@@ -95,6 +95,8 @@ pub const Cursor = struct {
     }
 
     pub fn advance(self: *Cursor) !Token {
+        // TODO: Invalid record 'LLVM 18.1.7':
+        // This code is a long running function because there seems to be a problem splitting the function into smaller parts.
         var state = State.Start;
         var token = Token{
             .kind = TokenKind.Eof,
@@ -105,9 +107,32 @@ pub const Cursor = struct {
         while (true) {
             var c_opt = self.bump();
             if (c_opt == null) {
-                // TODO: Handle eof.
-                // return self.eof(state, token);
-                return token;
+                // TODO: Fix llvm error make this a self.eof func.
+                switch (state) {
+                    State.Start => {
+                        token.index = token.index + 1;
+                        return token;
+                    },
+                    State.StringLiteralStart => {
+                        return error.UnexpectedEndOfData;
+                    },
+                    State.StringLiteral, State.BlockStringLiteral, State.StringLiteralEscapedUnicode, State.BlockStringLiteralBackslash, State.StringLiteralBackslash => {
+                        return error.UnterminatedString;
+                    },
+                    State.SpreadOperator => {
+                        return error.UnterminatedSpreadOperator;
+                    },
+                    State.MinusSign => {
+                        return error.UnexpectedCharacter;
+                    },
+                    State.DecimalPoint, State.ExponentIndicator, State.ExponentSign => {
+                        return error.UnexpectedEOFInFloat;
+                    },
+                    State.Ident, State.LeadingZero, State.IntegerPart, State.FractionalPart, State.ExponentDigit, State.Whitespace, State.Comment => {
+                        token.data = self.currentStr();
+                        return token;
+                    },
+                }
             }
             const c = c_opt.?;
             c_opt = null; // TODO: trick compiler so i can use var, figure out proper way to do this in zig.
