@@ -3,14 +3,6 @@ const Token = @import("tokens.zig").Token;
 const TokenKind = @import("tokens.zig").TokenKind;
 const Cursor = @import("cursor.zig").Cursor;
 
-// const A = error{ NotDir, PathNotFound };
-// const B = error{ OutOfMemory, PathNotFound };
-// const C = A || B;
-pub const LexerError = error{
-    LexingFailed,
-    LimitReached,
-};
-
 pub const Lexer = struct {
     finished: bool,
     allocator: std.mem.Allocator,

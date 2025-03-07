@@ -94,6 +94,8 @@ pub const Cursor = struct {
         return false;
     }
 
+    // TODO: Split this up into smaller functions. There seems to be a problem with the LLVM version when doing so.
+    // Need to investigate further.
     pub fn advance(self: *Cursor) !Token {
         // TODO: Invalid record 'LLVM 18.1.7':
         // This code is a long running function because there seems to be a problem splitting the function into smaller parts.
@@ -107,7 +109,8 @@ pub const Cursor = struct {
         while (true) {
             var c_opt = self.bump();
             if (c_opt == null) {
-                // TODO: Fix llvm error make this a self.eof func.
+                // TODO: Fix llvm error (version: 0.14.0-dev.544+7aaebd17).
+                // Make this long running block of code a self.eof func once zig is fixed.
                 switch (state) {
                     State.Start => {
                         token.index = token.index + 1;
