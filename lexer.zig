@@ -1,7 +1,7 @@
 const std = @import("std");
-const Token = @import("tokens.zig").Token;
-const TokenKind = @import("tokens.zig").TokenKind;
-const Cursor = @import("cursor.zig").Cursor;
+const Token = @import("lib/tokens.zig").Token;
+const TokenKind = @import("lib/tokens.zig").TokenKind;
+const Cursor = @import("lib/cursor.zig").Cursor;
 
 pub const Lexer = struct {
     finished: bool,
