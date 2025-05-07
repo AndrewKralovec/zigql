@@ -52,13 +52,13 @@ pub const CharExponent = struct {
     pos: usize,
 };
 
-pub const CharIndices = struct {
+pub const CharIterator = struct {
     source: []const u8,
     index: usize = 0,
-    pub fn init(source: []const u8) CharIndices {
-        return CharIndices{ .source = source };
+    pub fn init(source: []const u8) CharIterator {
+        return CharIterator{ .source = source };
     }
-    pub fn next(self: *CharIndices) ?CharExponent {
+    pub fn next(self: *CharIterator) ?CharExponent {
         if (self.index >= self.source.len) {
             return null;
         }

@@ -1,7 +1,7 @@
 const std = @import("std");
 const text = @import("text.zig");
 const tokens = @import("tokens.zig");
-const CharIndices = text.CharIndices;
+const CharIterator = text.CharIterator;
 const Token = tokens.Token;
 const TokenKind = tokens.TokenKind;
 
@@ -9,7 +9,7 @@ pub const Cursor = struct {
     index: usize,
     offset: usize,
     source: []const u8,
-    chars: CharIndices,
+    chars: CharIterator,
     pending: ?u8,
 
     pub fn init(input: []const u8) Cursor {
@@ -17,7 +17,7 @@ pub const Cursor = struct {
             .index = 0,
             .offset = 0,
             .source = input,
-            .chars = CharIndices.init(input),
+            .chars = CharIterator.init(input),
             .pending = null,
         };
     }
@@ -74,15 +74,20 @@ pub const Cursor = struct {
         return c;
     }
 
-    // TODO: Return error type.
-    pub fn eatc(self: *Cursor, c: u8) bool {
+    pub fn eatc(self: *Cursor, c: u8) !bool {
         if (self.pending != null) {
-            @panic("Don't call eatc when a character is pending");
+            // Don't call eatc when a character is pending
+            return error.InvalidState;
         }
 
         if (self.offset < self.source.len) {
-            const c_in = self.source[self.offset];
-            self.offset += 1;
+            const ex = self.chars.next();
+            if (ex == null) {
+                return false;
+            }
+
+            const c_in = ex.?.char;
+            self.offset = ex.?.pos;
 
             if (c_in == c) {
                 return true;
@@ -208,22 +213,24 @@ pub const Cursor = struct {
                 State.BlockStringLiteral => {
                     switch (c) {
                         '\\' => {
-                            state = State.BlockStringLiteral;
+                            state = State.BlockStringLiteralBackslash;
                         },
                         '"' => {
                             // Require two additional quotes to complete the triple quote.
-                            if (self.eatc('"') and self.eatc('"')) {
+                            if (try self.eatc('"') and try self.eatc('"')) {
                                 token.data = self.currentStr();
                                 return token;
                             }
                         },
-                        else => {},
+                        else => {
+                            // Continue parsing the block string
+                        },
                     }
                 },
                 State.StringLiteralStart => {
                     switch (c) {
                         '"' => {
-                            if (self.eatc('"')) {
+                            if (try self.eatc('"')) {
                                 state = State.BlockStringLiteral;
                                 continue;
                             }
@@ -278,8 +285,8 @@ pub const Cursor = struct {
                             // The lexer does not un-escape escape sequences so it's OK
                             // if we take this path for \"", even if that is technically not an escape
                             // sequence.
-                            if (self.eatc(c)) {
-                                _ = self.eatc('"');
+                            if (try self.eatc(c)) {
+                                _ = try self.eatc('"');
                             }
                             state = State.BlockStringLiteral;
                         },
@@ -382,7 +389,7 @@ pub const Cursor = struct {
                     }
                 },
                 State.SpreadOperator => {
-                    if (c == '.' and self.eatc('.')) {
+                    if (c == '.' and try self.eatc('.')) {
                         token.data = self.currentStr();
                         return token;
                     }
@@ -429,3 +436,72 @@ const State = union(enum) {
     SpreadOperator,
     MinusSign,
 };
+
+//
+// Test cases for the Cursor
+//
+
+test "should bump next character" {
+    const input = "{ user { id } }";
+
+    var cursor = Cursor.init(input);
+
+    const c_opt = cursor.bump();
+    const expected: u8 = input[0];
+    const c = c_opt.?;
+    try std.testing.expect(c == expected);
+}
+
+test "should return current string after bump" {
+    const input = "{ user { id } }";
+
+    var cursor = Cursor.init(input);
+
+    _ = cursor.bump();
+    const current = cursor.currentStr();
+    const expected = input[0..1];
+    try std.testing.expect(std.mem.eql(u8, current, expected));
+}
+
+test "should return previous string after bump" {
+    const input = "{ user { id } }";
+
+    var cursor = Cursor.init(input);
+
+    _ = cursor.bump();
+    const token = cursor.bump();
+    const expectedT = ' ';
+    const prev = cursor.prevStr();
+    const expectedPre = input[0..1];
+
+    try std.testing.expect(token == expectedT);
+    try std.testing.expect(std.mem.eql(u8, prev, expectedPre));
+}
+
+test "should return null when bumping past end of input" {
+    const input = "";
+
+    var cursor = Cursor.init(input);
+    const char = cursor.bump();
+    try std.testing.expect(char == null);
+}
+
+test "should advance cursor and parse token" {
+    const input = "{ user { id } }";
+
+    var cursor = Cursor.init(input);
+    const token = try cursor.advance();
+    try std.testing.expect(token.kind == tokens.TokenKind.LCurly);
+    try std.testing.expect(token.data.len == 1);
+    try std.testing.expect(std.mem.eql(u8, token.data, "{"));
+}
+
+test "should return error when advancing on unexpected character" {
+    const input = "*";
+
+    var cursor = Cursor.init(input);
+    _ = cursor.advance() catch |err| {
+        try std.testing.expect(err == error.UnexpectedChar);
+        return;
+    };
+}
