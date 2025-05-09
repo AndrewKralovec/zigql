@@ -4,11 +4,15 @@ const TokenKind = @import("lib/tokens.zig").TokenKind;
 const Cursor = @import("lib/cursor.zig").Cursor;
 const LimitTracker = @import("lib/limit_tracker.zig").LimitTracker;
 
+/// The `Lexer` struct is responsible for walking over GraphQL text and producing a stream of tokens.
+///
 pub const Lexer = struct {
     finished: bool,
     cursor: Cursor,
     limitTracker: LimitTracker,
 
+    /// Initializes a new `Lexer` from source text without a limit on the number of tokens
+    /// that can be scanned.
     pub fn init(source: []const u8) Lexer {
         return Lexer{
             .finished = false,
@@ -17,6 +21,8 @@ pub const Lexer = struct {
         };
     }
 
+    /// Initializes a new `Lexer` with a limit on the number of tokens that can be scanned.
+    /// This is useful for bounded parsing.
     pub fn withLimit(self: Lexer, limit: usize) Lexer {
         return Lexer{
             .finished = self.finished,
@@ -25,6 +31,9 @@ pub const Lexer = struct {
         };
     }
 
+    /// Fully lex the stream and return a slice of tokens.
+    /// errors encountered are collected and an error is returned if any of the tokens
+    /// could not be lexed.
     pub fn lex(self: *Lexer, allocator: std.mem.Allocator) ![]Token {
         var tokens = std.ArrayList(Token).init(allocator);
         var errors = std.ArrayList(anyerror).init(allocator);
@@ -51,6 +60,8 @@ pub const Lexer = struct {
         return tokens.toOwnedSlice();
     }
 
+    /// Return the next token in the stream, or null if we have reached EOF.
+    /// If a limit was set and reached, `LimitReached` is returned.
     pub fn next(self: *Lexer) !?Token {
         if (self.finished) return null;
 

@@ -1,0 +1,92 @@
+const std = @import("std");
+const ast = @import("ast.zig");
+const Parser = @import("../parser.zig").Parser;
+const TokenKind = @import("../lib/tokens.zig").TokenKind;
+
+const parseDescription = @import("./description.zig").parseDescription;
+const parseName = @import("./name.zig").parseName;
+const parseInputFieldsDefinition = @import("./input.zig").parseInputFieldsDefinition;
+const parseArguments = @import("./argument.zig").parseArguments;
+
+pub fn parseDirectiveDefinition(p: *Parser) !ast.DirectiveDefinitionNode {
+    p.debug("parseDirectiveDefinition");
+    const description = try parseDescription(p);
+    _ = try p.expectKeyword(ast.SyntaxKeyWord.directive);
+    _ = try p.expect(TokenKind.At);
+
+    const name = try parseName(p);
+    const args = try parseInputFieldsDefinition(p);
+    const repeatable = p.expectOptionalKeyword(ast.SyntaxKeyWord.repeatable);
+    _ = try p.expectKeyword(ast.SyntaxKeyWord.on);
+
+    const locations = try parseDirectiveLocations(p);
+    return ast.DirectiveDefinitionNode{
+        .description = description,
+        .name = name,
+        .arguments = args,
+        .repeatable = repeatable,
+        .locations = locations,
+    };
+}
+
+pub fn parseDirectiveLocations(p: *Parser) ![]ast.NameNode {
+    p.debug("parseDirectiveLocations");
+    _ = p.expectOptionalToken(TokenKind.Pipe);
+
+    var nodes = std.ArrayList(ast.NameNode).init(p.allocator);
+    defer nodes.deinit();
+    while (p.peek()) |_| {
+        const name = try parseDirectiveLocation(p);
+        try nodes.append(name);
+
+        if (!p.expectOptionalToken(TokenKind.Pipe)) {
+            break;
+        }
+    }
+    return try nodes.toOwnedSlice();
+}
+
+pub fn parseDirectiveLocation(p: *Parser) !ast.NameNode {
+    p.debug("parseDirectiveLocation");
+    const token = p.peek() orelse return error.UnexpectedNullToken;
+    _ = ast.stringToDirectiveLocation(token.data) orelse {
+        return error.UnknownDirectiveLocation;
+    };
+    const name = try parseName(p);
+    return name;
+}
+
+pub fn parseConstDirectives(p: *Parser) !?[]ast.DirectiveNode {
+    p.debug("parseConstDirectives");
+    return parseDirectives(p, true);
+}
+
+pub fn parseDirectives(p: *Parser, isConst: bool) !?[]ast.DirectiveNode {
+    p.debug("parseDirectives");
+    if (!p.peekKind(TokenKind.At)) {
+        return null;
+    }
+
+    var nodes = std.ArrayList(ast.DirectiveNode).init(p.allocator);
+    defer nodes.deinit();
+    while (p.peek()) |token| {
+        if (token.kind != TokenKind.At) {
+            break;
+        }
+        const dir = try parseDirective(p, isConst);
+        try nodes.append(dir);
+    }
+
+    return try nodes.toOwnedSlice();
+}
+
+pub fn parseDirective(p: *Parser, isConst: bool) !ast.DirectiveNode {
+    p.debug("parseDirective");
+    _ = try p.expect(TokenKind.At);
+    const name = try parseName(p);
+    const arguments = try parseArguments(p, isConst);
+    return ast.DirectiveNode{
+        .name = name,
+        .arguments = arguments,
+    };
+}
