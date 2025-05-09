@@ -1,4 +1,4 @@
-# Graphql Parser Zig
+# ZigQL
 A graphql parsing library written in zig.
 After reading that [bun](https://bun.sh/) was coded in zig, i wanted to try it out.
 
@@ -119,3 +119,11 @@ Research best practices for organizing and executing tests in Zig. Currently, un
 #### Keyword switching
 Zig does not natively support switching on strings. To work around this, I used `std.meta.stringToEnum` to convert a string into an enum and then performed a switch on the resulting enum. While this approach works, it may not be the most efficient or cleanest solution.
 Investigate the use of comptime maps as an alternative to stringToEnum. Comptime maps could offer better performance. 
+
+
+### Inspiration And Resources
+This project was inspired by a mix of curiosity for [zig](https://ziglang.org/), and a desire to see its use in web services.
+
+I also drew inspiration from existing GraphQL libraries like [graphql-js](https://github.com/graphql/graphql-js) and [apollo-rs](https://github.com/apollographql/apollo-rs). They provided a great reference for how a GraphQL parser should behave.
+
+This project follows the [October 2021 GraphQL specification](https://spec.graphql.org/October2021) for its grammar and parsing rules.

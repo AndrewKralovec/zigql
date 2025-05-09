@@ -7,7 +7,7 @@ pub fn build(b: *std.Build) void {
 
     // Define the build options
     const lib = b.addStaticLibrary(.{
-        .name = "graphql_parser",
+        .name = "zig_ql",
         .root_source_file = b.path("src/parser.zig"),
         .target = target,
         .optimize = optimize,
