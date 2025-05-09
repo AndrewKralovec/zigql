@@ -124,6 +124,6 @@ Investigate the use of comptime maps as an alternative to stringToEnum. Comptime
 ### Inspiration And Resources
 This project was inspired by a mix of curiosity for [zig](https://ziglang.org/), and a desire to see its use in web services.
 
-I also drew inspiration from existing GraphQL libraries like [graphql-js](https://github.com/graphql/graphql-js) and [apollo-rs](https://github.com/apollographql/apollo-rs). They provided a great reference for how a GraphQL parser should behave.
+I also drew inspiration from existing GraphQL libraries like [graphql-js](https://github.com/graphql/graphql-js) ([MIT](https://github.com/apollographql/apollo-rs/blob/main/LICENSE-MIT)) and [apollo-rs](https://github.com/apollographql/apollo-rs) ([MIT](https://github.com/apollographql/apollo-rs/blob/main/LICENSE-MIT)). They provided a great reference for how a GraphQL parser should behave.
 
 This project follows the [October 2021 GraphQL specification](https://spec.graphql.org/October2021) for its grammar and parsing rules.
