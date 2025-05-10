@@ -11,7 +11,7 @@ const parseOptionalOperationTypeDefinitions = @import("./operation.zig").parseOp
 pub fn parseSchemaDefinition(p: *Parser) !ast.SchemaDefinitionNode {
     p.debug("parseSchemaDefinition");
     const description = try parseDescription(p);
-    _ = try p.expectKeyword(ast.SyntaxKeyWord.schema);
+    _ = try p.expectKeyword(ast.SyntaxKeyWord.Schema);
     const directives = try parseConstDirectives(p);
     const operationTypes = try parseOperationTypeDefinitions(p);
     return ast.SchemaDefinitionNode{
@@ -24,7 +24,7 @@ pub fn parseSchemaDefinition(p: *Parser) !ast.SchemaDefinitionNode {
 pub fn parseSchemaExtension(p: *Parser) !ast.SchemaExtensionNode {
     p.debug("parseSchemaExtension");
     try p.expectKeyword(ast.SyntaxKeyWord.Extend);
-    try p.expectKeyword(ast.SyntaxKeyWord.schema);
+    try p.expectKeyword(ast.SyntaxKeyWord.Schema);
     const directives = try parseConstDirectives(p);
     const operationTypes = try parseOptionalOperationTypeDefinitions(p);
 

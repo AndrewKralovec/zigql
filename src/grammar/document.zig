@@ -50,7 +50,7 @@ pub fn parseDefinition(p: *Parser) !ast.DefinitionNode {
 
     const keyword = ast.stringToKeyword(token.data) orelse return error.UnknownKeyword;
     switch (keyword) {
-        ast.SyntaxKeyWord.schema => {
+        ast.SyntaxKeyWord.Schema => {
             const def = try parseSchemaDefinition(p);
             return ast.DefinitionNode{
                 .TypeSystemDefinition = ast.TypeSystemDefinitionNode{

@@ -58,7 +58,7 @@ pub fn parseTypeSystemExtension(p: *Parser) !ast.TypeSystemExtensionNode {
     if (token.kind == TokenKind.Name) {
         const keyword = ast.stringToKeyword(token.data) orelse return error.UnknownKeyword;
         switch (keyword) {
-            ast.SyntaxKeyWord.schema => {
+            ast.SyntaxKeyWord.Schema => {
                 return ast.TypeSystemExtensionNode{
                     .SchemaExtension = try parseSchemaExtension(p),
                 };
