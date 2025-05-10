@@ -12,7 +12,7 @@ const parseNamedType = @import("./type.zig").parseNamedType;
 pub fn parseInterfaceTypeDefinition(p: *Parser) !ast.InterfaceTypeDefinitionNode {
     p.debug("parseInterfaceTypeDefinition");
     const description = try parseDescription(p);
-    _ = try p.expectKeyword(ast.SyntaxKeyWord.interface);
+    _ = try p.expectKeyword(ast.SyntaxKeyWord.Interface);
     const name = try parseName(p);
     const interfaces = try parseImplementsInterfaces(p);
     const directives = try parseConstDirectives(p);
@@ -29,7 +29,7 @@ pub fn parseInterfaceTypeDefinition(p: *Parser) !ast.InterfaceTypeDefinitionNode
 
 pub fn parseImplementsInterfaces(p: *Parser) !?[]ast.NamedTypeNode {
     p.debug("parseImplementsInterfaces");
-    if (!p.expectOptionalKeyword(ast.SyntaxKeyWord.implements)) {
+    if (!p.expectOptionalKeyword(ast.SyntaxKeyWord.Implements)) {
         return null;
     }
 
@@ -49,8 +49,8 @@ pub fn parseImplementsInterfaces(p: *Parser) !?[]ast.NamedTypeNode {
 
 pub fn parseInterfaceTypeExtension(p: *Parser) !ast.InterfaceTypeExtensionNode {
     p.debug("parseInterfaceTypeExtension");
-    _ = try p.expectKeyword(ast.SyntaxKeyWord.extend);
-    _ = try p.expectKeyword(ast.SyntaxKeyWord.interface);
+    _ = try p.expectKeyword(ast.SyntaxKeyWord.Extend);
+    _ = try p.expectKeyword(ast.SyntaxKeyWord.Interface);
     const name = try parseName(p);
     const interfaces = try parseImplementsInterfaces(p);
     const directives = try parseConstDirectives(p);

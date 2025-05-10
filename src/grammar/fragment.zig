@@ -10,11 +10,11 @@ const parseName = @import("./name.zig").parseName;
 
 pub fn parseFragmentDefinition(p: *Parser) !ast.FragmentDefinitionNode {
     p.debug("parseFragmentDefinition");
-    try p.expectKeyword(ast.SyntaxKeyWord.fragment);
+    try p.expectKeyword(ast.SyntaxKeyWord.Fragment);
 
     const name = try parseFragmentName(p);
 
-    try p.expectKeyword(ast.SyntaxKeyWord.on);
+    try p.expectKeyword(ast.SyntaxKeyWord.On);
     const typeCondition = try parseNamedType(p);
     const directives = try parseDirectives(p, false);
     const selectionSet = try parseSelectionSet(p);

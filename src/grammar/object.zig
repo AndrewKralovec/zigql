@@ -12,7 +12,7 @@ const parseFieldsDefinition = @import("./field.zig").parseFieldsDefinition;
 pub fn parseObjectTypeDefinition(p: *Parser) !ast.ObjectTypeDefinitionNode {
     p.debug("parseObjectTypeDefinition");
     const description = try parseDescription(p);
-    _ = try p.expectKeyword(ast.SyntaxKeyWord.type);
+    _ = try p.expectKeyword(ast.SyntaxKeyWord.Type);
 
     const name = try parseName(p);
     const interfaces = try parseImplementsInterfaces(p);
@@ -29,8 +29,8 @@ pub fn parseObjectTypeDefinition(p: *Parser) !ast.ObjectTypeDefinitionNode {
 
 pub fn parseObjectTypeExtension(p: *Parser) !ast.ObjectTypeExtensionNode {
     p.debug("parseObjectTypeExtension");
-    _ = try p.expectKeyword(ast.SyntaxKeyWord.extend);
-    _ = try p.expectKeyword(ast.SyntaxKeyWord.type);
+    _ = try p.expectKeyword(ast.SyntaxKeyWord.Extend);
+    _ = try p.expectKeyword(ast.SyntaxKeyWord.Type);
     const name = try parseName(p);
     const interfaces = try parseImplementsInterfaces(p);
     const directives = try parseConstDirectives(p);

@@ -98,13 +98,13 @@ pub fn parseOperationType(p: *Parser) !ast.OperationType {
     };
 
     switch (keyword) {
-        ast.SyntaxKeyWord.query => {
+        ast.SyntaxKeyWord.Query => {
             return ast.OperationType.Query;
         },
-        ast.SyntaxKeyWord.mutation => {
+        ast.SyntaxKeyWord.Mutation => {
             return ast.OperationType.Mutation;
         },
-        ast.SyntaxKeyWord.subscription => {
+        ast.SyntaxKeyWord.Subscription => {
             return ast.OperationType.Subscription;
         },
         else => {

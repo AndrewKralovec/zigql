@@ -58,7 +58,7 @@ pub fn parseDefinition(p: *Parser) !ast.DefinitionNode {
                 },
             };
         },
-        ast.SyntaxKeyWord.scalar => {
+        ast.SyntaxKeyWord.Scalar => {
             const def = try parseScalarTypeDefinition(p);
             return ast.DefinitionNode{
                 .TypeSystemDefinition = ast.TypeSystemDefinitionNode{
@@ -68,7 +68,7 @@ pub fn parseDefinition(p: *Parser) !ast.DefinitionNode {
                 },
             };
         },
-        ast.SyntaxKeyWord.type => {
+        ast.SyntaxKeyWord.Type => {
             const def = try parseObjectTypeDefinition(p);
             return ast.DefinitionNode{
                 .TypeSystemDefinition = ast.TypeSystemDefinitionNode{
@@ -78,7 +78,7 @@ pub fn parseDefinition(p: *Parser) !ast.DefinitionNode {
                 },
             };
         },
-        ast.SyntaxKeyWord.interface => {
+        ast.SyntaxKeyWord.Interface => {
             const def = try parseInterfaceTypeDefinition(p);
             return ast.DefinitionNode{
                 .TypeSystemDefinition = ast.TypeSystemDefinitionNode{
@@ -88,7 +88,7 @@ pub fn parseDefinition(p: *Parser) !ast.DefinitionNode {
                 },
             };
         },
-        ast.SyntaxKeyWord.@"union" => {
+        ast.SyntaxKeyWord.Union => {
             const def = try parseUnionTypeDefinition(p);
             return ast.DefinitionNode{
                 .TypeSystemDefinition = ast.TypeSystemDefinitionNode{
@@ -98,7 +98,7 @@ pub fn parseDefinition(p: *Parser) !ast.DefinitionNode {
                 },
             };
         },
-        ast.SyntaxKeyWord.@"enum" => {
+        ast.SyntaxKeyWord.Enum => {
             const def = try parseEnumTypeDefinition(p);
             return ast.DefinitionNode{
                 .TypeSystemDefinition = ast.TypeSystemDefinitionNode{
@@ -108,7 +108,7 @@ pub fn parseDefinition(p: *Parser) !ast.DefinitionNode {
                 },
             };
         },
-        ast.SyntaxKeyWord.input => {
+        ast.SyntaxKeyWord.Input => {
             const def = try parseInputObjectTypeDefinition(p);
             return ast.DefinitionNode{
                 .TypeSystemDefinition = ast.TypeSystemDefinitionNode{
@@ -118,13 +118,13 @@ pub fn parseDefinition(p: *Parser) !ast.DefinitionNode {
                 },
             };
         },
-        ast.SyntaxKeyWord.directive => {
+        ast.SyntaxKeyWord.Directive => {
             const def = try parseDirectiveDefinition(p);
             return ast.DefinitionNode{
                 .TypeSystemDefinition = ast.TypeSystemDefinitionNode{ .DirectiveDefinition = def },
             };
         },
-        ast.SyntaxKeyWord.query, ast.SyntaxKeyWord.mutation, ast.SyntaxKeyWord.subscription, ast.SyntaxKeyWord.@"{" => {
+        ast.SyntaxKeyWord.Query, ast.SyntaxKeyWord.Mutation, ast.SyntaxKeyWord.Subscription, ast.SyntaxKeyWord.LCurly => {
             const def = try parseOperationDefinition(p);
             return ast.DefinitionNode{
                 .ExecutableDefinition = ast.ExecutableDefinitionNode{
@@ -132,7 +132,7 @@ pub fn parseDefinition(p: *Parser) !ast.DefinitionNode {
                 },
             };
         },
-        ast.SyntaxKeyWord.fragment => {
+        ast.SyntaxKeyWord.Fragment => {
             const def = try parseFragmentDefinition(p);
             return ast.DefinitionNode{
                 .ExecutableDefinition = ast.ExecutableDefinitionNode{
@@ -140,7 +140,7 @@ pub fn parseDefinition(p: *Parser) !ast.DefinitionNode {
                 },
             };
         },
-        ast.SyntaxKeyWord.extend => {
+        ast.SyntaxKeyWord.Extend => {
             const def = try parseTypeSystemExtension(p);
             return ast.DefinitionNode{
                 .TypeSystemExtension = def,

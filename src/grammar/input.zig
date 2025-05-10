@@ -12,7 +12,7 @@ const parseTypeReference = @import("./type.zig").parseTypeReference;
 pub fn parseInputObjectTypeDefinition(p: *Parser) !ast.InputObjectTypeDefinitionNode {
     p.debug("parseInputObjectTypeDefinition");
     const description = try parseDescription(p);
-    _ = try p.expectKeyword(ast.SyntaxKeyWord.input);
+    _ = try p.expectKeyword(ast.SyntaxKeyWord.Input);
     const name = try parseName(p);
     const directives = try parseConstDirectives(p);
     const fields = try parseInputFieldsDefinition(p);
@@ -65,8 +65,8 @@ pub fn parseInputValueDef(p: *Parser) !ast.InputValueDefinitionNode {
 
 pub fn parseInputObjectTypeExtension(p: *Parser) !ast.InputObjectTypeExtensionNode {
     p.debug("parseInputObjectTypeExtension");
-    _ = try p.expectKeyword(ast.SyntaxKeyWord.extend);
-    _ = try p.expectKeyword(ast.SyntaxKeyWord.input);
+    _ = try p.expectKeyword(ast.SyntaxKeyWord.Extend);
+    _ = try p.expectKeyword(ast.SyntaxKeyWord.Input);
     const name = try parseName(p);
     const directives = try parseConstDirectives(p);
     const fields = try parseInputFieldsDefinition(p);

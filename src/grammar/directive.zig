@@ -11,13 +11,13 @@ const parseArguments = @import("./argument.zig").parseArguments;
 pub fn parseDirectiveDefinition(p: *Parser) !ast.DirectiveDefinitionNode {
     p.debug("parseDirectiveDefinition");
     const description = try parseDescription(p);
-    _ = try p.expectKeyword(ast.SyntaxKeyWord.directive);
+    _ = try p.expectKeyword(ast.SyntaxKeyWord.Directive);
     _ = try p.expect(TokenKind.At);
 
     const name = try parseName(p);
     const args = try parseInputFieldsDefinition(p);
-    const repeatable = p.expectOptionalKeyword(ast.SyntaxKeyWord.repeatable);
-    _ = try p.expectKeyword(ast.SyntaxKeyWord.on);
+    const repeatable = p.expectOptionalKeyword(ast.SyntaxKeyWord.Repeatable);
+    _ = try p.expectKeyword(ast.SyntaxKeyWord.On);
 
     const locations = try parseDirectiveLocations(p);
     return ast.DirectiveDefinitionNode{
@@ -49,9 +49,10 @@ pub fn parseDirectiveLocations(p: *Parser) ![]ast.NameNode {
 pub fn parseDirectiveLocation(p: *Parser) !ast.NameNode {
     p.debug("parseDirectiveLocation");
     const token = p.peek() orelse return error.UnexpectedNullToken;
-    _ = ast.stringToDirectiveLocation(token.data) orelse {
+    if (!ast.isDirectiveLocation(token.data)) {
         return error.UnknownDirectiveLocation;
-    };
+    }
+
     const name = try parseName(p);
     return name;
 }

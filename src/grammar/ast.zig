@@ -1,64 +1,5 @@
 const std = @import("std");
 
-/// This enum defines the locations where directives can be used in the GraphQL syntax.
-/// They are uppercase to match the GraphQL spec.
-/// The locations are used to validate the usage of directives in the AST.
-pub const DirectiveLocation = enum {
-    QUERY,
-    MUTATION,
-    SUBSCRIPTION,
-    FIELD,
-    FRAGMENT_DEFINITION,
-    FRAGMENT_SPREAD,
-    INLINE_FRAGMENT,
-    VARIABLE_DEFINITION,
-    SCHEMA,
-    SCALAR,
-    OBJECT,
-    FIELD_DEFINITION,
-    ARGUMENT_DEFINITION,
-    INTERFACE,
-    UNION,
-    ENUM,
-    ENUM_VALUE,
-    INPUT_OBJECT,
-    INPUT_FIELD_DEFINITION,
-};
-
-// TODO: Look into comptime maps vs stringToEnum for better performance, and cleaner enum code.
-pub fn stringToDirectiveLocation(str: []const u8) ?DirectiveLocation {
-    return std.meta.stringToEnum(DirectiveLocation, str);
-}
-
-/// This enum defines the keywords in the GraphQL syntax.
-/// They are lowercase to match the GraphQL spec.
-/// The keywords are used to identify the type of node in the AST.
-/// This is used so i can do a switch on keyword strings in the parser.
-pub const SyntaxKeyWord = enum {
-    directive,
-    @"enum",
-    extend,
-    fragment,
-    input,
-    interface,
-    type,
-    query,
-    mutation,
-    subscription,
-    @"{",
-    scalar,
-    schema,
-    @"union",
-    implements,
-    on,
-    repeatable,
-};
-
-// TODO(keyword-switching): Look into comptime maps vs stringToEnum for better performance, and cleaner enum code.
-pub fn stringToKeyword(str: []const u8) ?SyntaxKeyWord {
-    return std.meta.stringToEnum(SyntaxKeyWord, str);
-}
-
 pub const SyntaxKind = enum {
     Document,
     OperationDefinition,
@@ -243,6 +184,7 @@ pub const NameNode = struct {
 /// *Directive[Const]*:
 ///     **@** Name Arguments[?Const]?
 pub const DirectiveNode = struct {
+    kind: SyntaxKind = SyntaxKind.Directive,
     name: NameNode,
     arguments: ?[]const ArgumentNode,
 };
@@ -252,12 +194,11 @@ pub const DirectiveNode = struct {
 /// *Argument[Const]*:
 ///    Name **:** Value[?Const]
 pub const ArgumentNode = struct {
+    kind: SyntaxKind = SyntaxKind.Argument,
     name: NameNode,
     value: ValueNode,
 };
 
-// TODO: should we separate node for const values?
-// These include const values as well as variables.
 /// See: https://spec.graphql.org/October2021/#Value
 ///
 /// *Value[Const]*
@@ -270,6 +211,9 @@ pub const ArgumentNode = struct {
 ///     EnumValue
 ///     ListValue[?Const]
 ///     ObjectValue[?Const]
+// TODO: should we separate node for const values?
+// If we need to differentiate between comptime(fixed) and runtime values
+// We need to indicate that in the AST, either by type or field. Come back to this later.
 pub const ValueNode = union(enum) {
     Variable: VariableNode,
     Int: IntValueNode,
@@ -287,6 +231,7 @@ pub const ValueNode = union(enum) {
 /// *Variable*:
 ///     **$** Name
 pub const VariableNode = struct {
+    kind: SyntaxKind = SyntaxKind.Variable,
     name: NameNode,
 };
 
@@ -719,3 +664,94 @@ pub const InputObjectTypeExtensionNode = struct {
     directives: ?[]const DirectiveNode,
     fields: ?[]const InputValueDefinitionNode,
 };
+
+const directiveLocations = [_][]const u8{
+    "QUERY",
+    "MUTATION",
+    "SUBSCRIPTION",
+    "FIELD",
+    "FRAGMENT_DEFINITION",
+    "FRAGMENT_SPREAD",
+    "INLINE_FRAGMENT",
+    "VARIABLE_DEFINITION",
+    "SCHEMA",
+    "SCALAR",
+    "OBJECT",
+    "FIELD_DEFINITION",
+    "ARGUMENT_DEFINITION",
+    "INTERFACE",
+    "UNION",
+    "ENUM",
+    "ENUM_VALUE",
+    "INPUT_OBJECT",
+    "INPUT_FIELD_DEFINITION",
+};
+
+/// Checks if the given string matches a known GraphQL directive location.
+pub fn isDirectiveLocation(value: []const u8) bool {
+    inline for (directiveLocations) |loc| {
+        if (std.mem.eql(u8, value, loc)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/// This enum defines the keywords in the GraphQL syntax.
+/// The keywords are used to identify the type of node in the AST.
+pub const SyntaxKeyWord = enum {
+    Directive,
+    Enum,
+    Extend,
+    Fragment,
+    Input,
+    Interface,
+    Type,
+    Query,
+    Mutation,
+    Subscription,
+    LCurly,
+    Scalar,
+    schema,
+    Union,
+    Implements,
+    On,
+    Repeatable,
+};
+
+/// This struct is used to map keywords to their corresponding enum values.
+const KeywordMap = struct {
+    name: []const u8,
+    value: SyntaxKeyWord,
+};
+
+/// This is a map of keywords to their corresponding enum values.
+const keywordMap = [_]KeywordMap{
+    .{ .name = "directive", .value = SyntaxKeyWord.Directive },
+    .{ .name = "enum", .value = SyntaxKeyWord.Enum },
+    .{ .name = "extend", .value = SyntaxKeyWord.Extend },
+    .{ .name = "fragment", .value = SyntaxKeyWord.Fragment },
+    .{ .name = "input", .value = SyntaxKeyWord.Input },
+    .{ .name = "interface", .value = SyntaxKeyWord.Interface },
+    .{ .name = "type", .value = SyntaxKeyWord.Type },
+    .{ .name = "query", .value = SyntaxKeyWord.Query },
+    .{ .name = "mutation", .value = SyntaxKeyWord.Mutation },
+    .{ .name = "subscription", .value = SyntaxKeyWord.Subscription },
+    .{ .name = "{", .value = SyntaxKeyWord.LCurly },
+    .{ .name = "scalar", .value = SyntaxKeyWord.Scalar },
+    .{ .name = "schema", .value = SyntaxKeyWord.schema },
+    .{ .name = "union", .value = SyntaxKeyWord.Union },
+    .{ .name = "implements", .value = SyntaxKeyWord.Implements },
+    .{ .name = "on", .value = SyntaxKeyWord.On },
+    .{ .name = "repeatable", .value = SyntaxKeyWord.Repeatable },
+};
+
+/// Converts to a `SyntaxKeyWord` or returns null if not in the SyntaxKeyWord enum.
+pub fn stringToKeyword(str: []const u8) ?SyntaxKeyWord {
+    inline for (keywordMap) |entry| {
+        if (std.mem.eql(u8, entry.name, str)) {
+            return entry.value;
+        }
+    }
+    return null;
+}

@@ -23,7 +23,7 @@ pub fn parseSchemaDefinition(p: *Parser) !ast.SchemaDefinitionNode {
 
 pub fn parseSchemaExtension(p: *Parser) !ast.SchemaExtensionNode {
     p.debug("parseSchemaExtension");
-    try p.expectKeyword(ast.SyntaxKeyWord.extend);
+    try p.expectKeyword(ast.SyntaxKeyWord.Extend);
     try p.expectKeyword(ast.SyntaxKeyWord.schema);
     const directives = try parseConstDirectives(p);
     const operationTypes = try parseOptionalOperationTypeDefinitions(p);

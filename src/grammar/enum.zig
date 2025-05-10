@@ -10,7 +10,7 @@ const parseConstDirectives = @import("./directive.zig").parseConstDirectives;
 pub fn parseEnumTypeDefinition(p: *Parser) !ast.EnumTypeDefinitionNode {
     p.debug("parseEnumTypeDefinition");
     const description = try parseDescription(p);
-    _ = try p.expectKeyword(ast.SyntaxKeyWord.@"enum");
+    _ = try p.expectKeyword(ast.SyntaxKeyWord.Enum);
     const name = try parseName(p);
     const directives = try parseConstDirectives(p);
     const values = try parseEnumValuesDefinitions(p);
@@ -71,8 +71,8 @@ pub fn parseEnumValueName(p: *Parser) !ast.NameNode {
 
 pub fn parseEnumTypeExtension(p: *Parser) !ast.EnumTypeExtensionNode {
     p.debug("parseEnumTypeExtension");
-    _ = try p.expectKeyword(ast.SyntaxKeyWord.extend);
-    _ = try p.expectKeyword(ast.SyntaxKeyWord.@"enum");
+    _ = try p.expectKeyword(ast.SyntaxKeyWord.Extend);
+    _ = try p.expectKeyword(ast.SyntaxKeyWord.Enum);
     const name = try parseName(p);
     const directives = try parseConstDirectives(p);
     const values = try parseEnumValuesDefinitions(p);

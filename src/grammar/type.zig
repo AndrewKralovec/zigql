@@ -63,42 +63,42 @@ pub fn parseTypeSystemExtension(p: *Parser) !ast.TypeSystemExtensionNode {
                     .SchemaExtension = try parseSchemaExtension(p),
                 };
             },
-            ast.SyntaxKeyWord.scalar => {
+            ast.SyntaxKeyWord.Scalar => {
                 return ast.TypeSystemExtensionNode{
                     .TypeExtension = ast.TypeExtensionNode{
                         .ScalarTypeExtension = try parseScalarTypeExtension(p),
                     },
                 };
             },
-            ast.SyntaxKeyWord.type => {
+            ast.SyntaxKeyWord.Type => {
                 return ast.TypeSystemExtensionNode{
                     .TypeExtension = ast.TypeExtensionNode{
                         .ObjectTypeExtension = try parseObjectTypeExtension(p),
                     },
                 };
             },
-            ast.SyntaxKeyWord.interface => {
+            ast.SyntaxKeyWord.Interface => {
                 return ast.TypeSystemExtensionNode{
                     .TypeExtension = ast.TypeExtensionNode{
                         .InterfaceTypeExtension = try parseInterfaceTypeExtension(p),
                     },
                 };
             },
-            ast.SyntaxKeyWord.@"union" => {
+            ast.SyntaxKeyWord.Union => {
                 return ast.TypeSystemExtensionNode{
                     .TypeExtension = ast.TypeExtensionNode{
                         .UnionTypeExtension = try parseUnionTypeExtension(p),
                     },
                 };
             },
-            ast.SyntaxKeyWord.@"enum" => {
+            ast.SyntaxKeyWord.Enum => {
                 return ast.TypeSystemExtensionNode{
                     .TypeExtension = ast.TypeExtensionNode{
                         .EnumTypeExtension = try parseEnumTypeExtension(p),
                     },
                 };
             },
-            ast.SyntaxKeyWord.input => {
+            ast.SyntaxKeyWord.Input => {
                 return ast.TypeSystemExtensionNode{
                     .TypeExtension = ast.TypeExtensionNode{
                         .InputObjectTypeExtension = try parseInputObjectTypeExtension(p),

@@ -116,11 +116,6 @@ Investigate a Ziggy way to handle repeated parsing logic without duplicating cod
 #### Testing
 Research best practices for organizing and executing tests in Zig. Currently, unit tests are embedded in the source files, which seems to align with Zig conventions but may not scale well as the project gets bigger.
 
-#### Keyword switching
-Zig does not natively support switching on strings. To work around this, I used `std.meta.stringToEnum` to convert a string into an enum and then performed a switch on the resulting enum. While this approach works, it may not be the most efficient or cleanest solution.
-Investigate the use of comptime maps as an alternative to stringToEnum. Comptime maps could offer better performance. 
-
-
 ### Inspiration And Resources
 This project was inspired by a mix of curiosity for [zig](https://ziglang.org/), and a desire to see its use in web services.
 

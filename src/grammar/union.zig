@@ -11,7 +11,7 @@ const parseNamedType = @import("./type.zig").parseNamedType;
 pub fn parseUnionTypeDefinition(p: *Parser) !ast.UnionTypeDefinitionNode {
     p.debug("parseUnionTypeDefinition");
     const description = try parseDescription(p);
-    _ = try p.expectKeyword(ast.SyntaxKeyWord.@"union");
+    _ = try p.expectKeyword(ast.SyntaxKeyWord.Union);
     const name = try parseName(p);
     const directives = try parseConstDirectives(p);
     const types = try parseUnionMemberTypes(p);
@@ -46,8 +46,8 @@ pub fn parseUnionMemberTypes(p: *Parser) !?[]ast.NamedTypeNode {
 
 pub fn parseUnionTypeExtension(p: *Parser) !ast.UnionTypeExtensionNode {
     p.debug("parseUnionTypeExtension");
-    _ = try p.expectKeyword(ast.SyntaxKeyWord.extend);
-    _ = try p.expectKeyword(ast.SyntaxKeyWord.@"union");
+    _ = try p.expectKeyword(ast.SyntaxKeyWord.Extend);
+    _ = try p.expectKeyword(ast.SyntaxKeyWord.Union);
     const name = try parseName(p);
     const directives = try parseConstDirectives(p);
     const types = try parseUnionMemberTypes(p);

@@ -10,7 +10,7 @@ const parseConstDirectives = @import("./directive.zig").parseConstDirectives;
 pub fn parseScalarTypeDefinition(p: *Parser) !ast.ScalarTypeDefinitionNode {
     p.debug("parseScalarTypeDefinition");
     const description = try parseDescription(p);
-    _ = try p.expectKeyword(ast.SyntaxKeyWord.scalar);
+    _ = try p.expectKeyword(ast.SyntaxKeyWord.Scalar);
     const name = try parseName(p);
     const directives = try parseConstDirectives(p);
     return ast.ScalarTypeDefinitionNode{
@@ -22,8 +22,8 @@ pub fn parseScalarTypeDefinition(p: *Parser) !ast.ScalarTypeDefinitionNode {
 
 pub fn parseScalarTypeExtension(p: *Parser) !ast.ScalarTypeExtensionNode {
     p.debug("parseScalarTypeExtension");
-    _ = try p.expectKeyword(ast.SyntaxKeyWord.extend);
-    _ = try p.expectKeyword(ast.SyntaxKeyWord.scalar);
+    _ = try p.expectKeyword(ast.SyntaxKeyWord.Extend);
+    _ = try p.expectKeyword(ast.SyntaxKeyWord.Scalar);
     const name = try parseName(p);
     const directives = try parseConstDirectives(p);
 
