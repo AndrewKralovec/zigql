@@ -17,7 +17,9 @@ pub const Lexer = struct {
         return Lexer{
             .finished = false,
             .cursor = Cursor.init(source),
-            .limitTracker = LimitTracker.init(std.math.maxInt(usize)),
+            .limitTracker = LimitTracker.init(
+                std.math.maxInt(usize),
+            ),
         };
     }
 
@@ -31,17 +33,23 @@ pub const Lexer = struct {
         };
     }
 
-    /// Fully lex the stream and return a slice of tokens.
-    /// errors encountered are collected and an error is returned if any of the tokens
-    /// could not be lexed.
-    pub fn lex(self: *Lexer, allocator: std.mem.Allocator) ![]Token {
+    /// Fully lex the input stream and return a struct containing all tokens and all errors encountered.
+    /// Errors from the allocator are propagated immediately.
+    /// The caller is responsible for freeing both slices.
+    pub fn lex(self: *Lexer, allocator: std.mem.Allocator) !struct {
+        tokens: []Token,
+        errors: []anyerror,
+    } {
         var tokens = std.ArrayList(Token).init(allocator);
         var errors = std.ArrayList(anyerror).init(allocator);
-        defer tokens.deinit();
-        defer errors.deinit();
+        defer {
+            tokens.deinit();
+            errors.deinit();
+        }
 
         while (true) {
             const result = self.next() catch |err| {
+                // collect lexing errors or throw on non lexing errors (from allocator).
                 try errors.append(err);
                 continue;
             };
@@ -53,11 +61,11 @@ pub const Lexer = struct {
             }
         }
 
-        if (errors.items.len > 0) {
-            return error.LexingFailed;
-        }
-
-        return tokens.toOwnedSlice();
+        // Return both tokens and errors, regardless of whether errors occurred.
+        return .{
+            .tokens = try tokens.toOwnedSlice(),
+            .errors = try errors.toOwnedSlice(),
+        };
     }
 
     /// Return the next token in the stream, or null if we have reached EOF.
@@ -83,20 +91,24 @@ pub const Lexer = struct {
 //
 
 test "should parse all tokens from input" {
-    const allocator = std.heap.page_allocator;
+    const allocator = std.testing.allocator;
     const input = "{ user { id } }"; // 12 tokens including EOF.
 
     var lexer = Lexer
         .init(input)
         .withLimit(100);
-    const tokens = try lexer.lex(allocator);
-    defer allocator.free(tokens);
+    const result = try lexer.lex(allocator);
+    defer {
+        allocator.free(result.tokens);
+        allocator.free(result.errors);
+    }
 
-    try std.testing.expect(tokens.len == 12);
+    try std.testing.expect(result.tokens.len == 12);
+    try std.testing.expect(result.errors.len == 0);
 }
 
 test "should parse string blocks as a single token" {
-    const allocator = std.heap.page_allocator;
+    const allocator = std.testing.allocator;
     const input =
         \\ """
         \\ The query type, represents all of the entry points into our object graph
@@ -109,20 +121,28 @@ test "should parse string blocks as a single token" {
         .init(input)
         .withLimit(100);
 
-    const tokens = try lexer.lex(allocator);
-    defer allocator.free(tokens);
-    try std.testing.expect(tokens.len == 18);
+    const result = try lexer.lex(allocator);
+    defer {
+        allocator.free(result.tokens);
+        allocator.free(result.errors);
+    }
+    try std.testing.expect(result.tokens.len == 18);
+    try std.testing.expect(result.errors.len == 0);
 }
 
 test "should return error when limit is reached" {
-    const allocator = std.heap.page_allocator;
+    const allocator = std.testing.allocator;
     const input = "{ user { id } }"; // 12 tokens including EOF.
 
     var lexer = Lexer
         .init(input)
-        .withLimit(11);
+        .withLimit(10);
 
-    _ = lexer.lex(allocator) catch |err| {
-        try std.testing.expect(err == error.LexingFailed);
-    };
+    const result = try lexer.lex(allocator);
+    defer {
+        allocator.free(result.tokens);
+        allocator.free(result.errors);
+    }
+    try std.testing.expect(result.tokens.len == 10);
+    try std.testing.expect(result.errors.len == 1);
 }

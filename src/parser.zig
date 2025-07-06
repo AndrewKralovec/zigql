@@ -159,7 +159,7 @@ fn nextNonIgnorableToken(lexer: *Lexer) ?Token {
 //
 
 test "should parse a operation definition with a single field" {
-    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
 
     const allocator = arena.allocator();
@@ -198,7 +198,7 @@ test "should parse a operation definition with a single field" {
 }
 
 test "should parse a query operation with a single field" {
-    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
 
     const allocator = arena.allocator();
@@ -244,7 +244,7 @@ test "should parse a query operation with a single field" {
 }
 
 test "should parse a query operation with fields and arguments" {
-    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
 
     const allocator = arena.allocator();
@@ -312,7 +312,7 @@ test "should parse a query operation with fields and arguments" {
 }
 
 test "should parse a query operation with descriptions" {
-    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
 
     const allocator = arena.allocator();
@@ -361,7 +361,7 @@ test "should parse a query operation with descriptions" {
 }
 
 test "should parse a schema definition" {
-    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
 
     const allocator = arena.allocator();
@@ -395,7 +395,7 @@ test "should parse a schema definition" {
 }
 
 test "should parse a schema definition with directives" {
-    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
 
     const allocator = arena.allocator();
@@ -423,7 +423,7 @@ test "should parse a schema definition with directives" {
 }
 
 test "should parse a scalar type definition" {
-    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
 
     const allocator = arena.allocator();
@@ -448,7 +448,7 @@ test "should parse a scalar type definition" {
 }
 
 test "should parse a type definition" {
-    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
 
     const allocator = arena.allocator();
@@ -486,7 +486,7 @@ test "should parse a type definition" {
 }
 
 test "should parse a interface type definition" {
-    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
 
     const allocator = arena.allocator();
@@ -517,7 +517,7 @@ test "should parse a interface type definition" {
 }
 
 test "should parse a union type definition" {
-    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
 
     const allocator = arena.allocator();
@@ -543,7 +543,7 @@ test "should parse a union type definition" {
 }
 
 test "should parse a enum type definition" {
-    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
 
     const allocator = arena.allocator();
@@ -581,7 +581,7 @@ test "should parse a enum type definition" {
 }
 
 test "should parse a input type definition" {
-    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
 
     const allocator = arena.allocator();
@@ -618,7 +618,7 @@ test "should parse a input type definition" {
 }
 
 test "should parse a directive definition" {
-    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
 
     const allocator = arena.allocator();
@@ -641,7 +641,7 @@ test "should parse a directive definition" {
 }
 
 test "should parse a fragment definition" {
-    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
 
     const allocator = arena.allocator();
@@ -681,7 +681,7 @@ test "should parse a fragment definition" {
 }
 
 test "should parse a schema extension" {
-    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
 
     const allocator = arena.allocator();

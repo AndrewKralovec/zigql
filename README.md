@@ -50,11 +50,17 @@ const source =
     \\ }
 ;
 var lexer = Lexer.init(source);
-const tokens = try lexer.lex(allocator);
-defer allocator.free(tokens);
+const result = try lexer.lex(allocator);
+defer {
+    allocator.free(result.tokens);
+    allocator.free(result.errors);
+}
 
-for (tokens) |token| {
+for (result.tokens) |token| {
     std.debug.print("Token={any}\n", .{ token });
+}
+for (result.errors) |err| {
+    std.debug.print("Error={any}\n", .{ err });
 }
 ```
 
@@ -79,7 +85,7 @@ const doc = try p.parse();
 for (doc.definitions) |def| {
     if (def.ExecutableDefinition == .OperationDefinition) {
         const operationDef = def.ExecutableDefinition.OperationDefinition;
-        std.debug.print("Operation Definition: {any}\n", .{operationDef});
+        std.debug.print("Operations={any}\n", .{operationDef});
     }
 }
 ```
