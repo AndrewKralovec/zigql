@@ -713,3 +713,26 @@ test "should parse a schema extension" {
     try std.testing.expect(schemaExt.operationTypes.?[0].operation == ast.OperationType.Query);
     try std.testing.expect(schemaExt.operationTypes.?[1].operation == ast.OperationType.Mutation);
 }
+
+test "should parse nested types like [String!]" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    const allocator = arena.allocator();
+    const source =
+        \\type Post {
+        \\  tags: [String!]!
+        \\}
+    ;
+    var p = Parser.init(allocator, source);
+    const doc = try p.parse();
+
+    const def = doc.definitions[0].TypeSystemDefinition.TypeDefinition.ObjectTypeDefinition;
+    const tagField = def.fields.?[0];
+
+    try std.testing.expect(tagField.type.* == ast.TypeNode.NonNullType); // !
+    try std.testing.expect(tagField.type.*.NonNullType.type.* == ast.TypeNode.ListType); // []
+    try std.testing.expect(tagField.type.*.NonNullType.type.*.ListType.type.* == ast.TypeNode.NonNullType); // !
+    try std.testing.expect(tagField.type.*.NonNullType.type.*.ListType.type.*.NonNullType.type.* == ast.TypeNode.NamedType); // String
+    try std.testing.expect(std.mem.eql(u8, tagField.type.*.NonNullType.type.*.ListType.type.*.NonNullType.type.*.NamedType.name.value, "String"));
+}

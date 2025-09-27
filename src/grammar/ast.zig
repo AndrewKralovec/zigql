@@ -344,6 +344,20 @@ pub const TypeNode = union(enum) {
     NamedType: NamedTypeNode,
     ListType: ListTypeNode,
     NonNullType: NonNullTypeNode,
+
+    pub fn deinit(self: *const TypeNode, allocator: std.mem.Allocator) void {
+        switch (self.*) {
+            .NamedType => {},
+            .ListType => |list_type| {
+                list_type.type.deinit(allocator);
+                allocator.destroy(list_type.type);
+            },
+            .NonNullType => |non_null_type| {
+                non_null_type.type.deinit(allocator);
+                allocator.destroy(non_null_type.type);
+            },
+        }
+    }
 };
 
 /// See: https://spec.graphql.org/October2021/#NamedType

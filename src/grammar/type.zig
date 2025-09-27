@@ -14,11 +14,20 @@ const parseInputObjectTypeExtension = @import("./input.zig").parseInputObjectTyp
 
 pub fn parseTypeReference(p: *Parser) !*ast.TypeNode {
     p.debug("parseTypeReference");
+    // GraphQL types can be nested like [String!]! or [[ID]]. each layer needs its own allocation.
+    // We recursively build this structure but need to clean up if anything fails along the way.
     const typeNode = try p.allocator.create(ast.TypeNode);
+    errdefer p.allocator.destroy(typeNode);
 
     if (p.expectOptionalToken(TokenKind.LBracket)) {
-        const innerType = try parseTypeReference(p);
-        _ = try p.expect(TokenKind.RBracket);
+        const innerType = parseTypeReference(p) catch |err| {
+            return err;
+        };
+        _ = p.expect(TokenKind.RBracket) catch |err| {
+            innerType.deinit(p.allocator);
+            p.allocator.destroy(innerType);
+            return err;
+        };
 
         typeNode.* = ast.TypeNode{
             .ListType = ast.ListTypeNode{
@@ -26,12 +35,17 @@ pub fn parseTypeReference(p: *Parser) !*ast.TypeNode {
             },
         };
     } else {
-        const name = try parseNamedType(p);
+        const name = parseNamedType(p) catch |err| {
+            return err;
+        };
         typeNode.* = ast.TypeNode{ .NamedType = name };
     }
 
     if (p.expectOptionalToken(TokenKind.Bang)) {
-        const non_null = try p.allocator.create(ast.TypeNode);
+        const non_null = p.allocator.create(ast.TypeNode) catch |err| {
+            typeNode.deinit(p.allocator);
+            return err;
+        };
         non_null.* = ast.TypeNode{
             .NonNullType = ast.NonNullTypeNode{
                 .type = typeNode,
