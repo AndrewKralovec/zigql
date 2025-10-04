@@ -36,10 +36,7 @@ pub const Lexer = struct {
     /// Fully lex the input stream and return a struct containing all tokens and all errors encountered.
     /// Errors from the allocator are propagated immediately.
     /// The caller is responsible for freeing both slices.
-    pub fn lex(self: *Lexer, allocator: std.mem.Allocator) !struct {
-        tokens: []Token,
-        errors: []anyerror,
-    } {
+    pub fn lex(self: *Lexer, allocator: std.mem.Allocator) !LexResult {
         var tokens = std.ArrayList(Token).init(allocator);
         var errors = std.ArrayList(anyerror).init(allocator);
         defer {
@@ -84,6 +81,19 @@ pub const Lexer = struct {
         }
         return token;
     }
+
+    pub fn scan(self: *Lexer) !Token {
+        const token = try self.next();
+        if (token == null) {
+            return error.TokenStreamEnded;
+        }
+        return token.?;
+    }
+};
+
+const LexResult = struct {
+    tokens: []Token,
+    errors: []anyerror,
 };
 
 //
