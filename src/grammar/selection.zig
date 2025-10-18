@@ -45,7 +45,7 @@ pub fn parseSelection(p: *Parser) !ast.SelectionNode {
 
     // Fragment spread.
     _ = try p.expect(TokenKind.Spread);
-    const hasTypeCondition = p.expectOptionalKeyword(ast.SyntaxKeyWord.On);
+    const hasTypeCondition = try p.expectOptionalKeyword(ast.SyntaxKeyWord.On);
     if (!hasTypeCondition and p.peekKind(TokenKind.Name)) {
         const name = try parseFragmentName(p);
         const directives = try parseDirectives(p, false);

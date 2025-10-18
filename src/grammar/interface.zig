@@ -29,7 +29,8 @@ pub fn parseInterfaceTypeDefinition(p: *Parser) !ast.InterfaceTypeDefinitionNode
 
 pub fn parseImplementsInterfaces(p: *Parser) !?[]ast.NamedTypeNode {
     p.debug("parseImplementsInterfaces");
-    if (!p.expectOptionalKeyword(ast.SyntaxKeyWord.Implements)) {
+    const hasImplements = try p.expectOptionalKeyword(ast.SyntaxKeyWord.Implements);
+    if (!hasImplements) {
         return null;
     }
 

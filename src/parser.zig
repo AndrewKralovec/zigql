@@ -86,8 +86,8 @@ pub const Parser = struct {
 
     /// If the next token is a given keyword and matches the expected keyword,
     /// pop it and return true. Otherwise, return false and no-op.
-    pub fn expectOptionalKeyword(self: *Parser, keyword: ast.SyntaxKeyWord) bool {
-        const token = self.peek() orelse return false;
+    pub fn expectOptionalKeyword(self: *Parser, keyword: ast.SyntaxKeyWord) !bool {
+        const token = self.peek() orelse return error.UnexpectedNullToken; // TODO: comeback and use try once peek starts throwing token errors.
         const tkw = ast.stringToKeyword(token.data) orelse return false;
         if (token.kind == TokenKind.Name and tkw == keyword) {
             _ = self.pop();

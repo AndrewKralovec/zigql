@@ -16,7 +16,7 @@ pub fn parseDirectiveDefinition(p: *Parser) !ast.DirectiveDefinitionNode {
 
     const name = try parseName(p);
     const args = try parseInputFieldsDefinition(p);
-    const repeatable = p.expectOptionalKeyword(ast.SyntaxKeyWord.Repeatable);
+    const repeatable = try p.expectOptionalKeyword(ast.SyntaxKeyWord.Repeatable);
     _ = try p.expectKeyword(ast.SyntaxKeyWord.On);
 
     const locations = try parseDirectiveLocations(p);
