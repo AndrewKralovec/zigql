@@ -42,9 +42,9 @@ ZigQL provides two main components for working with GraphQL.
 
 ### Lexer
 
-The Lexer tokenizes GraphQL text into individual tokens, which can then be processed by the parser or analyzed directly. It exposes five methods.
+The `Lexer` tokenizes GraphQL text into individual tokens, which can then be processed by the parser or analyzed directly. It exposes several methods for tokenization and navigation.
 
-- **`init()`** - Initializes a new Lexer instance with the provided GraphQL source text.
+- **`init()`** - Initializes a new `Lexer` instance with the provided GraphQL source text.
 - **`lex()`** - Reads all tokens in one batch, returning both tokens and any errors encountered.
 - **`next()`** - Returns tokens one at a time. Returns `null` when EOF is reached or when a token limit is hit (if configured).
 - **`read()`** - Reads a single token, throwing an error if a limit is reached or if tokenization fails.
@@ -53,7 +53,7 @@ The Lexer tokenizes GraphQL text into individual tokens, which can then be proce
 
 #### Batch Lexing
 
-The simplest way to use the Lexer is to tokenize an entire GraphQL document at once. The `lex()` method returns both tokens and any errors encountered during scanning.
+The simplest way to use the lexer is to tokenize an entire GraphQL document at once. The `lex()` method returns both tokens and any errors encountered during scanning.
 This approach is useful when you need an error resilient lexer that will not stop at the first error it encounters. This method instead collections errors and tokens, giving you the complete tokenized data.
 
 
@@ -125,7 +125,7 @@ defer {
 
 ### Parser
 
-The Parser converts GraphQL text into a structured AST, which you can use for analyzing or transforming GraphQL operations. It exposes several methods for parsing and token navigation. You should only pay attention to `init()` and `parse()` for basic usage.
+The `Parser` converts GraphQL text into a structured AST, which you can use for analyzing or transforming GraphQL operations. It exposes several methods for parsing and token navigation. You should only pay attention to `init()` and `parse()` for basic usage.
 
 - **`init()`** - Initializes a new Parser instance with the provided allocator and GraphQL source text.
 - **`parse()`** - Parses the entire GraphQL document and returns the AST (DocumentNode). This is the main entry point for parsing.
@@ -145,7 +145,7 @@ Using an `ArenaAllocator` is recommended for simpler memory management. You can 
 
 #### Basic Parsing
 
-The simplest way to use the [Parser](#parser) is to parse an entire GraphQL document at once. The `parse()` method returns a structured AST that you can traverse and analyze.
+The simplest way to use the Parser is to parse an entire GraphQL document at once. The `parse()` method returns a structured AST that you can traverse and analyze.
 
 Example.
 ```zig
