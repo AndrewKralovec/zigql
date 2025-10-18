@@ -35,13 +35,30 @@ zig build test
 
 ## Usage
 
+ZigQL provides two main components for working with GraphQL.
+
+- [Lexer](#lexer) for tokenization.
+- [Parser](#parser) for building an abstract syntax tree (AST).
+
 ### Lexer
 
-The `Lexer` tokenizes GraphQL text into individual tokens. These tokens can then be processed by the parser or analyzed directly.
+The Lexer tokenizes GraphQL text into individual tokens, which can then be processed by the parser or analyzed directly. It exposes five methods.
+
+- **`init()`** - Initializes a new Lexer instance with the provided GraphQL source text.
+- **`lex()`** - Reads all tokens in one batch, returning both tokens and any errors encountered.
+- **`next()`** - Returns tokens one at a time. Returns `null` when EOF is reached or when a token limit is hit (if configured).
+- **`read()`** - Reads a single token, throwing an error if a limit is reached or if tokenization fails.
+- **`withLimit()`** - Sets a maximum number of tokens that can be read, useful for controlling resource usage and preventing infinite loops.
 
 
+#### Batch Lexing
+
+The simplest way to use the [Lexer](#lexer) is to tokenize an entire GraphQL document at once. The `lex()` method returns both tokens and any errors encountered during scanning.
+This approach is useful when you need an error resilient lexer that will not stop at the first error it encounters. This method instead collections errors and tokens, giving you the complete tokenized data.
+
+
+Example.
 ```zig
-const allocator = std.heap.page_allocator;
 const source =
     \\ query {
     \\  users(id: 1) {
@@ -50,6 +67,7 @@ const source =
     \\ }
 ;
 var lexer = Lexer.init(source);
+const allocator = std.heap.page_allocator;
 const result = try lexer.lex(allocator);
 defer {
     allocator.free(result.tokens);
@@ -64,14 +82,13 @@ for (result.errors) |err| {
 }
 ```
 
-### Parser
-The `Parser` converts GraphQL text into a structured representation of GraphQL nodes (AST). This is used for analyzing or transforming GraphQL operations. The nodes can contain slices, and you must free these slices after use to avoid memory leaks.
+#### Stream Lexing
 
+Sometimes you need more control over the tokenization process. The `next()` method allows you to read tokens one at a time, which is useful for streaming scenarios or when you want to process tokens immediately as they are read. The `next()` method returns an optional token when you hit the end of the input, you get `null`. This makes it safe to call repeatedly without worrying about going past the end.
+
+
+Example.
 ```zig
-var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
-defer arena.deinit(); // Free memory
-
-const allocator = arena.allocator();
 const source =
     \\ query {
     \\  users(id: 1) {
@@ -79,16 +96,37 @@ const source =
     \\  }
     \\ }
 ;
-var p = Parser.init(allocator, source);
-const doc = try p.parse();
-
-for (doc.definitions) |def| {
-    if (def.ExecutableDefinition == .OperationDefinition) {
-        const operationDef = def.ExecutableDefinition.OperationDefinition;
-        std.debug.print("Operations={any}\n", .{operationDef});
+var lexer = Lexer.init(source);
+while (try lexer.next()) |token| {
+    if (token.kind == TokenKind.Eof) {
+        break; // Reached EOF
     }
+    std.debug.print("Token={any}\n", .{token});
 }
 ```
+
+#### Bounded Parsing
+
+It is recommended to limit how far the lexer can scan. Use `withLimit()` to create a lexer that has a limit on the number of tokens that can be scanned.
+
+
+Example.
+```zig
+var lexer = Lexer.init(source);
+var limitedLexer = lexer.withLimit(10); // Only scan up to 10 tokens
+
+const result = try limitedLexer.lex(allocator);
+defer {
+    allocator.free(result.tokens);
+    allocator.free(result.errors);
+}
+// result.errors will contain LimitReached if we hit the limit
+```
+
+### Parser
+
+The Parser converts GraphQL text into a structured AST, which you can use for analyzing or transforming GraphQL operations. Since the AST nodes contain slices, you will need to manage their memory appropriately to avoid leaks.
+Using an `ArenaAllocator` is recommended for simpler memory management. You can just defer the arena's memory to clean up everything at once.
 
 ## TODO
 

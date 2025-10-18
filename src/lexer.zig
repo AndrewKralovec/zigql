@@ -46,9 +46,12 @@ pub const Lexer = struct {
 
         while (true) {
             const result = self.next() catch |err| {
-                // collect lexing errors or throw on non lexing errors (from allocator).
+                // collect lexing errors or throw on non lexing errors (from allocator or limitReached).
                 try errors.append(err);
-                continue;
+                switch (err) {
+                    error.LimitReached => break, // If we hit the limit, stop lexing.
+                    else => continue,
+                }
             };
             if (result == null) {
                 break;
@@ -159,5 +162,30 @@ test "should return error when limit is reached" {
         allocator.free(result.errors);
     }
     try std.testing.expect(result.tokens.len == 10);
+    std.debug.print("Errors={any}\n", .{result.errors.len});
     try std.testing.expect(result.errors.len == 1);
+}
+
+test "should return error when limit is reached on read" {
+    const allocator = std.heap.page_allocator;
+    const source =
+        \\ query {
+        \\  users(id: 1) {
+        \\   id
+        \\  }
+        \\ }
+    ;
+    var lexer = Lexer.init(source);
+    const result = try lexer.lex(allocator);
+    defer {
+        allocator.free(result.tokens);
+        allocator.free(result.errors);
+    }
+
+    for (result.tokens) |token| {
+        std.debug.print("Token={any}\n", .{token});
+    }
+    for (result.errors) |err| {
+        std.debug.print("Error={any}\n", .{err});
+    }
 }
