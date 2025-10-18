@@ -125,6 +125,23 @@ test "should parse all tokens from input" {
     try std.testing.expect(result.errors.len == 0);
 }
 
+test "should stream all tokens from input" {
+    const input = "{ user { id } }"; // 12 tokens including EOF.
+
+    var lexer = Lexer
+        .init(input)
+        .withLimit(100);
+
+    var count: usize = 0;
+    while (try lexer.next()) |token| {
+        count += 1;
+        if (token.kind == TokenKind.Eof) {
+            break; // Reached EOF
+        }
+    }
+    try std.testing.expect(count == 12);
+}
+
 test "should parse string blocks as a single token" {
     const allocator = std.testing.allocator;
     const input =
@@ -162,30 +179,22 @@ test "should return error when limit is reached" {
         allocator.free(result.errors);
     }
     try std.testing.expect(result.tokens.len == 10);
-    std.debug.print("Errors={any}\n", .{result.errors.len});
     try std.testing.expect(result.errors.len == 1);
 }
 
 test "should return error when limit is reached on read" {
-    const allocator = std.heap.page_allocator;
-    const source =
-        \\ query {
-        \\  users(id: 1) {
-        \\   id
-        \\  }
-        \\ }
-    ;
-    var lexer = Lexer.init(source);
+    const allocator = std.testing.allocator;
+    const input = "{ user { id } }"; // 12 tokens including EOF.
+
+    var lexer = Lexer
+        .init(input)
+        .withLimit(100);
     const result = try lexer.lex(allocator);
     defer {
         allocator.free(result.tokens);
         allocator.free(result.errors);
     }
-
-    for (result.tokens) |token| {
-        std.debug.print("Token={any}\n", .{token});
-    }
-    for (result.errors) |err| {
-        std.debug.print("Error={any}\n", .{err});
-    }
+    _ = lexer.read() catch |err| {
+        try std.testing.expect(err == error.ReadAfterEof);
+    };
 }
