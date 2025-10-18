@@ -66,7 +66,9 @@ pub const Lexer = struct {
     }
 
     /// Return the next token in the stream, or null if we have reached EOF.
+    /// This method is safe to call after EOF has been reached.
     /// If a limit was set and reached, `LimitReached` is returned.
+    /// Token parsing errors are propagated immediately.
     pub fn next(self: *Lexer) !?Token {
         if (self.finished) return null;
 
@@ -82,6 +84,9 @@ pub const Lexer = struct {
         return token;
     }
 
+    /// Return the next token in the stream, returning an error if EOF has been reached.
+    /// If a limit was set and reached, `LimitReached` is returned.
+    /// Token parsing errors are propagated immediately.
     pub fn read(self: *Lexer) !Token {
         const token = try self.next();
         if (token == null) {
