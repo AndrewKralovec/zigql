@@ -78,8 +78,8 @@ pub const Parser = struct {
     }
 
     /// Pop the current token and reset the peeked state.
-    pub fn pop(self: *Parser) ?Token {
-        const token = self.peek();
+    pub fn pop(self: *Parser) !Token {
+        const token = self.peek() orelse return error.UnexpectedNullToken; // TODO: comeback and use try once peek starts throwing token errors.
         self.currentToken = null;
         return token;
     }
@@ -90,7 +90,7 @@ pub const Parser = struct {
         const token = self.peek() orelse return error.UnexpectedNullToken; // TODO: comeback and use try once peek starts throwing token errors.
         const tkw = ast.stringToKeyword(token.data) orelse return error.UnknownKeyword;
         if (token.kind == TokenKind.Name and tkw == keyword) {
-            _ = self.pop();
+            _ = try self.pop();
             return true;
         }
         return false;
@@ -101,7 +101,7 @@ pub const Parser = struct {
         const token = self.peek() orelse return error.UnexpectedNullToken;
         const tkw = ast.stringToKeyword(token.data) orelse return error.UnknownKeyword;
         if (token.kind == TokenKind.Name and tkw == keyword) {
-            _ = self.pop();
+            _ = try self.pop();
         } else {
             return error.UnexpectedKeyword;
         }
@@ -112,7 +112,7 @@ pub const Parser = struct {
     pub fn expectOptionalToken(self: *Parser, kind: TokenKind) !bool {
         const token = self.peek() orelse return error.UnexpectedNullToken; // TODO: comeback and use try once peek starts throwing token errors.
         if (token.kind == kind) {
-            _ = self.pop();
+            _ = try self.pop();
             return true;
         }
         return false;
@@ -124,7 +124,7 @@ pub const Parser = struct {
         if (token.kind != kind) {
             return error.UnexpectedToken;
         }
-        _ = self.pop();
+        _ = try self.pop();
         return token;
     }
 

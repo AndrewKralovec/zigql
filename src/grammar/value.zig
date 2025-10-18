@@ -24,7 +24,7 @@ pub fn parseValueLiteral(p: *Parser, isConst: bool) anyerror!ast.ValueNode {
             };
         },
         TokenKind.Int => {
-            _ = p.pop();
+            _ = try p.pop();
             return ast.ValueNode{
                 .Int = ast.IntValueNode{
                     .value = token.data,
@@ -32,7 +32,7 @@ pub fn parseValueLiteral(p: *Parser, isConst: bool) anyerror!ast.ValueNode {
             };
         },
         TokenKind.Float => {
-            _ = p.pop();
+            _ = try p.pop();
             return ast.ValueNode{
                 .Float = ast.FloatValueNode{
                     .value = token.data,
@@ -44,7 +44,7 @@ pub fn parseValueLiteral(p: *Parser, isConst: bool) anyerror!ast.ValueNode {
             return ast.ValueNode{ .String = str };
         },
         TokenKind.Name => {
-            _ = p.pop();
+            _ = try p.pop();
 
             if (std.mem.eql(u8, token.data, "true")) {
                 return ast.ValueNode{
@@ -137,7 +137,7 @@ pub fn parseObjectField(p: *Parser, isConst: bool) !ast.ObjectFieldNode {
 
 pub fn parseStringLiteral(p: *Parser) !ast.StringValueNode {
     p.debug("parseStringLiteral");
-    const token = p.pop() orelse return error.UnexpectedNullToken;
+    const token = try p.pop();
     return ast.StringValueNode{
         .value = token.data,
     };
