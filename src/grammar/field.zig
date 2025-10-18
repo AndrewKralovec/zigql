@@ -66,7 +66,7 @@ pub fn parseField(p: *Parser) anyerror!ast.FieldNode {
     const arguments = try parseArguments(p, false);
     const directives = try parseDirectives(p, false);
     var selectionSet: ?ast.SelectionSetNode = null;
-    if (p.peekKind(TokenKind.LCurly)) {
+    if (try p.peekKind(TokenKind.LCurly)) {
         selectionSet = try parseSelectionSet(p);
     }
 

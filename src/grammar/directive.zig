@@ -64,7 +64,7 @@ pub fn parseConstDirectives(p: *Parser) !?[]ast.DirectiveNode {
 
 pub fn parseDirectives(p: *Parser, isConst: bool) !?[]ast.DirectiveNode {
     p.debug("parseDirectives");
-    if (!p.peekKind(TokenKind.At)) {
+    if (!try p.peekKind(TokenKind.At)) {
         return null;
     }
 

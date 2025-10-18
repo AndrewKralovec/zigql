@@ -25,7 +25,7 @@ pub fn parseOperationDefinition(p: *Parser) !ast.OperationDefinitionNode {
 
     const operation = try parseOperationType(p);
     var name: ?ast.NameNode = null;
-    if (p.peekKind(TokenKind.Name)) {
+    if (try p.peekKind(TokenKind.Name)) {
         name = try parseName(p);
     }
 

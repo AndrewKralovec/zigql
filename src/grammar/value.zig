@@ -70,7 +70,7 @@ pub fn parseValueLiteral(p: *Parser, isConst: bool) anyerror!ast.ValueNode {
             if (isConst) {
                 _ = try p.expect(TokenKind.Dollar);
 
-                if (p.peekKind(TokenKind.Name)) {
+                if (try p.peekKind(TokenKind.Name)) {
                     return error.UnexpectedVariable;
                 } else {
                     return error.UnexpectedToken;
