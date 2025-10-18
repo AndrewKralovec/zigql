@@ -1,10 +1,10 @@
 const std = @import("std");
 const Lexer = @import("lexer.zig").Lexer;
-const Token = @import("lib/tokens.zig").Token;
-const TokenKind = @import("lib/tokens.zig").TokenKind;
-const ast = @import("grammar/ast.zig");
-const config = @import("config.zig");
-const document = @import("grammar/document.zig");
+const Token = @import("tokens.zig").Token;
+const TokenKind = @import("tokens.zig").TokenKind;
+const ast = @import("../grammar/ast.zig");
+const document = @import("../grammar/document.zig");
+const config = @import("build_config.zig");
 
 // Debugging functions to print the parser state.
 // Configurable through build options.
@@ -148,6 +148,12 @@ fn nextNonIgnorableToken(lexer: *Lexer) !Token {
         }
     }
     // unreachable;
+}
+
+/// Parse the given GraphQL source text into an AST representation, using the given allocator.
+pub fn parse(allocator: std.mem.Allocator, source: []const u8) !ast.DocumentNode {
+    var parser = Parser.init(allocator, source);
+    return parser.parse();
 }
 
 //
@@ -847,4 +853,14 @@ test "should parse directives on field definition" {
     try std.testing.expect(directive.arguments != null);
     try std.testing.expect(directive.arguments.?.len == 1);
     try std.testing.expect(std.mem.eql(u8, directive.arguments.?[0].name.value, "reason"));
+}
+
+test "parse simple query" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    const source = "{ user { id } }";
+    const doc = try parse(arena.allocator(), source);
+
+    try std.testing.expect(doc.definitions.len == 1);
 }

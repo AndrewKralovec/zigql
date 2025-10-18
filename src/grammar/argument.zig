@@ -1,7 +1,7 @@
 const std = @import("std");
 const ast = @import("ast.zig");
-const Parser = @import("../parser.zig").Parser;
-const TokenKind = @import("../lib/tokens.zig").TokenKind;
+const Parser = @import("../core/parser.zig").Parser;
+const TokenKind = @import("../core/tokens.zig").TokenKind;
 
 const parseName = @import("./name.zig").parseName;
 const parseValueLiteral = @import("./value.zig").parseValueLiteral;

@@ -1,8 +1,8 @@
 const std = @import("std");
-const Token = @import("lib/tokens.zig").Token;
-const TokenKind = @import("lib/tokens.zig").TokenKind;
-const Cursor = @import("lib/cursor.zig").Cursor;
-const LimitTracker = @import("lib/limit_tracker.zig").LimitTracker;
+const Token = @import("tokens.zig").Token;
+const TokenKind = @import("tokens.zig").TokenKind;
+const Cursor = @import("cursor.zig").Cursor;
+const LimitTracker = @import("../util/limit_tracker.zig").LimitTracker;
 
 /// The `Lexer` struct is responsible for walking over GraphQL text and producing a stream of tokens.
 ///

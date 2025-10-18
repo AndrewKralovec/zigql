@@ -1,5 +1,5 @@
 const std = @import("std");
-const text = @import("text.zig");
+const text = @import("../util/text.zig");
 const tokens = @import("tokens.zig");
 const CharIterator = text.CharIterator;
 const Token = tokens.Token;
