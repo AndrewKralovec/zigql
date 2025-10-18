@@ -732,3 +732,119 @@ test "should parse nested types like [String!]" {
     try std.testing.expect(tagField.type.*.NonNullType.type.*.ListType.type.*.NonNullType.type.* == ast.TypeNode.NamedType); // String
     try std.testing.expect(std.mem.eql(u8, tagField.type.*.NonNullType.type.*.ListType.type.*.NonNullType.type.*.NamedType.name.value, "String"));
 }
+
+test "should parse a field with a single directive without arguments" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    const allocator = arena.allocator();
+    const source =
+        \\ query {
+        \\   user @deprecated {
+        \\     id
+        \\   }
+        \\ }
+    ;
+    var p = Parser.init(allocator, source);
+    const doc = try p.parse();
+
+    try std.testing.expect(doc.definitions.len == 1);
+    const op = doc.definitions[0].ExecutableDefinition.OperationDefinition;
+    const field = op.selectionSet.?.selections[0].Field;
+
+    try std.testing.expect(std.mem.eql(u8, field.name.value, "user"));
+    try std.testing.expect(field.directives != null);
+    try std.testing.expect(field.directives.?.len == 1);
+
+    const directive = field.directives.?[0];
+    try std.testing.expect(std.mem.eql(u8, directive.name.value, "deprecated"));
+    try std.testing.expect(directive.arguments == null);
+}
+
+test "should parse a field with a directive with arguments" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    const allocator = arena.allocator();
+    const source =
+        \\ query {
+        \\   user @deprecated(reason: "Use newUser instead") {
+        \\     id
+        \\   }
+        \\ }
+    ;
+    var p = Parser.init(allocator, source);
+    const doc = try p.parse();
+
+    const op = doc.definitions[0].ExecutableDefinition.OperationDefinition;
+    const field = op.selectionSet.?.selections[0].Field;
+
+    try std.testing.expect(field.directives != null);
+    try std.testing.expect(field.directives.?.len == 1);
+
+    const directive = field.directives.?[0];
+    try std.testing.expect(std.mem.eql(u8, directive.name.value, "deprecated"));
+    try std.testing.expect(directive.arguments != null);
+    try std.testing.expect(directive.arguments.?.len == 1);
+
+    const arg = directive.arguments.?[0];
+    try std.testing.expect(std.mem.eql(u8, arg.name.value, "reason"));
+    try std.testing.expect(arg.value == ast.ValueNode.String);
+    try std.testing.expect(std.mem.eql(u8, arg.value.String.value, "\"Use newUser instead\""));
+}
+
+test "should parse directives on type definition" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    const allocator = arena.allocator();
+    const source =
+        \\ type User @auth @cached(ttl: 300) {
+        \\   id: ID
+        \\   name: String
+        \\ }
+    ;
+    var p = Parser.init(allocator, source);
+    const doc = try p.parse();
+
+    const objDef = doc.definitions[0].TypeSystemDefinition.TypeDefinition.ObjectTypeDefinition;
+
+    try std.testing.expect(objDef.directives != null);
+    try std.testing.expect(objDef.directives.?.len == 2);
+
+    const dir1 = objDef.directives.?[0];
+    try std.testing.expect(std.mem.eql(u8, dir1.name.value, "auth"));
+    try std.testing.expect(dir1.arguments == null);
+
+    const dir2 = objDef.directives.?[1];
+    try std.testing.expect(std.mem.eql(u8, dir2.name.value, "cached"));
+    try std.testing.expect(dir2.arguments != null);
+    try std.testing.expect(dir2.arguments.?.len == 1);
+}
+
+test "should parse directives on field definition" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    const allocator = arena.allocator();
+    const source =
+        \\ type User {
+        \\   email: String @deprecated(reason: "Use emailAddress")
+        \\ }
+    ;
+    var p = Parser.init(allocator, source);
+    const doc = try p.parse();
+
+    const objDef = doc.definitions[0].TypeSystemDefinition.TypeDefinition.ObjectTypeDefinition;
+    const field = objDef.fields.?[0];
+
+    try std.testing.expect(std.mem.eql(u8, field.name.value, "email"));
+    try std.testing.expect(field.directives != null);
+    try std.testing.expect(field.directives.?.len == 1);
+
+    const directive = field.directives.?[0];
+    try std.testing.expect(std.mem.eql(u8, directive.name.value, "deprecated"));
+    try std.testing.expect(directive.arguments != null);
+    try std.testing.expect(directive.arguments.?.len == 1);
+    try std.testing.expect(std.mem.eql(u8, directive.arguments.?[0].name.value, "reason"));
+}
