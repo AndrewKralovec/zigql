@@ -53,7 +53,7 @@ pub fn parseOperationTypeDefinitions(p: *Parser) ![]ast.OperationTypeDefinitionN
         const otd = try parseOperationTypeDefinition(p);
         try nodes.append(otd);
 
-        if (p.expectOptionalToken(TokenKind.RCurly)) {
+        if (try p.expectOptionalToken(TokenKind.RCurly)) {
             break;
         }
     }
@@ -62,7 +62,7 @@ pub fn parseOperationTypeDefinitions(p: *Parser) ![]ast.OperationTypeDefinitionN
 
 pub fn parseOptionalOperationTypeDefinitions(p: *Parser) !?[]ast.OperationTypeDefinitionNode {
     p.debug("parseOptionalOperationTypeDefinitions");
-    if (!p.expectOptionalToken(TokenKind.LCurly)) {
+    if (!try p.expectOptionalToken(TokenKind.LCurly)) {
         return null;
     }
 
@@ -72,7 +72,7 @@ pub fn parseOptionalOperationTypeDefinitions(p: *Parser) !?[]ast.OperationTypeDe
         const otd = try parseOperationTypeDefinition(p);
         try nodes.append(otd);
 
-        if (p.expectOptionalToken(TokenKind.RCurly)) {
+        if (try p.expectOptionalToken(TokenKind.RCurly)) {
             break;
         }
     }

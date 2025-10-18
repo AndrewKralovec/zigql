@@ -109,8 +109,8 @@ pub const Parser = struct {
 
     /// If the next token is of the expected kind, pop it and return true.
     /// Otherwise, return false and no-op.
-    pub fn expectOptionalToken(self: *Parser, kind: TokenKind) bool {
-        const token = self.peek() orelse return true;
+    pub fn expectOptionalToken(self: *Parser, kind: TokenKind) !bool {
+        const token = self.peek() orelse return error.UnexpectedNullToken; // TODO: comeback and use try once peek starts throwing token errors.
         if (token.kind == kind) {
             _ = self.pop();
             return true;

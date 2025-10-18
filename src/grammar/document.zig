@@ -34,7 +34,7 @@ pub fn parseDefinitions(p: *Parser) ![]ast.DefinitionNode {
         const def = try parseDefinition(p);
         try nodes.append(def);
 
-        if (p.expectOptionalToken(TokenKind.Eof)) {
+        if (try p.expectOptionalToken(TokenKind.Eof)) {
             break;
         }
     }

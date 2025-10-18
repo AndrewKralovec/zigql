@@ -14,7 +14,7 @@ const parseSelectionSet = @import("./selection.zig").parseSelectionSet;
 
 pub fn parseFieldsDefinition(p: *Parser) !?[]ast.FieldDefinitionNode {
     p.debug("parseFieldsDefinition");
-    if (!p.expectOptionalToken(TokenKind.LCurly)) {
+    if (!try p.expectOptionalToken(TokenKind.LCurly)) {
         return null;
     }
 
@@ -24,7 +24,7 @@ pub fn parseFieldsDefinition(p: *Parser) !?[]ast.FieldDefinitionNode {
         const field = try parseFieldDefinition(p);
         try nodes.append(field);
 
-        if (p.expectOptionalToken(TokenKind.RCurly)) {
+        if (try p.expectOptionalToken(TokenKind.RCurly)) {
             break;
         }
     }
@@ -56,7 +56,7 @@ pub fn parseField(p: *Parser) anyerror!ast.FieldNode {
     var name: ast.NameNode = undefined;
     var alias: ?ast.NameNode = null;
 
-    if (p.expectOptionalToken(TokenKind.Colon)) {
+    if (try p.expectOptionalToken(TokenKind.Colon)) {
         alias = nameOrAlias;
         name = try parseName(p);
     } else {

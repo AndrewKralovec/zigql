@@ -25,7 +25,7 @@ pub fn parseEnumTypeDefinition(p: *Parser) !ast.EnumTypeDefinitionNode {
 
 pub fn parseEnumValuesDefinitions(p: *Parser) !?[]ast.EnumValueDefinitionNode {
     p.debug("parseEnumValuesDefinitions");
-    if (!p.expectOptionalToken(TokenKind.LCurly)) {
+    if (!try p.expectOptionalToken(TokenKind.LCurly)) {
         return null;
     }
 
@@ -35,7 +35,7 @@ pub fn parseEnumValuesDefinitions(p: *Parser) !?[]ast.EnumValueDefinitionNode {
         const value = try parseEnumValueDefinition(p);
         try nodes.append(value);
 
-        if (p.expectOptionalToken(TokenKind.RCurly)) {
+        if (try p.expectOptionalToken(TokenKind.RCurly)) {
             break;
         }
     }

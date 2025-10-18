@@ -27,7 +27,7 @@ pub fn parseSelections(p: *Parser) ![]ast.SelectionNode {
         const sel = try parseSelection(p);
         try nodes.append(sel);
 
-        if (p.expectOptionalToken(TokenKind.RCurly)) {
+        if (try p.expectOptionalToken(TokenKind.RCurly)) {
             break;
         }
     }

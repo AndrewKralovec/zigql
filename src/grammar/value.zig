@@ -98,7 +98,7 @@ pub fn parseList(p: *Parser, isConst: bool) !ast.ListValueNode {
 
     var nodes = std.ArrayList(ast.ValueNode).init(p.allocator);
     defer nodes.deinit();
-    while (!p.expectOptionalToken(TokenKind.RBracket)) {
+    while (!try p.expectOptionalToken(TokenKind.RBracket)) {
         const value = try parseValueLiteral(p, isConst);
         try nodes.append(value);
     }
@@ -114,7 +114,7 @@ pub fn parseObject(p: *Parser, isConst: bool) !ast.ObjectValueNode {
 
     var nodes = std.ArrayList(ast.ObjectFieldNode).init(p.allocator);
     defer nodes.deinit();
-    while (!p.expectOptionalToken(TokenKind.RCurly)) {
+    while (!try p.expectOptionalToken(TokenKind.RCurly)) {
         const field = try parseObjectField(p, isConst);
         try nodes.append(field);
     }

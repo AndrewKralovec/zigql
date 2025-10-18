@@ -9,7 +9,7 @@ const parseInputValueDef = @import("./input.zig").parseInputValueDef;
 
 pub fn parseArguments(p: *Parser, isConst: bool) !?[]ast.ArgumentNode {
     p.debug("parseArguments");
-    if (!p.expectOptionalToken(TokenKind.LParen)) {
+    if (!try p.expectOptionalToken(TokenKind.LParen)) {
         return null;
     }
 
@@ -19,7 +19,7 @@ pub fn parseArguments(p: *Parser, isConst: bool) !?[]ast.ArgumentNode {
         const arg = try parseArgument(p, isConst);
         try nodes.append(arg);
 
-        if (p.expectOptionalToken(TokenKind.RParen)) {
+        if (try p.expectOptionalToken(TokenKind.RParen)) {
             break;
         }
     }
@@ -40,7 +40,7 @@ pub fn parseArgument(p: *Parser, isConst: bool) !ast.ArgumentNode {
 
 pub fn parseArgumentDefs(p: *Parser) !?[]ast.InputValueDefinitionNode {
     p.debug("parseArgumentDefs");
-    if (!p.expectOptionalToken(TokenKind.LParen)) {
+    if (!try p.expectOptionalToken(TokenKind.LParen)) {
         return null;
     }
 
@@ -50,7 +50,7 @@ pub fn parseArgumentDefs(p: *Parser) !?[]ast.InputValueDefinitionNode {
         const arg = try parseInputValueDef(p);
         try nodes.append(arg);
 
-        if (p.expectOptionalToken(TokenKind.RParen)) {
+        if (try p.expectOptionalToken(TokenKind.RParen)) {
             break;
         }
     }
