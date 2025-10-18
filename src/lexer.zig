@@ -36,10 +36,7 @@ pub const Lexer = struct {
     /// Fully lex the input stream and return a struct containing all tokens and all errors encountered.
     /// Errors from the allocator are propagated immediately.
     /// The caller is responsible for freeing both slices.
-    pub fn lex(self: *Lexer, allocator: std.mem.Allocator) !struct {
-        tokens: []Token,
-        errors: []anyerror,
-    } {
+    pub fn lex(self: *Lexer, allocator: std.mem.Allocator) !LexResult {
         var tokens = std.ArrayList(Token).init(allocator);
         var errors = std.ArrayList(anyerror).init(allocator);
         defer {
@@ -49,9 +46,12 @@ pub const Lexer = struct {
 
         while (true) {
             const result = self.next() catch |err| {
-                // collect lexing errors or throw on non lexing errors (from allocator).
+                // collect lexing errors or throw on non lexing errors (from allocator or limitReached).
                 try errors.append(err);
-                continue;
+                switch (err) {
+                    error.LimitReached => break, // If we hit the limit, stop lexing.
+                    else => continue,
+                }
             };
             if (result == null) {
                 break;
@@ -69,7 +69,9 @@ pub const Lexer = struct {
     }
 
     /// Return the next token in the stream, or null if we have reached EOF.
+    /// This method is safe to call after EOF has been reached.
     /// If a limit was set and reached, `LimitReached` is returned.
+    /// Token parsing errors are propagated immediately.
     pub fn next(self: *Lexer) !?Token {
         if (self.finished) return null;
 
@@ -84,6 +86,24 @@ pub const Lexer = struct {
         }
         return token;
     }
+
+    /// Return the next token in the stream, returning an error if EOF has been reached.
+    /// If a limit was set and reached, `LimitReached` is returned.
+    /// Token parsing errors are propagated immediately.
+    pub fn read(self: *Lexer) !Token {
+        const token = try self.next();
+        if (token == null) {
+            return error.ReadAfterEof;
+        }
+        return token.?;
+    }
+};
+
+/// Result from lexing an entire input stream.
+/// Contains all tokens and any errors encountered during lexing.
+pub const LexResult = struct {
+    tokens: []Token,
+    errors: []anyerror,
 };
 
 //
@@ -105,6 +125,23 @@ test "should parse all tokens from input" {
 
     try std.testing.expect(result.tokens.len == 12);
     try std.testing.expect(result.errors.len == 0);
+}
+
+test "should stream all tokens from input" {
+    const input = "{ user { id } }"; // 12 tokens including EOF.
+
+    var lexer = Lexer
+        .init(input)
+        .withLimit(100);
+
+    var count: usize = 0;
+    while (try lexer.next()) |token| {
+        count += 1;
+        if (token.kind == TokenKind.Eof) {
+            break; // Reached EOF
+        }
+    }
+    try std.testing.expect(count == 12);
 }
 
 test "should parse string blocks as a single token" {
@@ -145,4 +182,21 @@ test "should return error when limit is reached" {
     }
     try std.testing.expect(result.tokens.len == 10);
     try std.testing.expect(result.errors.len == 1);
+}
+
+test "should return error when limit is reached on read" {
+    const allocator = std.testing.allocator;
+    const input = "{ user { id } }"; // 12 tokens including EOF.
+
+    var lexer = Lexer
+        .init(input)
+        .withLimit(100);
+    const result = try lexer.lex(allocator);
+    defer {
+        allocator.free(result.tokens);
+        allocator.free(result.errors);
+    }
+    _ = lexer.read() catch |err| {
+        try std.testing.expect(err == error.ReadAfterEof);
+    };
 }

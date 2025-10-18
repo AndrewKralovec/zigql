@@ -16,7 +16,7 @@ pub fn parseDirectiveDefinition(p: *Parser) !ast.DirectiveDefinitionNode {
 
     const name = try parseName(p);
     const args = try parseInputFieldsDefinition(p);
-    const repeatable = p.expectOptionalKeyword(ast.SyntaxKeyWord.Repeatable);
+    const repeatable = try p.expectOptionalKeyword(ast.SyntaxKeyWord.Repeatable);
     _ = try p.expectKeyword(ast.SyntaxKeyWord.On);
 
     const locations = try parseDirectiveLocations(p);
@@ -31,15 +31,15 @@ pub fn parseDirectiveDefinition(p: *Parser) !ast.DirectiveDefinitionNode {
 
 pub fn parseDirectiveLocations(p: *Parser) ![]ast.NameNode {
     p.debug("parseDirectiveLocations");
-    _ = p.expectOptionalToken(TokenKind.Pipe);
+    _ = try p.expectOptionalToken(TokenKind.Pipe);
 
     var nodes = std.ArrayList(ast.NameNode).init(p.allocator);
     defer nodes.deinit();
-    while (p.peek()) |_| {
+    while (true) {
         const name = try parseDirectiveLocation(p);
         try nodes.append(name);
 
-        if (!p.expectOptionalToken(TokenKind.Pipe)) {
+        if (!try p.expectOptionalToken(TokenKind.Pipe)) {
             break;
         }
     }
@@ -48,7 +48,7 @@ pub fn parseDirectiveLocations(p: *Parser) ![]ast.NameNode {
 
 pub fn parseDirectiveLocation(p: *Parser) !ast.NameNode {
     p.debug("parseDirectiveLocation");
-    const token = p.peek() orelse return error.UnexpectedNullToken;
+    const token = try p.peek();
     if (!ast.isDirectiveLocation(token.data)) {
         return error.UnknownDirectiveLocation;
     }
@@ -64,16 +64,13 @@ pub fn parseConstDirectives(p: *Parser) !?[]ast.DirectiveNode {
 
 pub fn parseDirectives(p: *Parser, isConst: bool) !?[]ast.DirectiveNode {
     p.debug("parseDirectives");
-    if (!p.peekKind(TokenKind.At)) {
+    if (!try p.peekKind(TokenKind.At)) {
         return null;
     }
 
     var nodes = std.ArrayList(ast.DirectiveNode).init(p.allocator);
     defer nodes.deinit();
-    while (p.peek()) |token| {
-        if (token.kind != TokenKind.At) {
-            break;
-        }
+    while (try p.peekKind(TokenKind.At)) {
         const dir = try parseDirective(p, isConst);
         try nodes.append(dir);
     }

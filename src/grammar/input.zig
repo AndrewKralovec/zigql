@@ -27,17 +27,17 @@ pub fn parseInputObjectTypeDefinition(p: *Parser) !ast.InputObjectTypeDefinition
 
 pub fn parseInputFieldsDefinition(p: *Parser) !?[]ast.InputValueDefinitionNode {
     p.debug("parseInputFieldsDefinition");
-    if (!p.expectOptionalToken(TokenKind.LCurly)) {
+    if (!try p.expectOptionalToken(TokenKind.LCurly)) {
         return null;
     }
 
     var nodes = std.ArrayList(ast.InputValueDefinitionNode).init(p.allocator);
     defer nodes.deinit();
-    while (p.peek()) |_| {
+    while (true) {
         const field = try parseInputValueDef(p);
         try nodes.append(field);
 
-        if (p.expectOptionalToken(TokenKind.RCurly)) {
+        if (try p.expectOptionalToken(TokenKind.RCurly)) {
             break;
         }
     }
@@ -50,7 +50,7 @@ pub fn parseInputValueDef(p: *Parser) !ast.InputValueDefinitionNode {
     _ = try p.expect(TokenKind.Colon);
     const typeNode = try parseTypeReference(p);
     var defaultValue: ?ast.ValueNode = null;
-    if (p.expectOptionalToken(TokenKind.Eq)) {
+    if (try p.expectOptionalToken(TokenKind.Eq)) {
         defaultValue = try parseConstValueLiteral(p);
     }
     const directives = try parseConstDirectives(p);

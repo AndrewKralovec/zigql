@@ -23,11 +23,11 @@ pub fn parseSelections(p: *Parser) ![]ast.SelectionNode {
     defer nodes.deinit();
 
     _ = try p.expect(TokenKind.LCurly);
-    while (p.peek()) |_| {
+    while (true) {
         const sel = try parseSelection(p);
         try nodes.append(sel);
 
-        if (p.expectOptionalToken(TokenKind.RCurly)) {
+        if (try p.expectOptionalToken(TokenKind.RCurly)) {
             break;
         }
     }
@@ -36,7 +36,7 @@ pub fn parseSelections(p: *Parser) ![]ast.SelectionNode {
 
 pub fn parseSelection(p: *Parser) !ast.SelectionNode {
     p.debug("parseSelection");
-    const token = p.peek() orelse return error.UnexpectedNullToken;
+    const token = try p.peek();
     // Field.
     if (token.kind != TokenKind.Spread) {
         const field = try parseField(p);
@@ -45,8 +45,8 @@ pub fn parseSelection(p: *Parser) !ast.SelectionNode {
 
     // Fragment spread.
     _ = try p.expect(TokenKind.Spread);
-    const hasTypeCondition = p.expectOptionalKeyword(ast.SyntaxKeyWord.On);
-    if (!hasTypeCondition and p.peekKind(TokenKind.Name)) {
+    const hasTypeCondition = try p.expectOptionalKeyword(ast.SyntaxKeyWord.On);
+    if (!hasTypeCondition and try p.peekKind(TokenKind.Name)) {
         const name = try parseFragmentName(p);
         const directives = try parseDirectives(p, false);
         return ast.SelectionNode{

@@ -11,7 +11,7 @@ const parseDirectives = @import("./directive.zig").parseDirectives;
 
 pub fn parseOperationDefinition(p: *Parser) !ast.OperationDefinitionNode {
     p.debug("parseOperationDefinition");
-    const token = p.peek() orelse return error.UnexpectedNullToken;
+    const token = try p.peek();
     if (token.kind == TokenKind.LCurly) {
         const selectionSet = try parseSelectionSet(p);
         return ast.OperationDefinitionNode{
@@ -25,7 +25,7 @@ pub fn parseOperationDefinition(p: *Parser) !ast.OperationDefinitionNode {
 
     const operation = try parseOperationType(p);
     var name: ?ast.NameNode = null;
-    if (p.peekKind(TokenKind.Name)) {
+    if (try p.peekKind(TokenKind.Name)) {
         name = try parseName(p);
     }
 
@@ -49,11 +49,11 @@ pub fn parseOperationTypeDefinitions(p: *Parser) ![]ast.OperationTypeDefinitionN
 
     var nodes = std.ArrayList(ast.OperationTypeDefinitionNode).init(p.allocator);
     defer nodes.deinit();
-    while (p.peek()) |_| {
+    while (true) {
         const otd = try parseOperationTypeDefinition(p);
         try nodes.append(otd);
 
-        if (p.expectOptionalToken(TokenKind.RCurly)) {
+        if (try p.expectOptionalToken(TokenKind.RCurly)) {
             break;
         }
     }
@@ -62,17 +62,17 @@ pub fn parseOperationTypeDefinitions(p: *Parser) ![]ast.OperationTypeDefinitionN
 
 pub fn parseOptionalOperationTypeDefinitions(p: *Parser) !?[]ast.OperationTypeDefinitionNode {
     p.debug("parseOptionalOperationTypeDefinitions");
-    if (!p.expectOptionalToken(TokenKind.LCurly)) {
+    if (!try p.expectOptionalToken(TokenKind.LCurly)) {
         return null;
     }
 
     var nodes = std.ArrayList(ast.OperationTypeDefinitionNode).init(p.allocator);
     defer nodes.deinit();
-    while (p.peek()) |_| {
+    while (true) {
         const otd = try parseOperationTypeDefinition(p);
         try nodes.append(otd);
 
-        if (p.expectOptionalToken(TokenKind.RCurly)) {
+        if (try p.expectOptionalToken(TokenKind.RCurly)) {
             break;
         }
     }

@@ -8,7 +8,7 @@ const parseVariable = @import("./variable.zig").parseVariable;
 
 pub fn parseValueLiteral(p: *Parser, isConst: bool) anyerror!ast.ValueNode {
     p.debug("parseValueLiteral");
-    const token = p.peek() orelse return error.UnexpectedNullToken;
+    const token = try p.peek();
 
     switch (token.kind) {
         TokenKind.LBracket => {
@@ -24,7 +24,7 @@ pub fn parseValueLiteral(p: *Parser, isConst: bool) anyerror!ast.ValueNode {
             };
         },
         TokenKind.Int => {
-            _ = p.pop();
+            _ = try p.pop();
             return ast.ValueNode{
                 .Int = ast.IntValueNode{
                     .value = token.data,
@@ -32,7 +32,7 @@ pub fn parseValueLiteral(p: *Parser, isConst: bool) anyerror!ast.ValueNode {
             };
         },
         TokenKind.Float => {
-            _ = p.pop();
+            _ = try p.pop();
             return ast.ValueNode{
                 .Float = ast.FloatValueNode{
                     .value = token.data,
@@ -44,7 +44,7 @@ pub fn parseValueLiteral(p: *Parser, isConst: bool) anyerror!ast.ValueNode {
             return ast.ValueNode{ .String = str };
         },
         TokenKind.Name => {
-            _ = p.pop();
+            _ = try p.pop();
 
             if (std.mem.eql(u8, token.data, "true")) {
                 return ast.ValueNode{
@@ -70,7 +70,7 @@ pub fn parseValueLiteral(p: *Parser, isConst: bool) anyerror!ast.ValueNode {
             if (isConst) {
                 _ = try p.expect(TokenKind.Dollar);
 
-                if (p.peekKind(TokenKind.Name)) {
+                if (try p.peekKind(TokenKind.Name)) {
                     return error.UnexpectedVariable;
                 } else {
                     return error.UnexpectedToken;
@@ -98,7 +98,7 @@ pub fn parseList(p: *Parser, isConst: bool) !ast.ListValueNode {
 
     var nodes = std.ArrayList(ast.ValueNode).init(p.allocator);
     defer nodes.deinit();
-    while (!p.expectOptionalToken(TokenKind.RBracket)) {
+    while (!try p.expectOptionalToken(TokenKind.RBracket)) {
         const value = try parseValueLiteral(p, isConst);
         try nodes.append(value);
     }
@@ -114,7 +114,7 @@ pub fn parseObject(p: *Parser, isConst: bool) !ast.ObjectValueNode {
 
     var nodes = std.ArrayList(ast.ObjectFieldNode).init(p.allocator);
     defer nodes.deinit();
-    while (!p.expectOptionalToken(TokenKind.RCurly)) {
+    while (!try p.expectOptionalToken(TokenKind.RCurly)) {
         const field = try parseObjectField(p, isConst);
         try nodes.append(field);
     }
@@ -137,7 +137,7 @@ pub fn parseObjectField(p: *Parser, isConst: bool) !ast.ObjectFieldNode {
 
 pub fn parseStringLiteral(p: *Parser) !ast.StringValueNode {
     p.debug("parseStringLiteral");
-    const token = p.pop() orelse return error.UnexpectedNullToken;
+    const token = try p.pop();
     return ast.StringValueNode{
         .value = token.data,
     };

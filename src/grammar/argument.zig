@@ -9,17 +9,17 @@ const parseInputValueDef = @import("./input.zig").parseInputValueDef;
 
 pub fn parseArguments(p: *Parser, isConst: bool) !?[]ast.ArgumentNode {
     p.debug("parseArguments");
-    if (!p.expectOptionalToken(TokenKind.LParen)) {
+    if (!try p.expectOptionalToken(TokenKind.LParen)) {
         return null;
     }
 
     var nodes = std.ArrayList(ast.ArgumentNode).init(p.allocator);
     defer nodes.deinit();
-    while (p.peek()) |_| {
+    while (true) {
         const arg = try parseArgument(p, isConst);
         try nodes.append(arg);
 
-        if (p.expectOptionalToken(TokenKind.RParen)) {
+        if (try p.expectOptionalToken(TokenKind.RParen)) {
             break;
         }
     }
@@ -40,17 +40,17 @@ pub fn parseArgument(p: *Parser, isConst: bool) !ast.ArgumentNode {
 
 pub fn parseArgumentDefs(p: *Parser) !?[]ast.InputValueDefinitionNode {
     p.debug("parseArgumentDefs");
-    if (!p.expectOptionalToken(TokenKind.LParen)) {
+    if (!try p.expectOptionalToken(TokenKind.LParen)) {
         return null;
     }
 
     var nodes = std.ArrayList(ast.InputValueDefinitionNode).init(p.allocator);
     defer nodes.deinit();
-    while (p.peek()) |_| {
+    while (true) {
         const arg = try parseInputValueDef(p);
         try nodes.append(arg);
 
-        if (p.expectOptionalToken(TokenKind.RParen)) {
+        if (try p.expectOptionalToken(TokenKind.RParen)) {
             break;
         }
     }

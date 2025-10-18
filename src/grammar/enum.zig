@@ -25,17 +25,17 @@ pub fn parseEnumTypeDefinition(p: *Parser) !ast.EnumTypeDefinitionNode {
 
 pub fn parseEnumValuesDefinitions(p: *Parser) !?[]ast.EnumValueDefinitionNode {
     p.debug("parseEnumValuesDefinitions");
-    if (!p.expectOptionalToken(TokenKind.LCurly)) {
+    if (!try p.expectOptionalToken(TokenKind.LCurly)) {
         return null;
     }
 
     var nodes = std.ArrayList(ast.EnumValueDefinitionNode).init(p.allocator);
     defer nodes.deinit();
-    while (p.peek()) |_| {
+    while (true) {
         const value = try parseEnumValueDefinition(p);
         try nodes.append(value);
 
-        if (p.expectOptionalToken(TokenKind.RCurly)) {
+        if (try p.expectOptionalToken(TokenKind.RCurly)) {
             break;
         }
     }
@@ -57,7 +57,7 @@ pub fn parseEnumValueDefinition(p: *Parser) !ast.EnumValueDefinitionNode {
 
 pub fn parseEnumValueName(p: *Parser) !ast.NameNode {
     p.debug("parseEnumValueName");
-    const token = p.peek() orelse return error.UnexpectedNullToken;
+    const token = try p.peek();
     if (std.mem.eql(u8, token.data, "true") or
         std.mem.eql(u8, token.data, "false") or
         std.mem.eql(u8, token.data, "null"))

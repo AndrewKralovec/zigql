@@ -9,18 +9,18 @@ const parseConstValueLiteral = @import("./value.zig").parseConstValueLiteral;
 const parseConstDirectives = @import("./directive.zig").parseConstDirectives;
 
 pub fn parseVariableDefinitions(p: *Parser) !?[]ast.VariableDefinitionNode {
-    if (!p.expectOptionalToken(TokenKind.LParen)) {
+    if (!try p.expectOptionalToken(TokenKind.LParen)) {
         return null;
     }
 
     var nodes = std.ArrayList(ast.VariableDefinitionNode).init(p.allocator);
     defer nodes.deinit();
-    while (p.peek()) |_| {
+    while (true) {
         p.debug("parseVariableDefinitions");
         const varDef = try parseVariableDefinition(p);
         try nodes.append(varDef);
 
-        if (p.expectOptionalToken(TokenKind.RParen)) {
+        if (try p.expectOptionalToken(TokenKind.RParen)) {
             break;
         }
     }
@@ -34,7 +34,7 @@ pub fn parseVariableDefinition(p: *Parser) !ast.VariableDefinitionNode {
     const typeNode = try parseTypeReference(p);
 
     var defaultValue: ?ast.ValueNode = null;
-    if (p.expectOptionalToken(TokenKind.Eq)) {
+    if (try p.expectOptionalToken(TokenKind.Eq)) {
         defaultValue = try parseConstValueLiteral(p);
     }
 

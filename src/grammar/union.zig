@@ -26,18 +26,18 @@ pub fn parseUnionTypeDefinition(p: *Parser) !ast.UnionTypeDefinitionNode {
 
 pub fn parseUnionMemberTypes(p: *Parser) !?[]ast.NamedTypeNode {
     p.debug("parseUnionMemberTypes");
-    if (!p.expectOptionalToken(TokenKind.Eq)) {
+    if (!try p.expectOptionalToken(TokenKind.Eq)) {
         return null;
     }
 
-    _ = p.expectOptionalToken(TokenKind.Pipe);
+    _ = try p.expectOptionalToken(TokenKind.Pipe);
     var nodes = std.ArrayList(ast.NamedTypeNode).init(p.allocator);
     defer nodes.deinit();
-    while (p.peek()) |_| {
+    while (true) {
         const name = try parseNamedType(p);
         try nodes.append(name);
 
-        if (!p.expectOptionalToken(TokenKind.Pipe)) {
+        if (!try p.expectOptionalToken(TokenKind.Pipe)) {
             break;
         }
     }

@@ -50,13 +50,13 @@ pub const Parser = struct {
     }
 
     /// Next non-ignorable token from the `Lexer`.
-    pub fn nextToken(self: *Parser) ?Token {
+    pub fn nextToken(self: *Parser) !Token {
         return nextNonIgnorableToken(&self.lexer);
     }
 
     /// Lookahead at the next non-ignorable token without advancing the `Lexer`.
     /// This is done by cloning the `Lexer` and scanning ahead.
-    pub fn lookahead(self: *Parser) ?Token {
+    pub fn lookahead(self: *Parser) !Token {
         // TODO: Inefficient, refactor the lexer/cursor to allow lookahead without cloning.
         var lexer = self.lexer;
         return nextNonIgnorableToken(&lexer);
@@ -64,33 +64,33 @@ pub const Parser = struct {
 
     /// Peek the next token from the `Lexer`.
     /// This will load the next token until it is popped.
-    pub fn peek(self: *Parser) ?Token {
+    pub fn peek(self: *Parser) !Token {
         if (self.currentToken == null) {
-            self.currentToken = self.nextToken();
+            self.currentToken = try self.nextToken();
         }
-        return self.currentToken;
+        return self.currentToken.?;
     }
 
     /// Peek and check if the next token is of a given kind.
-    pub fn peekKind(self: *Parser, kind: TokenKind) bool {
-        const token = self.peek() orelse return false;
+    pub fn peekKind(self: *Parser, kind: TokenKind) !bool {
+        const token = try self.peek();
         return (token.kind == kind);
     }
 
     /// Pop the current token and reset the peeked state.
-    pub fn pop(self: *Parser) ?Token {
-        const token = self.peek();
+    pub fn pop(self: *Parser) !Token {
+        const token = try self.peek();
         self.currentToken = null;
         return token;
     }
 
     /// If the next token is a given keyword and matches the expected keyword,
     /// pop it and return true. Otherwise, return false and no-op.
-    pub fn expectOptionalKeyword(self: *Parser, keyword: ast.SyntaxKeyWord) bool {
-        const token = self.peek() orelse return false;
+    pub fn expectOptionalKeyword(self: *Parser, keyword: ast.SyntaxKeyWord) !bool {
+        const token = try self.peek();
         const tkw = ast.stringToKeyword(token.data) orelse return false;
         if (token.kind == TokenKind.Name and tkw == keyword) {
-            _ = self.pop();
+            _ = try self.pop();
             return true;
         }
         return false;
@@ -98,10 +98,10 @@ pub const Parser = struct {
 
     /// Expect the next token is a given keyword. If it's not there, throw an error.
     pub fn expectKeyword(self: *Parser, keyword: ast.SyntaxKeyWord) !void {
-        const token = self.peek() orelse return error.UnexpectedNullToken;
+        const token = try self.peek();
         const tkw = ast.stringToKeyword(token.data) orelse return error.UnknownKeyword;
         if (token.kind == TokenKind.Name and tkw == keyword) {
-            _ = self.pop();
+            _ = try self.pop();
         } else {
             return error.UnexpectedKeyword;
         }
@@ -109,10 +109,10 @@ pub const Parser = struct {
 
     /// If the next token is of the expected kind, pop it and return true.
     /// Otherwise, return false and no-op.
-    pub fn expectOptionalToken(self: *Parser, kind: TokenKind) bool {
-        const token = self.peek() orelse return true;
+    pub fn expectOptionalToken(self: *Parser, kind: TokenKind) !bool {
+        const token = try self.peek();
         if (token.kind == kind) {
-            _ = self.pop();
+            _ = try self.pop();
             return true;
         }
         return false;
@@ -120,11 +120,11 @@ pub const Parser = struct {
 
     /// Expect the next token is a given kind. If it's not, throw an error.
     pub fn expect(self: *Parser, kind: TokenKind) !Token {
-        const token = self.peek() orelse return error.UnexpectedNullToken;
+        const token = try self.peek();
         if (token.kind != kind) {
             return error.UnexpectedToken;
         }
-        _ = self.pop();
+        _ = try self.pop();
         return token;
     }
 
@@ -136,13 +136,9 @@ pub const Parser = struct {
     }
 };
 
-fn nextNonIgnorableToken(lexer: *Lexer) ?Token {
+fn nextNonIgnorableToken(lexer: *Lexer) !Token {
     while (true) {
-        // TODO: Until errors are refactored, the lexer will return null on error.
-        // Which will be caught in the parsing, but will produce UnexpectedNullToken instead
-        // of the token error.
-        const result = lexer.next() catch return null;
-        const token = result orelse return null;
+        const token = try lexer.read();
         switch (token.kind) {
             TokenKind.Comment, TokenKind.Whitespace, TokenKind.Comma => {
                 // Ignore comments and whitespace.
@@ -151,7 +147,7 @@ fn nextNonIgnorableToken(lexer: *Lexer) ?Token {
             else => return token,
         }
     }
-    return null;
+    // unreachable;
 }
 
 //
@@ -735,4 +731,120 @@ test "should parse nested types like [String!]" {
     try std.testing.expect(tagField.type.*.NonNullType.type.*.ListType.type.* == ast.TypeNode.NonNullType); // !
     try std.testing.expect(tagField.type.*.NonNullType.type.*.ListType.type.*.NonNullType.type.* == ast.TypeNode.NamedType); // String
     try std.testing.expect(std.mem.eql(u8, tagField.type.*.NonNullType.type.*.ListType.type.*.NonNullType.type.*.NamedType.name.value, "String"));
+}
+
+test "should parse a field with a single directive without arguments" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    const allocator = arena.allocator();
+    const source =
+        \\ query {
+        \\   user @deprecated {
+        \\     id
+        \\   }
+        \\ }
+    ;
+    var p = Parser.init(allocator, source);
+    const doc = try p.parse();
+
+    try std.testing.expect(doc.definitions.len == 1);
+    const op = doc.definitions[0].ExecutableDefinition.OperationDefinition;
+    const field = op.selectionSet.?.selections[0].Field;
+
+    try std.testing.expect(std.mem.eql(u8, field.name.value, "user"));
+    try std.testing.expect(field.directives != null);
+    try std.testing.expect(field.directives.?.len == 1);
+
+    const directive = field.directives.?[0];
+    try std.testing.expect(std.mem.eql(u8, directive.name.value, "deprecated"));
+    try std.testing.expect(directive.arguments == null);
+}
+
+test "should parse a field with a directive with arguments" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    const allocator = arena.allocator();
+    const source =
+        \\ query {
+        \\   user @deprecated(reason: "Use newUser instead") {
+        \\     id
+        \\   }
+        \\ }
+    ;
+    var p = Parser.init(allocator, source);
+    const doc = try p.parse();
+
+    const op = doc.definitions[0].ExecutableDefinition.OperationDefinition;
+    const field = op.selectionSet.?.selections[0].Field;
+
+    try std.testing.expect(field.directives != null);
+    try std.testing.expect(field.directives.?.len == 1);
+
+    const directive = field.directives.?[0];
+    try std.testing.expect(std.mem.eql(u8, directive.name.value, "deprecated"));
+    try std.testing.expect(directive.arguments != null);
+    try std.testing.expect(directive.arguments.?.len == 1);
+
+    const arg = directive.arguments.?[0];
+    try std.testing.expect(std.mem.eql(u8, arg.name.value, "reason"));
+    try std.testing.expect(arg.value == ast.ValueNode.String);
+    try std.testing.expect(std.mem.eql(u8, arg.value.String.value, "\"Use newUser instead\""));
+}
+
+test "should parse directives on type definition" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    const allocator = arena.allocator();
+    const source =
+        \\ type User @auth @cached(ttl: 300) {
+        \\   id: ID
+        \\   name: String
+        \\ }
+    ;
+    var p = Parser.init(allocator, source);
+    const doc = try p.parse();
+
+    const objDef = doc.definitions[0].TypeSystemDefinition.TypeDefinition.ObjectTypeDefinition;
+
+    try std.testing.expect(objDef.directives != null);
+    try std.testing.expect(objDef.directives.?.len == 2);
+
+    const dir1 = objDef.directives.?[0];
+    try std.testing.expect(std.mem.eql(u8, dir1.name.value, "auth"));
+    try std.testing.expect(dir1.arguments == null);
+
+    const dir2 = objDef.directives.?[1];
+    try std.testing.expect(std.mem.eql(u8, dir2.name.value, "cached"));
+    try std.testing.expect(dir2.arguments != null);
+    try std.testing.expect(dir2.arguments.?.len == 1);
+}
+
+test "should parse directives on field definition" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    const allocator = arena.allocator();
+    const source =
+        \\ type User {
+        \\   email: String @deprecated(reason: "Use emailAddress")
+        \\ }
+    ;
+    var p = Parser.init(allocator, source);
+    const doc = try p.parse();
+
+    const objDef = doc.definitions[0].TypeSystemDefinition.TypeDefinition.ObjectTypeDefinition;
+    const field = objDef.fields.?[0];
+
+    try std.testing.expect(std.mem.eql(u8, field.name.value, "email"));
+    try std.testing.expect(field.directives != null);
+    try std.testing.expect(field.directives.?.len == 1);
+
+    const directive = field.directives.?[0];
+    try std.testing.expect(std.mem.eql(u8, directive.name.value, "deprecated"));
+    try std.testing.expect(directive.arguments != null);
+    try std.testing.expect(directive.arguments.?.len == 1);
+    try std.testing.expect(std.mem.eql(u8, directive.arguments.?[0].name.value, "reason"));
 }

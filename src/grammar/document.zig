@@ -30,11 +30,11 @@ pub fn parseDefinitions(p: *Parser) ![]ast.DefinitionNode {
     var nodes = std.ArrayList(ast.DefinitionNode).init(p.allocator);
     defer nodes.deinit();
 
-    while (p.peek()) |_| {
+    while (true) {
         const def = try parseDefinition(p);
         try nodes.append(def);
 
-        if (p.expectOptionalToken(TokenKind.Eof)) {
+        if (try p.expectOptionalToken(TokenKind.Eof)) {
             break;
         }
     }
@@ -43,9 +43,9 @@ pub fn parseDefinitions(p: *Parser) ![]ast.DefinitionNode {
 
 pub fn parseDefinition(p: *Parser) !ast.DefinitionNode {
     p.debug("parseDefinition");
-    var token = p.peek() orelse return error.UnexpectedNullToken;
+    var token = try p.peek();
     if (token.kind == TokenKind.StringValue) {
-        token = p.lookahead() orelse return error.UnexpectedNullToken;
+        token = try p.lookahead();
     }
 
     const keyword = ast.stringToKeyword(token.data) orelse return error.UnknownKeyword;

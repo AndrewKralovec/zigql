@@ -14,17 +14,17 @@ const parseSelectionSet = @import("./selection.zig").parseSelectionSet;
 
 pub fn parseFieldsDefinition(p: *Parser) !?[]ast.FieldDefinitionNode {
     p.debug("parseFieldsDefinition");
-    if (!p.expectOptionalToken(TokenKind.LCurly)) {
+    if (!try p.expectOptionalToken(TokenKind.LCurly)) {
         return null;
     }
 
     var nodes = std.ArrayList(ast.FieldDefinitionNode).init(p.allocator);
     defer nodes.deinit();
-    while (p.peek()) |_| {
+    while (true) {
         const field = try parseFieldDefinition(p);
         try nodes.append(field);
 
-        if (p.expectOptionalToken(TokenKind.RCurly)) {
+        if (try p.expectOptionalToken(TokenKind.RCurly)) {
             break;
         }
     }
@@ -56,7 +56,7 @@ pub fn parseField(p: *Parser) anyerror!ast.FieldNode {
     var name: ast.NameNode = undefined;
     var alias: ?ast.NameNode = null;
 
-    if (p.expectOptionalToken(TokenKind.Colon)) {
+    if (try p.expectOptionalToken(TokenKind.Colon)) {
         alias = nameOrAlias;
         name = try parseName(p);
     } else {
@@ -66,7 +66,7 @@ pub fn parseField(p: *Parser) anyerror!ast.FieldNode {
     const arguments = try parseArguments(p, false);
     const directives = try parseDirectives(p, false);
     var selectionSet: ?ast.SelectionSetNode = null;
-    if (p.peekKind(TokenKind.LCurly)) {
+    if (try p.peekKind(TokenKind.LCurly)) {
         selectionSet = try parseSelectionSet(p);
     }
 

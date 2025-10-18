@@ -19,7 +19,7 @@ pub fn parseTypeReference(p: *Parser) !*ast.TypeNode {
     const typeNode = try p.allocator.create(ast.TypeNode);
     errdefer p.allocator.destroy(typeNode);
 
-    if (p.expectOptionalToken(TokenKind.LBracket)) {
+    if (try p.expectOptionalToken(TokenKind.LBracket)) {
         const innerType = parseTypeReference(p) catch |err| {
             return err;
         };
@@ -41,7 +41,7 @@ pub fn parseTypeReference(p: *Parser) !*ast.TypeNode {
         typeNode.* = ast.TypeNode{ .NamedType = name };
     }
 
-    if (p.expectOptionalToken(TokenKind.Bang)) {
+    if (try p.expectOptionalToken(TokenKind.Bang)) {
         const non_null = p.allocator.create(ast.TypeNode) catch |err| {
             typeNode.deinit(p.allocator);
             return err;
@@ -67,7 +67,7 @@ pub fn parseNamedType(p: *Parser) !ast.NamedTypeNode {
 
 pub fn parseTypeSystemExtension(p: *Parser) !ast.TypeSystemExtensionNode {
     p.debug("parseTypeSystemExtension");
-    const token = p.lookahead() orelse return error.UnexpectedNullToken;
+    const token = try p.lookahead();
 
     if (token.kind == TokenKind.Name) {
         const keyword = ast.stringToKeyword(token.data) orelse return error.UnknownKeyword;
