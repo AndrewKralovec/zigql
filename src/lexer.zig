@@ -82,10 +82,10 @@ pub const Lexer = struct {
         return token;
     }
 
-    pub fn scan(self: *Lexer) !Token {
+    pub fn read(self: *Lexer) !Token {
         const token = try self.next();
         if (token == null) {
-            return error.TokenStreamEnded;
+            return error.ReadAfterEof;
         }
         return token.?;
     }

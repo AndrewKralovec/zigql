@@ -67,7 +67,7 @@ pub fn parseNamedType(p: *Parser) !ast.NamedTypeNode {
 
 pub fn parseTypeSystemExtension(p: *Parser) !ast.TypeSystemExtensionNode {
     p.debug("parseTypeSystemExtension");
-    const token = p.lookahead() orelse return error.UnexpectedNullToken;
+    const token = try p.lookahead();
 
     if (token.kind == TokenKind.Name) {
         const keyword = ast.stringToKeyword(token.data) orelse return error.UnknownKeyword;

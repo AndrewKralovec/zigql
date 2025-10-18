@@ -45,7 +45,7 @@ pub fn parseDefinition(p: *Parser) !ast.DefinitionNode {
     p.debug("parseDefinition");
     var token = p.peek() orelse return error.UnexpectedNullToken;
     if (token.kind == TokenKind.StringValue) {
-        token = p.lookahead() orelse return error.UnexpectedNullToken;
+        token = try p.lookahead();
     }
 
     const keyword = ast.stringToKeyword(token.data) orelse return error.UnknownKeyword;

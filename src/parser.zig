@@ -50,13 +50,13 @@ pub const Parser = struct {
     }
 
     /// Next non-ignorable token from the `Lexer`.
-    pub fn nextToken(self: *Parser) ?Token {
+    pub fn nextToken(self: *Parser) !Token {
         return nextNonIgnorableToken(&self.lexer);
     }
 
     /// Lookahead at the next non-ignorable token without advancing the `Lexer`.
     /// This is done by cloning the `Lexer` and scanning ahead.
-    pub fn lookahead(self: *Parser) ?Token {
+    pub fn lookahead(self: *Parser) !Token {
         // TODO: Inefficient, refactor the lexer/cursor to allow lookahead without cloning.
         var lexer = self.lexer;
         return nextNonIgnorableToken(&lexer);
@@ -66,7 +66,9 @@ pub const Parser = struct {
     /// This will load the next token until it is popped.
     pub fn peek(self: *Parser) ?Token {
         if (self.currentToken == null) {
-            self.currentToken = self.nextToken();
+            self.currentToken = self.nextToken() catch {
+                return null; // TODO: comeback and use try once peek starts throwing token errors.
+            };
         }
         return self.currentToken;
     }
@@ -136,13 +138,9 @@ pub const Parser = struct {
     }
 };
 
-fn nextNonIgnorableToken(lexer: *Lexer) ?Token {
+fn nextNonIgnorableToken(lexer: *Lexer) !Token {
     while (true) {
-        // TODO: Until errors are refactored, the lexer will return null on error.
-        // Which will be caught in the parsing, but will produce UnexpectedNullToken instead
-        // of the token error.
-        const result = lexer.next() catch return null;
-        const token = result orelse return null;
+        const token = try lexer.read();
         switch (token.kind) {
             TokenKind.Comment, TokenKind.Whitespace, TokenKind.Comma => {
                 // Ignore comments and whitespace.
@@ -151,7 +149,7 @@ fn nextNonIgnorableToken(lexer: *Lexer) ?Token {
             else => return token,
         }
     }
-    return null;
+    unreachable;
 }
 
 //
