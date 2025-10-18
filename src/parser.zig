@@ -64,13 +64,11 @@ pub const Parser = struct {
 
     /// Peek the next token from the `Lexer`.
     /// This will load the next token until it is popped.
-    pub fn peek(self: *Parser) ?Token {
+    pub fn peek(self: *Parser) !Token {
         if (self.currentToken == null) {
-            self.currentToken = self.nextToken() catch {
-                return null; // TODO: comeback and use try once peek starts throwing token errors.
-            };
+            self.currentToken = try self.nextToken();
         }
-        return self.currentToken;
+        return self.currentToken.?;
     }
 
     /// Peek and check if the next token is of a given kind.
@@ -149,7 +147,7 @@ fn nextNonIgnorableToken(lexer: *Lexer) !Token {
             else => return token,
         }
     }
-    unreachable;
+    // unreachable;
 }
 
 //

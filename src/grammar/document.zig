@@ -43,7 +43,7 @@ pub fn parseDefinitions(p: *Parser) ![]ast.DefinitionNode {
 
 pub fn parseDefinition(p: *Parser) !ast.DefinitionNode {
     p.debug("parseDefinition");
-    var token = p.peek() orelse return error.UnexpectedNullToken;
+    var token = try p.peek();
     if (token.kind == TokenKind.StringValue) {
         token = try p.lookahead();
     }

@@ -36,7 +36,7 @@ pub fn parseSelections(p: *Parser) ![]ast.SelectionNode {
 
 pub fn parseSelection(p: *Parser) !ast.SelectionNode {
     p.debug("parseSelection");
-    const token = p.peek() orelse return error.UnexpectedNullToken;
+    const token = try p.peek();
     // Field.
     if (token.kind != TokenKind.Spread) {
         const field = try parseField(p);

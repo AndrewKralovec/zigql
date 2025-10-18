@@ -8,7 +8,7 @@ const parseVariable = @import("./variable.zig").parseVariable;
 
 pub fn parseValueLiteral(p: *Parser, isConst: bool) anyerror!ast.ValueNode {
     p.debug("parseValueLiteral");
-    const token = p.peek() orelse return error.UnexpectedNullToken;
+    const token = try p.peek();
 
     switch (token.kind) {
         TokenKind.LBracket => {

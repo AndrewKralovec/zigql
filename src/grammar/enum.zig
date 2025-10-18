@@ -57,7 +57,7 @@ pub fn parseEnumValueDefinition(p: *Parser) !ast.EnumValueDefinitionNode {
 
 pub fn parseEnumValueName(p: *Parser) !ast.NameNode {
     p.debug("parseEnumValueName");
-    const token = p.peek() orelse return error.UnexpectedNullToken;
+    const token = try p.peek();
     if (std.mem.eql(u8, token.data, "true") or
         std.mem.eql(u8, token.data, "false") or
         std.mem.eql(u8, token.data, "null"))

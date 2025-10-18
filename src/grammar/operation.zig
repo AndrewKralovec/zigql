@@ -11,7 +11,7 @@ const parseDirectives = @import("./directive.zig").parseDirectives;
 
 pub fn parseOperationDefinition(p: *Parser) !ast.OperationDefinitionNode {
     p.debug("parseOperationDefinition");
-    const token = p.peek() orelse return error.UnexpectedNullToken;
+    const token = try p.peek();
     if (token.kind == TokenKind.LCurly) {
         const selectionSet = try parseSelectionSet(p);
         return ast.OperationDefinitionNode{

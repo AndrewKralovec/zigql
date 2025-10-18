@@ -29,7 +29,7 @@ pub fn parseFragmentDefinition(p: *Parser) !ast.FragmentDefinitionNode {
 
 pub fn parseFragmentName(p: *Parser) !ast.NameNode {
     p.debug("parseFragmentName");
-    const token = p.peek() orelse return error.UnexpectedNullToken;
+    const token = try p.peek();
     // TODO: Keyword check eats the token. Use an if statement instead. Come back to this later.
     if (std.mem.eql(u8, token.data, "on")) {
         return error.UnexpectedFragmentName;

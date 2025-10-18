@@ -48,7 +48,7 @@ pub fn parseDirectiveLocations(p: *Parser) ![]ast.NameNode {
 
 pub fn parseDirectiveLocation(p: *Parser) !ast.NameNode {
     p.debug("parseDirectiveLocation");
-    const token = p.peek() orelse return error.UnexpectedNullToken;
+    const token = try p.peek();
     if (!ast.isDirectiveLocation(token.data)) {
         return error.UnknownDirectiveLocation;
     }
