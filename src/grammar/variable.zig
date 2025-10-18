@@ -15,7 +15,7 @@ pub fn parseVariableDefinitions(p: *Parser) !?[]ast.VariableDefinitionNode {
 
     var nodes = std.ArrayList(ast.VariableDefinitionNode).init(p.allocator);
     defer nodes.deinit();
-    while (p.peek()) |_| {
+    while (true) {
         p.debug("parseVariableDefinitions");
         const varDef = try parseVariableDefinition(p);
         try nodes.append(varDef);

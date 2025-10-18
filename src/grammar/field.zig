@@ -20,7 +20,7 @@ pub fn parseFieldsDefinition(p: *Parser) !?[]ast.FieldDefinitionNode {
 
     var nodes = std.ArrayList(ast.FieldDefinitionNode).init(p.allocator);
     defer nodes.deinit();
-    while (p.peek()) |_| {
+    while (true) {
         const field = try parseFieldDefinition(p);
         try nodes.append(field);
 

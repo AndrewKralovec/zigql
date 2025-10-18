@@ -49,7 +49,7 @@ pub fn parseOperationTypeDefinitions(p: *Parser) ![]ast.OperationTypeDefinitionN
 
     var nodes = std.ArrayList(ast.OperationTypeDefinitionNode).init(p.allocator);
     defer nodes.deinit();
-    while (p.peek()) |_| {
+    while (true) {
         const otd = try parseOperationTypeDefinition(p);
         try nodes.append(otd);
 
@@ -68,7 +68,7 @@ pub fn parseOptionalOperationTypeDefinitions(p: *Parser) !?[]ast.OperationTypeDe
 
     var nodes = std.ArrayList(ast.OperationTypeDefinitionNode).init(p.allocator);
     defer nodes.deinit();
-    while (p.peek()) |_| {
+    while (true) {
         const otd = try parseOperationTypeDefinition(p);
         try nodes.append(otd);
 

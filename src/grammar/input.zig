@@ -33,7 +33,7 @@ pub fn parseInputFieldsDefinition(p: *Parser) !?[]ast.InputValueDefinitionNode {
 
     var nodes = std.ArrayList(ast.InputValueDefinitionNode).init(p.allocator);
     defer nodes.deinit();
-    while (p.peek()) |_| {
+    while (true) {
         const field = try parseInputValueDef(p);
         try nodes.append(field);
 

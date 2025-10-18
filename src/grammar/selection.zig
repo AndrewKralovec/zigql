@@ -23,7 +23,7 @@ pub fn parseSelections(p: *Parser) ![]ast.SelectionNode {
     defer nodes.deinit();
 
     _ = try p.expect(TokenKind.LCurly);
-    while (p.peek()) |_| {
+    while (true) {
         const sel = try parseSelection(p);
         try nodes.append(sel);
 

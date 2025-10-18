@@ -35,7 +35,7 @@ pub fn parseDirectiveLocations(p: *Parser) ![]ast.NameNode {
 
     var nodes = std.ArrayList(ast.NameNode).init(p.allocator);
     defer nodes.deinit();
-    while (p.peek()) |_| {
+    while (true) {
         const name = try parseDirectiveLocation(p);
         try nodes.append(name);
 
@@ -70,10 +70,7 @@ pub fn parseDirectives(p: *Parser, isConst: bool) !?[]ast.DirectiveNode {
 
     var nodes = std.ArrayList(ast.DirectiveNode).init(p.allocator);
     defer nodes.deinit();
-    while (p.peek()) |token| {
-        if (token.kind != TokenKind.At) {
-            break;
-        }
+    while (try p.peekKind(TokenKind.At)) {
         const dir = try parseDirective(p, isConst);
         try nodes.append(dir);
     }

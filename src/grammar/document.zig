@@ -30,7 +30,7 @@ pub fn parseDefinitions(p: *Parser) ![]ast.DefinitionNode {
     var nodes = std.ArrayList(ast.DefinitionNode).init(p.allocator);
     defer nodes.deinit();
 
-    while (p.peek()) |_| {
+    while (true) {
         const def = try parseDefinition(p);
         try nodes.append(def);
 

@@ -36,7 +36,7 @@ pub fn parseImplementsInterfaces(p: *Parser) !?[]ast.NamedTypeNode {
     _ = try p.expectOptionalToken(TokenKind.Amp);
     var nodes = std.ArrayList(ast.NamedTypeNode).init(p.allocator);
     defer nodes.deinit();
-    while (p.peek()) |_| {
+    while (true) {
         const name = try parseNamedType(p);
         try nodes.append(name);
 

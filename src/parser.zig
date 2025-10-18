@@ -73,13 +73,13 @@ pub const Parser = struct {
 
     /// Peek and check if the next token is of a given kind.
     pub fn peekKind(self: *Parser, kind: TokenKind) !bool {
-        const token = self.peek() orelse return error.UnexpectedNullToken; // TODO: comeback and use try once peek starts throwing token errors.
+        const token = try self.peek();
         return (token.kind == kind);
     }
 
     /// Pop the current token and reset the peeked state.
     pub fn pop(self: *Parser) !Token {
-        const token = self.peek() orelse return error.UnexpectedNullToken; // TODO: comeback and use try once peek starts throwing token errors.
+        const token = try self.peek();
         self.currentToken = null;
         return token;
     }
@@ -87,8 +87,8 @@ pub const Parser = struct {
     /// If the next token is a given keyword and matches the expected keyword,
     /// pop it and return true. Otherwise, return false and no-op.
     pub fn expectOptionalKeyword(self: *Parser, keyword: ast.SyntaxKeyWord) !bool {
-        const token = self.peek() orelse return error.UnexpectedNullToken; // TODO: comeback and use try once peek starts throwing token errors.
-        const tkw = ast.stringToKeyword(token.data) orelse return error.UnknownKeyword;
+        const token = try self.peek();
+        const tkw = ast.stringToKeyword(token.data) orelse return false;
         if (token.kind == TokenKind.Name and tkw == keyword) {
             _ = try self.pop();
             return true;
@@ -98,7 +98,7 @@ pub const Parser = struct {
 
     /// Expect the next token is a given keyword. If it's not there, throw an error.
     pub fn expectKeyword(self: *Parser, keyword: ast.SyntaxKeyWord) !void {
-        const token = self.peek() orelse return error.UnexpectedNullToken;
+        const token = try self.peek();
         const tkw = ast.stringToKeyword(token.data) orelse return error.UnknownKeyword;
         if (token.kind == TokenKind.Name and tkw == keyword) {
             _ = try self.pop();
@@ -110,7 +110,7 @@ pub const Parser = struct {
     /// If the next token is of the expected kind, pop it and return true.
     /// Otherwise, return false and no-op.
     pub fn expectOptionalToken(self: *Parser, kind: TokenKind) !bool {
-        const token = self.peek() orelse return error.UnexpectedNullToken; // TODO: comeback and use try once peek starts throwing token errors.
+        const token = try self.peek();
         if (token.kind == kind) {
             _ = try self.pop();
             return true;
@@ -120,7 +120,7 @@ pub const Parser = struct {
 
     /// Expect the next token is a given kind. If it's not, throw an error.
     pub fn expect(self: *Parser, kind: TokenKind) !Token {
-        const token = self.peek() orelse return error.UnexpectedNullToken;
+        const token = try self.peek();
         if (token.kind != kind) {
             return error.UnexpectedToken;
         }
