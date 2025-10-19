@@ -87,13 +87,13 @@ pub const Lexer = struct {
         return token;
     }
 
-    /// Return the next token in the stream, returning an error if EOF has been reached.
-    /// If a limit was set and reached, `LimitReached` is returned.
-    /// Token parsing errors are propagated immediately.
+    /// Return the next token in the stream.
+    /// An error is returned if read is called after the lexer has finished.
+    /// A lexer is finished when it reaches EOF or when a limit is reached.
     pub fn read(self: *Lexer) !Token {
         const token = try self.next();
         if (token == null) {
-            return error.ReadAfterEof;
+            return error.ReadAfterFinished;
         }
         return token.?;
     }
@@ -197,6 +197,6 @@ test "should return error when limit is reached on read" {
         allocator.free(result.errors);
     }
     _ = lexer.read() catch |err| {
-        try std.testing.expect(err == error.ReadAfterEof);
+        try std.testing.expect(err == error.ReadAfterFinished);
     };
 }

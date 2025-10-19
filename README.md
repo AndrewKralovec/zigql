@@ -44,13 +44,6 @@ ZigQL provides two main components for working with GraphQL.
 
 The `Lexer` tokenizes GraphQL text into individual tokens, which can then be processed by the parser or analyzed directly. It exposes several methods for tokenization and navigation.
 
-- **`init()`** - Initializes a new `Lexer` instance with the provided GraphQL source text.
-- **`lex()`** - Reads all tokens in one batch, returning both tokens and any errors encountered.
-- **`next()`** - Returns tokens one at a time. Returns `null` when EOF is reached or when a token limit is hit (if configured).
-- **`read()`** - Reads a single token, throwing an error if a limit is reached or if tokenization fails.
-- **`withLimit()`** - Sets a maximum number of tokens that can be read, useful for controlling resource usage and preventing infinite loops.
-
-
 #### Batch Lexing
 
 The simplest way to use the lexer is to tokenize an entire GraphQL document at once. The `lex()` method returns both tokens and any errors encountered during scanning.
@@ -127,18 +120,6 @@ defer {
 
 The `Parser` converts GraphQL text into a structured AST, which you can use for analyzing or transforming GraphQL operations. It exposes several methods for parsing and token navigation. You should only pay attention to `init()` and `parse()` for basic usage.
 
-- **`init()`** - Initializes a new Parser instance with the provided allocator and GraphQL source text.
-- **`parse()`** - Parses the entire GraphQL document and returns the AST (DocumentNode). This is the main entry point for parsing.
-- **`withLimit()`** - Creates a parser with a token limit, useful for bounded parsing to prevent excessive resource usage.
-- **`peek()`** - Peeks at the next token without consuming it. Loads and caches the token until it is popped.
-- **`peekKind()`** - Checks if the next token matches a specific TokenKind without consuming it.
-- **`pop()`** - Consumes and returns the current token, resetting the peeked state.
-- **`nextToken()`** - Returns the next non ignorable token from the lexer (skips comments, whitespace, and commas).
-- **`lookahead()`** - Looks ahead at the next non ignorable token without advancing the parser state.
-- **`expect()`** - Expects the next token to be of a specific kind. Throws an error if it doesn't match.
-- **`expectOptionalToken()`** - Optionally expects a token of a specific kind. Returns true and consumes if it matches, otherwise returns false.
-- **`expectKeyword()`** - Expects the next token to be a specific GraphQL keyword. Throws an error if it doesn't match.
-- **`expectOptionalKeyword()`** - Optionally expects a specific GraphQL keyword. Returns true and consumes if it matches, otherwise returns false.
 
 Since the AST nodes contain slices, you will need to manage their memory appropriately to avoid leaks.
 Using an `ArenaAllocator` is recommended for simpler memory management. You can just defer the arena's memory to clean up everything at once.
@@ -168,11 +149,31 @@ for (doc.definitions) |definition| {
 }
 ```
 
-#### Bounded Parsing
 
-Similar to the lexer, it is recommended to limit how far the parser can process tokens. Use `withLimit()` to create a parser that has a limit on the number of tokens that can be processed.
+For basic parsing, the library exposes a `parse()` function, which provides a convenient way to parse GraphQL documents without manually creating a parser instance.
+
 
 Example.
+```zig
+const zigql = @import("zig_ql");
+
+var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+defer arena.deinit();
+
+const doc = try zigql.parse(arena.allocator(), source);
+```
+
+#### Bounded Parsing
+
+Similar to the lexer, it is recommended to limit how far the parser can process tokens. You can use the `parseWithLimit()` function or create a parser with `withLimit()`.
+
+Example with `parseWithLimit()`.
+```zig
+const doc = try zigql.parseWithLimit(allocator, source, 100);
+// Will throw LimitReached error if we hit the limit
+```
+
+Example with `withLimit()`.
 ```zig
 var parser = Parser.init(allocator, source);
 var limitedParser = parser.withLimit(100); // Only process up to 100 tokens

@@ -156,6 +156,13 @@ pub fn parse(allocator: std.mem.Allocator, source: []const u8) !ast.DocumentNode
     return parser.parse();
 }
 
+/// Parse the given GraphQL source text with a limit on the number of tokens that can be scanned.
+/// This is useful for bounded parsing to prevent excessive memory usage or infinite loops.
+pub fn parseWithLimit(allocator: std.mem.Allocator, source: []const u8, limit: usize) !ast.DocumentNode {
+    var parser = Parser.init(allocator, source).withLimit(limit);
+    return parser.parse();
+}
+
 //
 // Test cases for the Parser
 //
@@ -855,7 +862,19 @@ test "should parse directives on field definition" {
     try std.testing.expect(std.mem.eql(u8, directive.arguments.?[0].name.value, "reason"));
 }
 
-test "parse simple query" {
+test "should return error when limit is reached" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    const source = "{ user { id } }";
+    var parser = Parser.init(arena.allocator(), source);
+    var bounded = parser.withLimit(11);
+
+    const result = bounded.parse();
+    try std.testing.expectError(error.LimitReached, result);
+}
+
+test "should parse simple query with public parse function" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
 
@@ -863,4 +882,24 @@ test "parse simple query" {
     const doc = try parse(arena.allocator(), source);
 
     try std.testing.expect(doc.definitions.len == 1);
+}
+
+test "should parse simple query with public parseWithLimit function" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    const source = "{ user { id } }";
+    const doc = try parseWithLimit(arena.allocator(), source, 12);
+
+    try std.testing.expect(doc.definitions.len == 1);
+}
+
+test "should return error when limit is reached using parseWithLimit function" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    const source = "{ user { id } }";
+    const result = parseWithLimit(arena.allocator(), source, 11);
+
+    try std.testing.expectError(error.LimitReached, result);
 }
