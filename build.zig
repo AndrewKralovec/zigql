@@ -27,6 +27,15 @@ pub fn build(b: *std.Build) void {
     // Attach options for the `build_config` module to the library
     lib.root_module.addOptions("build_config.zig", options);
 
+    // Install the library
+    b.installArtifact(lib);
+
+    // Export the module so other projects can depend on it
+    const module = b.addModule("zig_ql", .{
+        .root_source_file = b.path("src/zig_ql.zig"),
+    });
+    module.addOptions("build_config.zig", options);
+
     // Add a test step
     const tests = b.addTest(.{
         .root_source_file = b.path("src/zig_ql.zig"),
