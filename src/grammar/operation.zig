@@ -13,13 +13,13 @@ pub fn parseOperationDefinition(p: *Parser) !ast.OperationDefinitionNode {
     p.debug("parseOperationDefinition");
     const token = try p.peek();
     if (token.kind == TokenKind.LCurly) {
-        const selectionSet = try parseSelectionSet(p);
+        const selection_set = try parseSelectionSet(p);
         return ast.OperationDefinitionNode{
             .operation = ast.OperationType.Query,
             .name = null,
-            .variableDefinitions = null,
+            .variable_definitions = null,
             .directives = null,
-            .selectionSet = selectionSet,
+            .selection_set = selection_set,
         };
     }
 
@@ -29,20 +29,19 @@ pub fn parseOperationDefinition(p: *Parser) !ast.OperationDefinitionNode {
         name = try parseName(p);
     }
 
-    const varDefs = try parseVariableDefinitions(p);
+    const var_defs = try parseVariableDefinitions(p);
     const dirs = try parseDirectives(p, false);
-    const selSet = try parseSelectionSet(p);
+    const sel_set = try parseSelectionSet(p);
 
     return ast.OperationDefinitionNode{
         .operation = operation,
         .name = name,
-        .variableDefinitions = varDefs,
+        .variable_definitions = var_defs,
         .directives = dirs,
-        .selectionSet = selSet,
+        .selection_set = sel_set,
     };
 }
 
-// TODO: Why is this optional?
 pub fn parseOperationTypeDefinitions(p: *Parser) ![]ast.OperationTypeDefinitionNode {
     p.debug("parseOperationTypeDefinitions");
     _ = try p.expect(TokenKind.LCurly);
@@ -83,10 +82,10 @@ pub fn parseOperationTypeDefinition(p: *Parser) !ast.OperationTypeDefinitionNode
     p.debug("parseOperationTypeDefinition");
     const operation = try parseOperationType(p);
     _ = try p.expect(TokenKind.Colon);
-    const typeNode = try parseNamedType(p);
+    const type_node = try parseNamedType(p);
     return ast.OperationTypeDefinitionNode{
         .operation = operation,
-        .type = typeNode,
+        .type = type_node,
     };
 }
 

@@ -7,7 +7,7 @@ const parseName = @import("./name.zig").parseName;
 const parseValueLiteral = @import("./value.zig").parseValueLiteral;
 const parseInputValueDef = @import("./input.zig").parseInputValueDef;
 
-pub fn parseArguments(p: *Parser, isConst: bool) !?[]ast.ArgumentNode {
+pub fn parseArguments(p: *Parser, is_const: bool) !?[]ast.ArgumentNode {
     p.debug("parseArguments");
     if (!try p.expectOptionalToken(TokenKind.LParen)) {
         return null;
@@ -16,7 +16,7 @@ pub fn parseArguments(p: *Parser, isConst: bool) !?[]ast.ArgumentNode {
     var nodes = std.ArrayList(ast.ArgumentNode).init(p.allocator);
     defer nodes.deinit();
     while (true) {
-        const arg = try parseArgument(p, isConst);
+        const arg = try parseArgument(p, is_const);
         try nodes.append(arg);
 
         if (try p.expectOptionalToken(TokenKind.RParen)) {
@@ -26,12 +26,12 @@ pub fn parseArguments(p: *Parser, isConst: bool) !?[]ast.ArgumentNode {
     return try nodes.toOwnedSlice();
 }
 
-pub fn parseArgument(p: *Parser, isConst: bool) !ast.ArgumentNode {
+pub fn parseArgument(p: *Parser, is_const: bool) !ast.ArgumentNode {
     p.debug("parseArgument");
     const name = try parseName(p);
     _ = try p.expect(TokenKind.Colon);
 
-    const value = try parseValueLiteral(p, isConst);
+    const value = try parseValueLiteral(p, is_const);
     return ast.ArgumentNode{
         .name = name,
         .value = value,

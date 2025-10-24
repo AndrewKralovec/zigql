@@ -8,8 +8,8 @@ const LimitTracker = @import("../util/limit_tracker.zig").LimitTracker;
 ///
 pub const Lexer = struct {
     finished: bool,
+    limit_tracker: LimitTracker,
     cursor: Cursor,
-    limitTracker: LimitTracker,
 
     /// Initializes a new `Lexer` from source text without a limit on the number of tokens
     /// that can be scanned.
@@ -17,7 +17,7 @@ pub const Lexer = struct {
         return Lexer{
             .finished = false,
             .cursor = Cursor.init(source),
-            .limitTracker = LimitTracker.init(
+            .limit_tracker = LimitTracker.init(
                 std.math.maxInt(usize),
             ),
         };
@@ -29,7 +29,7 @@ pub const Lexer = struct {
         return Lexer{
             .finished = self.finished,
             .cursor = self.cursor,
-            .limitTracker = LimitTracker.init(limit),
+            .limit_tracker = LimitTracker.init(limit),
         };
     }
 
@@ -75,7 +75,7 @@ pub const Lexer = struct {
     pub fn next(self: *Lexer) !?Token {
         if (self.finished) return null;
 
-        if (self.limitTracker.checkAndIncrement()) {
+        if (self.limit_tracker.checkAndIncrement()) {
             self.finished = true;
             return error.LimitReached;
         }

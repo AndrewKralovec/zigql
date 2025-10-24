@@ -17,8 +17,8 @@ pub fn parseVariableDefinitions(p: *Parser) !?[]ast.VariableDefinitionNode {
     defer nodes.deinit();
     while (true) {
         p.debug("parseVariableDefinitions");
-        const varDef = try parseVariableDefinition(p);
-        try nodes.append(varDef);
+        const var_def = try parseVariableDefinition(p);
+        try nodes.append(var_def);
 
         if (try p.expectOptionalToken(TokenKind.RParen)) {
             break;
@@ -31,19 +31,19 @@ pub fn parseVariableDefinition(p: *Parser) !ast.VariableDefinitionNode {
     p.debug("parseVariableDefinition");
     const variable = try parseVariable(p);
     _ = try p.expect(TokenKind.Colon);
-    const typeNode = try parseTypeReference(p);
+    const type_node = try parseTypeReference(p);
 
-    var defaultValue: ?ast.ValueNode = null;
+    var default_value: ?ast.ValueNode = null;
     if (try p.expectOptionalToken(TokenKind.Eq)) {
-        defaultValue = try parseConstValueLiteral(p);
+        default_value = try parseConstValueLiteral(p);
     }
 
     const directives = try parseConstDirectives(p);
 
     return ast.VariableDefinitionNode{
         .variable = variable,
-        .type = typeNode,
-        .defaultValue = defaultValue,
+        .type = type_node,
+        .default_value = default_value,
         .directives = directives,
     };
 }

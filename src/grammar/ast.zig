@@ -100,9 +100,9 @@ pub const OperationDefinitionNode = struct {
     kind: SyntaxKind = SyntaxKind.OperationDefinition,
     operation: OperationType,
     name: ?NameNode,
-    variableDefinitions: ?[]const VariableDefinitionNode,
+    variable_definitions: ?[]const VariableDefinitionNode,
     directives: ?[]const DirectiveNode,
-    selectionSet: ?SelectionSetNode,
+    selection_set: ?SelectionSetNode,
 };
 
 /// See: https://spec.graphql.org/October2021/#OperationType
@@ -146,7 +146,7 @@ pub const FieldNode = struct {
     alias: ?NameNode,
     arguments: ?[]const ArgumentNode,
     directives: ?[]const DirectiveNode,
-    selectionSet: ?SelectionSetNode,
+    selection_set: ?SelectionSetNode,
 };
 
 /// See: https://spec.graphql.org/October2021/#FragmentSpread
@@ -165,9 +165,9 @@ pub const FragmentSpreadNode = struct {
 ///     **...** TypeCondition? Directives? SelectionSet
 pub const InlineFragmentNode = struct {
     kind: SyntaxKind = SyntaxKind.InlineFragment,
-    typeCondition: ?NamedTypeNode,
+    type_condition: ?NamedTypeNode,
     directives: ?[]const DirectiveNode,
-    selectionSet: SelectionSetNode,
+    selection_set: SelectionSetNode,
 };
 
 /// See: https://spec.graphql.org/October2021/#Name
@@ -327,7 +327,7 @@ pub const VariableDefinitionNode = struct {
     kind: SyntaxKind = SyntaxKind.VariableDefinition,
     variable: VariableNode,
     type: *TypeNode,
-    defaultValue: ?ValueNode, // ConstValueNode
+    default_value: ?ValueNode, // ConstValueNode
     directives: ?[]const DirectiveNode, // ConstDirectiveNode
 };
 
@@ -396,7 +396,7 @@ pub const SchemaDefinitionNode = struct {
     kind: SyntaxKind = SyntaxKind.SchemaDefinition,
     description: ?StringValueNode,
     directives: ?[]const DirectiveNode,
-    operationTypes: []const OperationTypeDefinitionNode,
+    operation_types: []const OperationTypeDefinitionNode,
 };
 
 /// See: https://spec.graphql.org/October2021/#OperationDefinition
@@ -533,7 +533,7 @@ pub const InputValueDefinitionNode = struct {
     kind: SyntaxKind = SyntaxKind.InputValueDefinition,
     name: NameNode,
     type: *TypeNode,
-    defaultValue: ?ValueNode,
+    default_value: ?ValueNode,
     directives: ?[]const DirectiveNode,
 };
 
@@ -557,9 +557,9 @@ pub const DirectiveDefinitionNode = struct {
 pub const FragmentDefinitionNode = struct {
     kind: SyntaxKind = SyntaxKind.FragmentDefinition,
     name: NameNode,
-    typeCondition: NamedTypeNode,
+    type_condition: NamedTypeNode,
     directives: ?[]const DirectiveNode,
-    selectionSet: SelectionSetNode,
+    selection_set: SelectionSetNode,
 };
 
 // See: https://spec.graphql.org/October2021/#TypeSystemExtension
@@ -581,7 +581,7 @@ pub const TypeSystemExtensionNode = union(enum) {
 pub const SchemaExtensionNode = struct {
     kind: SyntaxKind = SyntaxKind.SchemaExtension,
     directives: ?[]const DirectiveNode,
-    operationTypes: ?[]const OperationTypeDefinitionNode,
+    operation_types: ?[]const OperationTypeDefinitionNode,
 };
 
 // TODO: This is very similar to TypeDefinitionNode.
@@ -679,7 +679,7 @@ pub const InputObjectTypeExtensionNode = struct {
     fields: ?[]const InputValueDefinitionNode,
 };
 
-const directiveLocations = [_][]const u8{
+const directive_locations = [_][]const u8{
     "QUERY",
     "MUTATION",
     "SUBSCRIPTION",
@@ -702,8 +702,8 @@ const directiveLocations = [_][]const u8{
 };
 
 /// Checks if the given string matches a known GraphQL directive location.
-pub fn isDirectiveLocation(value: []const u8) bool {
-    inline for (directiveLocations) |loc| {
+pub fn is_directive_location(value: []const u8) bool {
+    inline for (directive_locations) |loc| {
         if (std.mem.eql(u8, value, loc)) {
             return true;
         }
@@ -740,7 +740,7 @@ const KeywordMap = struct {
 };
 
 /// This is a map of keywords to their corresponding enum values.
-const keywordMap = [_]KeywordMap{
+const keyword_map = [_]KeywordMap{
     .{ .name = "directive", .value = SyntaxKeyWord.Directive },
     .{ .name = "enum", .value = SyntaxKeyWord.Enum },
     .{ .name = "extend", .value = SyntaxKeyWord.Extend },
@@ -762,7 +762,7 @@ const keywordMap = [_]KeywordMap{
 
 /// Converts to a `SyntaxKeyWord` or returns null if not in the SyntaxKeyWord enum.
 pub fn stringToKeyword(str: []const u8) ?SyntaxKeyWord {
-    inline for (keywordMap) |entry| {
+    inline for (keyword_map) |entry| {
         if (std.mem.eql(u8, entry.name, str)) {
             return entry.value;
         }

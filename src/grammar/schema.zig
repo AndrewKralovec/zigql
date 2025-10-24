@@ -13,11 +13,11 @@ pub fn parseSchemaDefinition(p: *Parser) !ast.SchemaDefinitionNode {
     const description = try parseDescription(p);
     _ = try p.expectKeyword(ast.SyntaxKeyWord.Schema);
     const directives = try parseConstDirectives(p);
-    const operationTypes = try parseOperationTypeDefinitions(p);
+    const operation_types = try parseOperationTypeDefinitions(p);
     return ast.SchemaDefinitionNode{
         .description = description,
         .directives = directives,
-        .operationTypes = operationTypes,
+        .operation_types = operation_types,
     };
 }
 
@@ -26,14 +26,14 @@ pub fn parseSchemaExtension(p: *Parser) !ast.SchemaExtensionNode {
     try p.expectKeyword(ast.SyntaxKeyWord.Extend);
     try p.expectKeyword(ast.SyntaxKeyWord.Schema);
     const directives = try parseConstDirectives(p);
-    const operationTypes = try parseOptionalOperationTypeDefinitions(p);
+    const operation_types = try parseOptionalOperationTypeDefinitions(p);
 
-    if (directives.?.len == 0 and operationTypes.?.len == 0) {
+    if (directives.?.len == 0 and operation_types.?.len == 0) {
         return error.UnexpectedToken;
     }
 
     return ast.SchemaExtensionNode{
         .directives = directives,
-        .operationTypes = operationTypes,
+        .operation_types = operation_types,
     };
 }

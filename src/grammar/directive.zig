@@ -49,7 +49,7 @@ pub fn parseDirectiveLocations(p: *Parser) ![]ast.NameNode {
 pub fn parseDirectiveLocation(p: *Parser) !ast.NameNode {
     p.debug("parseDirectiveLocation");
     const token = try p.peek();
-    if (!ast.isDirectiveLocation(token.data)) {
+    if (!ast.is_directive_location(token.data)) {
         return error.UnknownDirectiveLocation;
     }
 
@@ -62,7 +62,7 @@ pub fn parseConstDirectives(p: *Parser) !?[]ast.DirectiveNode {
     return parseDirectives(p, true);
 }
 
-pub fn parseDirectives(p: *Parser, isConst: bool) !?[]ast.DirectiveNode {
+pub fn parseDirectives(p: *Parser, is_const: bool) !?[]ast.DirectiveNode {
     p.debug("parseDirectives");
     if (!try p.peekKind(TokenKind.At)) {
         return null;
@@ -71,18 +71,18 @@ pub fn parseDirectives(p: *Parser, isConst: bool) !?[]ast.DirectiveNode {
     var nodes = std.ArrayList(ast.DirectiveNode).init(p.allocator);
     defer nodes.deinit();
     while (try p.peekKind(TokenKind.At)) {
-        const dir = try parseDirective(p, isConst);
+        const dir = try parseDirective(p, is_const);
         try nodes.append(dir);
     }
 
     return try nodes.toOwnedSlice();
 }
 
-pub fn parseDirective(p: *Parser, isConst: bool) !ast.DirectiveNode {
+pub fn parseDirective(p: *Parser, is_const: bool) !ast.DirectiveNode {
     p.debug("parseDirective");
     _ = try p.expect(TokenKind.At);
     const name = try parseName(p);
-    const arguments = try parseArguments(p, isConst);
+    const arguments = try parseArguments(p, is_const);
     return ast.DirectiveNode{
         .name = name,
         .arguments = arguments,

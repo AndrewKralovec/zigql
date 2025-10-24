@@ -15,15 +15,15 @@ pub fn parseFragmentDefinition(p: *Parser) !ast.FragmentDefinitionNode {
     const name = try parseFragmentName(p);
 
     try p.expectKeyword(ast.SyntaxKeyWord.On);
-    const typeCondition = try parseNamedType(p);
+    const type_condition = try parseNamedType(p);
     const directives = try parseDirectives(p, false);
-    const selectionSet = try parseSelectionSet(p);
+    const selection_set = try parseSelectionSet(p);
 
     return ast.FragmentDefinitionNode{
         .name = name,
-        .typeCondition = typeCondition,
+        .type_condition = type_condition,
         .directives = directives,
-        .selectionSet = selectionSet,
+        .selection_set = selection_set,
     };
 }
 

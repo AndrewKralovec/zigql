@@ -37,12 +37,12 @@ pub fn parseFieldDefinition(p: *Parser) !ast.FieldDefinitionNode {
     const name = try parseName(p);
     const args = try parseArgumentDefs(p);
     _ = try p.expect(TokenKind.Colon);
-    const typeNode = try parseTypeReference(p);
+    const type_node = try parseTypeReference(p);
     const directives = try parseConstDirectives(p);
 
     return ast.FieldDefinitionNode{
         .name = name,
-        .type = typeNode,
+        .type = type_node,
         .arguments = args,
         .description = description,
         .directives = directives,
@@ -51,23 +51,23 @@ pub fn parseFieldDefinition(p: *Parser) !ast.FieldDefinitionNode {
 
 pub fn parseField(p: *Parser) anyerror!ast.FieldNode {
     p.debug("parseField");
-    const nameOrAlias = try parseName(p);
+    const name_or_alias = try parseName(p);
 
     var name: ast.NameNode = undefined;
     var alias: ?ast.NameNode = null;
 
     if (try p.expectOptionalToken(TokenKind.Colon)) {
-        alias = nameOrAlias;
+        alias = name_or_alias;
         name = try parseName(p);
     } else {
-        name = nameOrAlias;
+        name = name_or_alias;
     }
 
     const arguments = try parseArguments(p, false);
     const directives = try parseDirectives(p, false);
-    var selectionSet: ?ast.SelectionSetNode = null;
+    var selection_set: ?ast.SelectionSetNode = null;
     if (try p.peekKind(TokenKind.LCurly)) {
-        selectionSet = try parseSelectionSet(p);
+        selection_set = try parseSelectionSet(p);
     }
 
     return ast.FieldNode{
@@ -76,6 +76,6 @@ pub fn parseField(p: *Parser) anyerror!ast.FieldNode {
         .alias = alias,
         .arguments = arguments,
         .directives = directives,
-        .selectionSet = selectionSet,
+        .selection_set = selection_set,
     };
 }

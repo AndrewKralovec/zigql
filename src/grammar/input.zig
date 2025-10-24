@@ -48,17 +48,17 @@ pub fn parseInputValueDef(p: *Parser) !ast.InputValueDefinitionNode {
     p.debug("parseInputValueDef");
     const name = try parseName(p);
     _ = try p.expect(TokenKind.Colon);
-    const typeNode = try parseTypeReference(p);
-    var defaultValue: ?ast.ValueNode = null;
+    const type_node = try parseTypeReference(p);
+    var default_value: ?ast.ValueNode = null;
     if (try p.expectOptionalToken(TokenKind.Eq)) {
-        defaultValue = try parseConstValueLiteral(p);
+        default_value = try parseConstValueLiteral(p);
     }
     const directives = try parseConstDirectives(p);
 
     return ast.InputValueDefinitionNode{
         .name = name,
-        .type = typeNode,
-        .defaultValue = defaultValue,
+        .type = type_node,
+        .default_value = default_value,
         .directives = directives,
     };
 }

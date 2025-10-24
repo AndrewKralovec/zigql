@@ -6,11 +6,11 @@ const Token = tokens.Token;
 const TokenKind = tokens.TokenKind;
 
 pub const Cursor = struct {
+    pending: ?u8,
     index: usize,
     offset: usize,
     source: []const u8,
     chars: CharIterator,
-    pending: ?u8,
 
     pub fn init(input: []const u8) Cursor {
         return Cursor{
@@ -470,12 +470,12 @@ test "should return previous string after bump" {
 
     _ = cursor.bump();
     const token = cursor.bump();
-    const expectedT = ' ';
+    const expected_token = ' ';
     const prev = cursor.prevStr();
-    const expectedPre = input[0..1];
+    const expected_prev = input[0..1];
 
-    try std.testing.expect(token == expectedT);
-    try std.testing.expect(std.mem.eql(u8, prev, expectedPre));
+    try std.testing.expect(token == expected_token);
+    try std.testing.expect(std.mem.eql(u8, prev, expected_prev));
 }
 
 test "should return null when bumping past end of input" {

@@ -45,8 +45,8 @@ pub fn parseSelection(p: *Parser) !ast.SelectionNode {
 
     // Fragment spread.
     _ = try p.expect(TokenKind.Spread);
-    const hasTypeCondition = try p.expectOptionalKeyword(ast.SyntaxKeyWord.On);
-    if (!hasTypeCondition and try p.peekKind(TokenKind.Name)) {
+    const has_type_condition = try p.expectOptionalKeyword(ast.SyntaxKeyWord.On);
+    if (!has_type_condition and try p.peekKind(TokenKind.Name)) {
         const name = try parseFragmentName(p);
         const directives = try parseDirectives(p, false);
         return ast.SelectionNode{
@@ -58,19 +58,19 @@ pub fn parseSelection(p: *Parser) !ast.SelectionNode {
     }
 
     // Inline Fragment.
-    var typeCondition: ?ast.NamedTypeNode = null;
-    if (hasTypeCondition) {
-        typeCondition = try parseNamedType(p);
+    var type_condition: ?ast.NamedTypeNode = null;
+    if (has_type_condition) {
+        type_condition = try parseNamedType(p);
     }
 
     const directives = try parseDirectives(p, false);
-    const selectionSet = try parseSelectionSet(p);
+    const selection_set = try parseSelectionSet(p);
 
     return ast.SelectionNode{
         .InlineFragment = ast.InlineFragmentNode{
-            .typeCondition = typeCondition,
+            .type_condition = type_condition,
             .directives = directives,
-            .selectionSet = selectionSet,
+            .selection_set = selection_set,
         },
     };
 }

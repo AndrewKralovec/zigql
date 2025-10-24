@@ -24,7 +24,7 @@ fn printDebug(p: *Parser, tag: []const u8) void {
 pub const Parser = struct {
     allocator: std.mem.Allocator,
     lexer: Lexer,
-    currentToken: ?Token,
+    current_token: ?Token,
 
     /// Debug function to print the parser state.
     pub const debug = if (config.debug) printDebug else noopDebug;
@@ -35,7 +35,7 @@ pub const Parser = struct {
         return Parser{
             .allocator = allocator,
             .lexer = Lexer.init(source),
-            .currentToken = null,
+            .current_token = null,
         };
     }
 
@@ -44,7 +44,7 @@ pub const Parser = struct {
     pub fn withLimit(self: Parser, limit: usize) Parser {
         return Parser{
             .allocator = self.allocator,
-            .currentToken = self.currentToken,
+            .current_token = self.current_token,
             .lexer = self.lexer.withLimit(limit),
         };
     }
@@ -65,10 +65,10 @@ pub const Parser = struct {
     /// Peek the next token from the `Lexer`.
     /// This will load the next token until it is popped.
     pub fn peek(self: *Parser) !Token {
-        if (self.currentToken == null) {
-            self.currentToken = try self.nextToken();
+        if (self.current_token == null) {
+            self.current_token = try self.nextToken();
         }
-        return self.currentToken.?;
+        return self.current_token.?;
     }
 
     /// Peek and check if the next token is of a given kind.
@@ -80,7 +80,7 @@ pub const Parser = struct {
     /// Pop the current token and reset the peeked state.
     pub fn pop(self: *Parser) !Token {
         const token = try self.peek();
-        self.currentToken = null;
+        self.current_token = null;
         return token;
     }
 
@@ -185,25 +185,25 @@ test "should parse a operation definition with a single field" {
     try std.testing.expect(def == ast.ExecutableDefinitionNode.OperationDefinition);
     const op = def.OperationDefinition;
 
-    try std.testing.expect(op.selectionSet != null);
-    try std.testing.expect(op.selectionSet.?.selections.len == 1);
-    const sel = op.selectionSet.?.selections[0];
+    try std.testing.expect(op.selection_set != null);
+    try std.testing.expect(op.selection_set.?.selections.len == 1);
+    const sel = op.selection_set.?.selections[0];
 
     try std.testing.expect(sel == ast.SelectionNode.Field);
     const f = sel.Field;
     try std.testing.expect(std.mem.eql(u8, f.name.value, "user"));
     try std.testing.expect(f.alias == null);
     try std.testing.expect(f.arguments == null);
-    try std.testing.expect(f.selectionSet != null);
-    try std.testing.expect(f.selectionSet.?.selections.len == 1);
+    try std.testing.expect(f.selection_set != null);
+    try std.testing.expect(f.selection_set.?.selections.len == 1);
 
-    const subSel = f.selectionSet.?.selections[0];
-    try std.testing.expect(subSel == ast.SelectionNode.Field);
-    const subF = subSel.Field;
-    try std.testing.expect(std.mem.eql(u8, subF.name.value, "id"));
-    try std.testing.expect(subF.alias == null);
-    try std.testing.expect(subF.arguments == null);
-    try std.testing.expect(subF.selectionSet == null);
+    const sub_sel = f.selection_set.?.selections[0];
+    try std.testing.expect(sub_sel == ast.SelectionNode.Field);
+    const sub_f = sub_sel.Field;
+    try std.testing.expect(std.mem.eql(u8, sub_f.name.value, "id"));
+    try std.testing.expect(sub_f.alias == null);
+    try std.testing.expect(sub_f.arguments == null);
+    try std.testing.expect(sub_f.selection_set == null);
 }
 
 test "should parse a query operation with a single field" {
@@ -230,9 +230,9 @@ test "should parse a query operation with a single field" {
     try std.testing.expect(def == ast.ExecutableDefinitionNode.OperationDefinition);
     const op = def.OperationDefinition;
 
-    try std.testing.expect(op.selectionSet != null);
-    try std.testing.expect(op.selectionSet.?.selections.len == 1);
-    const sel = op.selectionSet.?.selections[0];
+    try std.testing.expect(op.selection_set != null);
+    try std.testing.expect(op.selection_set.?.selections.len == 1);
+    const sel = op.selection_set.?.selections[0];
 
     try std.testing.expect(sel == ast.SelectionNode.Field);
     const f = sel.Field;
@@ -240,16 +240,16 @@ test "should parse a query operation with a single field" {
     try std.testing.expect(f.alias == null);
     try std.testing.expect(f.arguments != null);
     try std.testing.expect(f.arguments.?.len == 1);
-    try std.testing.expect(f.selectionSet != null);
-    try std.testing.expect(f.selectionSet.?.selections.len == 1);
+    try std.testing.expect(f.selection_set != null);
+    try std.testing.expect(f.selection_set.?.selections.len == 1);
 
-    const subSel = f.selectionSet.?.selections[0];
-    try std.testing.expect(subSel == ast.SelectionNode.Field);
-    const subF = subSel.Field;
-    try std.testing.expect(std.mem.eql(u8, subF.name.value, "id"));
-    try std.testing.expect(subF.alias == null);
-    try std.testing.expect(subF.arguments == null);
-    try std.testing.expect(subF.selectionSet == null);
+    const sub_sel = f.selection_set.?.selections[0];
+    try std.testing.expect(sub_sel == ast.SelectionNode.Field);
+    const sub_f = sub_sel.Field;
+    try std.testing.expect(std.mem.eql(u8, sub_f.name.value, "id"));
+    try std.testing.expect(sub_f.alias == null);
+    try std.testing.expect(sub_f.arguments == null);
+    try std.testing.expect(sub_f.selection_set == null);
 }
 
 test "should parse a query operation with fields and arguments" {
@@ -279,9 +279,9 @@ test "should parse a query operation with fields and arguments" {
     try std.testing.expect(def == ast.ExecutableDefinitionNode.OperationDefinition);
     const op = def.OperationDefinition;
 
-    try std.testing.expect(op.selectionSet != null);
-    try std.testing.expect(op.selectionSet.?.selections.len == 1);
-    const sel = op.selectionSet.?.selections[0];
+    try std.testing.expect(op.selection_set != null);
+    try std.testing.expect(op.selection_set.?.selections.len == 1);
+    const sel = op.selection_set.?.selections[0];
 
     try std.testing.expect(sel == ast.SelectionNode.Field);
     const f = sel.Field;
@@ -295,29 +295,29 @@ test "should parse a query operation with fields and arguments" {
     try std.testing.expect(std.mem.eql(u8, arg.name.value, "createdTime"));
 
     try std.testing.expect(arg.value == ast.ValueNode.Variable);
-    const varNode = arg.value.Variable;
-    try std.testing.expect(std.mem.eql(u8, varNode.name.value, "createdTime"));
+    const var_node = arg.value.Variable;
+    try std.testing.expect(std.mem.eql(u8, var_node.name.value, "createdTime"));
 
-    try std.testing.expect(f.selectionSet != null);
-    try std.testing.expect(f.selectionSet.?.selections.len == 2);
+    try std.testing.expect(f.selection_set != null);
+    try std.testing.expect(f.selection_set.?.selections.len == 2);
 
-    const subSelOne = f.selectionSet.?.selections[0];
-    try std.testing.expect(subSelOne == ast.SelectionNode.Field);
-    const subFOne = subSelOne.Field;
-    try std.testing.expect(std.mem.eql(u8, subFOne.name.value, "id"));
-    try std.testing.expect(subFOne.alias == null);
-    try std.testing.expect(subFOne.arguments == null);
-    try std.testing.expect(subFOne.selectionSet == null);
+    const sub_sel_one = f.selection_set.?.selections[0];
+    try std.testing.expect(sub_sel_one == ast.SelectionNode.Field);
+    const sub_f_one = sub_sel_one.Field;
+    try std.testing.expect(std.mem.eql(u8, sub_f_one.name.value, "id"));
+    try std.testing.expect(sub_f_one.alias == null);
+    try std.testing.expect(sub_f_one.arguments == null);
+    try std.testing.expect(sub_f_one.selection_set == null);
 
-    const subSelTwo = f.selectionSet.?.selections[1];
-    try std.testing.expect(subSelTwo == ast.SelectionNode.Field);
+    const sub_sel_two = f.selection_set.?.selections[1];
+    try std.testing.expect(sub_sel_two == ast.SelectionNode.Field);
 
-    const subFTwo = subSelTwo.Field;
-    try std.testing.expect(std.mem.eql(u8, subFTwo.name.value, "friends"));
-    try std.testing.expect(subFTwo.alias == null);
-    try std.testing.expect(subFTwo.arguments == null);
-    try std.testing.expect(subFTwo.selectionSet != null);
-    try std.testing.expect(subFTwo.selectionSet.?.selections.len == 1);
+    const sub_f_two = sub_sel_two.Field;
+    try std.testing.expect(std.mem.eql(u8, sub_f_two.name.value, "friends"));
+    try std.testing.expect(sub_f_two.alias == null);
+    try std.testing.expect(sub_f_two.arguments == null);
+    try std.testing.expect(sub_f_two.selection_set != null);
+    try std.testing.expect(sub_f_two.selection_set.?.selections.len == 1);
 }
 
 test "should parse a query operation with descriptions" {
@@ -344,25 +344,25 @@ test "should parse a query operation with descriptions" {
     const def = dn.TypeSystemDefinition;
     try std.testing.expect(def == ast.TypeSystemDefinitionNode.TypeDefinition);
 
-    const typeDef = def.TypeDefinition;
-    try std.testing.expect(typeDef == ast.TypeDefinitionNode.ObjectTypeDefinition);
+    const type_def = def.TypeDefinition;
+    try std.testing.expect(type_def == ast.TypeDefinitionNode.ObjectTypeDefinition);
 
-    const objDef = typeDef.ObjectTypeDefinition;
-    try std.testing.expect(objDef.description != null);
-    try std.testing.expect(std.mem.eql(u8, objDef.description.?.value, "\"\"\"\n The query description\n \"\"\""));
-    try std.testing.expect(std.mem.eql(u8, objDef.name.value, "Query"));
-    try std.testing.expect(objDef.interfaces == null);
-    try std.testing.expect(objDef.directives == null);
-    try std.testing.expect(objDef.fields != null);
-    try std.testing.expect(objDef.fields.?.len == 1);
+    const obj_def = type_def.ObjectTypeDefinition;
+    try std.testing.expect(obj_def.description != null);
+    try std.testing.expect(std.mem.eql(u8, obj_def.description.?.value, "\"\"\"\n The query description\n \"\"\""));
+    try std.testing.expect(std.mem.eql(u8, obj_def.name.value, "Query"));
+    try std.testing.expect(obj_def.interfaces == null);
+    try std.testing.expect(obj_def.directives == null);
+    try std.testing.expect(obj_def.fields != null);
+    try std.testing.expect(obj_def.fields.?.len == 1);
 
-    const fields = objDef.fields.?;
+    const fields = obj_def.fields.?;
 
     const field = fields[0];
-    const namedType = field.type.NamedType;
+    const named_type = field.type.NamedType;
 
     try std.testing.expect(std.mem.eql(u8, field.name.value, "users"));
-    try std.testing.expect(std.mem.eql(u8, namedType.name.value, "User"));
+    try std.testing.expect(std.mem.eql(u8, named_type.name.value, "User"));
     try std.testing.expect(field.arguments != null);
     try std.testing.expect(field.description == null);
     try std.testing.expect(field.directives == null);
@@ -391,16 +391,16 @@ test "should parse a schema definition" {
     const def = dn.TypeSystemDefinition;
     try std.testing.expect(def == ast.TypeSystemDefinitionNode.SchemaDefinition);
 
-    const schemaDef = def.SchemaDefinition;
-    try std.testing.expect(schemaDef.description == null);
-    try std.testing.expect(schemaDef.directives == null);
-    try std.testing.expect(schemaDef.operationTypes.len == 2);
+    const schema_def = def.SchemaDefinition;
+    try std.testing.expect(schema_def.description == null);
+    try std.testing.expect(schema_def.directives == null);
+    try std.testing.expect(schema_def.operation_types.len == 2);
 
-    const operationTypes = schemaDef.operationTypes;
-    try std.testing.expect(operationTypes[0].operation == ast.OperationType.Query);
-    try std.testing.expect(std.mem.eql(u8, operationTypes[0].type.name.value, "Query"));
-    try std.testing.expect(operationTypes[1].operation == ast.OperationType.Mutation);
-    try std.testing.expect(std.mem.eql(u8, operationTypes[1].type.name.value, "Mutation"));
+    const operation_types = schema_def.operation_types;
+    try std.testing.expect(operation_types[0].operation == ast.OperationType.Query);
+    try std.testing.expect(std.mem.eql(u8, operation_types[0].type.name.value, "Query"));
+    try std.testing.expect(operation_types[1].operation == ast.OperationType.Mutation);
+    try std.testing.expect(std.mem.eql(u8, operation_types[1].type.name.value, "Mutation"));
 }
 
 test "should parse a schema definition with directives" {
@@ -424,11 +424,11 @@ test "should parse a schema definition with directives" {
     const def = dn.TypeSystemDefinition;
     try std.testing.expect(def == ast.TypeSystemDefinitionNode.SchemaDefinition);
 
-    const schemaDef = def.SchemaDefinition;
+    const schema_def = def.SchemaDefinition;
 
-    try std.testing.expect(schemaDef.description == null);
-    try std.testing.expect(schemaDef.directives != null);
-    try std.testing.expect(schemaDef.directives.?.len == 1);
+    try std.testing.expect(schema_def.description == null);
+    try std.testing.expect(schema_def.directives != null);
+    try std.testing.expect(schema_def.directives.?.len == 1);
 }
 
 test "should parse a scalar type definition" {
@@ -449,11 +449,11 @@ test "should parse a scalar type definition" {
     const def = dn.TypeSystemDefinition;
     try std.testing.expect(def == ast.TypeSystemDefinitionNode.TypeDefinition);
 
-    const typeDef = def.TypeDefinition;
-    try std.testing.expect(typeDef == ast.TypeDefinitionNode.ScalarTypeDefinition);
+    const type_def = def.TypeDefinition;
+    try std.testing.expect(type_def == ast.TypeDefinitionNode.ScalarTypeDefinition);
 
-    const scalarDef = typeDef.ScalarTypeDefinition;
-    try std.testing.expect(std.mem.eql(u8, scalarDef.name.value, "DateTime"));
+    const scalar_def = type_def.ScalarTypeDefinition;
+    try std.testing.expect(std.mem.eql(u8, scalar_def.name.value, "DateTime"));
 }
 
 test "should parse a type definition" {
@@ -478,20 +478,20 @@ test "should parse a type definition" {
     const def = dn.TypeSystemDefinition;
     try std.testing.expect(def == ast.TypeSystemDefinitionNode.TypeDefinition);
 
-    const typeDef = def.TypeDefinition;
-    try std.testing.expect(typeDef == ast.TypeDefinitionNode.ObjectTypeDefinition);
+    const type_def = def.TypeDefinition;
+    try std.testing.expect(type_def == ast.TypeDefinitionNode.ObjectTypeDefinition);
 
-    const objDef = typeDef.ObjectTypeDefinition;
-    try std.testing.expect(objDef.description == null);
-    try std.testing.expect(std.mem.eql(u8, objDef.name.value, "User"));
-    try std.testing.expect(objDef.interfaces == null);
-    try std.testing.expect(objDef.directives == null);
+    const obj_def = type_def.ObjectTypeDefinition;
+    try std.testing.expect(obj_def.description == null);
+    try std.testing.expect(std.mem.eql(u8, obj_def.name.value, "User"));
+    try std.testing.expect(obj_def.interfaces == null);
+    try std.testing.expect(obj_def.directives == null);
 
-    try std.testing.expect(objDef.fields != null);
-    try std.testing.expect(objDef.fields.?.len == 3);
-    try std.testing.expect(std.mem.eql(u8, objDef.fields.?[0].name.value, "id"));
-    try std.testing.expect(std.mem.eql(u8, objDef.fields.?[1].name.value, "name"));
-    try std.testing.expect(std.mem.eql(u8, objDef.fields.?[2].name.value, "friends"));
+    try std.testing.expect(obj_def.fields != null);
+    try std.testing.expect(obj_def.fields.?.len == 3);
+    try std.testing.expect(std.mem.eql(u8, obj_def.fields.?[0].name.value, "id"));
+    try std.testing.expect(std.mem.eql(u8, obj_def.fields.?[1].name.value, "name"));
+    try std.testing.expect(std.mem.eql(u8, obj_def.fields.?[2].name.value, "friends"));
 }
 
 test "should parse a interface type definition" {
@@ -515,14 +515,14 @@ test "should parse a interface type definition" {
     const def = dn.TypeSystemDefinition;
     try std.testing.expect(def == ast.TypeSystemDefinitionNode.TypeDefinition);
 
-    const typeDef = def.TypeDefinition;
-    try std.testing.expect(typeDef == ast.TypeDefinitionNode.InterfaceTypeDefinition);
+    const type_def = def.TypeDefinition;
+    try std.testing.expect(type_def == ast.TypeDefinitionNode.InterfaceTypeDefinition);
 
-    const objDef = typeDef.InterfaceTypeDefinition;
-    try std.testing.expect(objDef.description == null);
-    try std.testing.expect(std.mem.eql(u8, objDef.name.value, "User"));
-    try std.testing.expect(objDef.interfaces == null);
-    try std.testing.expect(objDef.directives == null);
+    const obj_def = type_def.InterfaceTypeDefinition;
+    try std.testing.expect(obj_def.description == null);
+    try std.testing.expect(std.mem.eql(u8, obj_def.name.value, "User"));
+    try std.testing.expect(obj_def.interfaces == null);
+    try std.testing.expect(obj_def.directives == null);
 }
 
 test "should parse a union type definition" {
@@ -543,12 +543,12 @@ test "should parse a union type definition" {
     const def = dn.TypeSystemDefinition;
     try std.testing.expect(def == ast.TypeSystemDefinitionNode.TypeDefinition);
 
-    const typeDef = def.TypeDefinition;
-    try std.testing.expect(typeDef == ast.TypeDefinitionNode.UnionTypeDefinition);
+    const type_def = def.TypeDefinition;
+    try std.testing.expect(type_def == ast.TypeDefinitionNode.UnionTypeDefinition);
 
-    const objDef = typeDef.UnionTypeDefinition;
-    try std.testing.expect(objDef.description == null);
-    try std.testing.expect(std.mem.eql(u8, objDef.name.value, "SearchResult"));
+    const obj_def = type_def.UnionTypeDefinition;
+    try std.testing.expect(obj_def.description == null);
+    try std.testing.expect(std.mem.eql(u8, obj_def.name.value, "SearchResult"));
 }
 
 test "should parse a enum type definition" {
@@ -573,17 +573,17 @@ test "should parse a enum type definition" {
     const def = dn.TypeSystemDefinition;
     try std.testing.expect(def == ast.TypeSystemDefinitionNode.TypeDefinition);
 
-    const typeDef = def.TypeDefinition;
-    try std.testing.expect(typeDef == ast.TypeDefinitionNode.EnumTypeDefinition);
+    const type_def = def.TypeDefinition;
+    try std.testing.expect(type_def == ast.TypeDefinitionNode.EnumTypeDefinition);
 
-    const objDef = typeDef.EnumTypeDefinition;
-    try std.testing.expect(objDef.description == null);
-    try std.testing.expect(std.mem.eql(u8, objDef.name.value, "UserType"));
+    const obj_def = type_def.EnumTypeDefinition;
+    try std.testing.expect(obj_def.description == null);
+    try std.testing.expect(std.mem.eql(u8, obj_def.name.value, "UserType"));
 
-    try std.testing.expect(objDef.values != null);
-    try std.testing.expect(objDef.values.?.len == 3);
+    try std.testing.expect(obj_def.values != null);
+    try std.testing.expect(obj_def.values.?.len == 3);
 
-    const values = objDef.values.?;
+    const values = obj_def.values.?;
     try std.testing.expect(std.mem.eql(u8, values[0].name.value, "GUEST"));
     try std.testing.expect(std.mem.eql(u8, values[1].name.value, "REGISTERED"));
     try std.testing.expect(std.mem.eql(u8, values[2].name.value, "ADMIN"));
@@ -610,18 +610,18 @@ test "should parse a input type definition" {
     const def = dn.TypeSystemDefinition;
     try std.testing.expect(def == ast.TypeSystemDefinitionNode.TypeDefinition);
 
-    const typeDef = def.TypeDefinition;
-    try std.testing.expect(typeDef == ast.TypeDefinitionNode.InputObjectTypeDefinition);
+    const type_def = def.TypeDefinition;
+    try std.testing.expect(type_def == ast.TypeDefinitionNode.InputObjectTypeDefinition);
 
-    const objDef = typeDef.InputObjectTypeDefinition;
-    try std.testing.expect(objDef.description == null);
-    try std.testing.expect(std.mem.eql(u8, objDef.name.value, "UserInput"));
+    const obj_def = type_def.InputObjectTypeDefinition;
+    try std.testing.expect(obj_def.description == null);
+    try std.testing.expect(std.mem.eql(u8, obj_def.name.value, "UserInput"));
 
-    try std.testing.expect(objDef.directives == null);
-    try std.testing.expect(objDef.fields != null);
-    try std.testing.expect(objDef.fields.?.len == 2);
+    try std.testing.expect(obj_def.directives == null);
+    try std.testing.expect(obj_def.fields != null);
+    try std.testing.expect(obj_def.fields.?.len == 2);
 
-    const fields = objDef.fields.?;
+    const fields = obj_def.fields.?;
     try std.testing.expect(std.mem.eql(u8, fields[0].name.value, "id"));
     try std.testing.expect(std.mem.eql(u8, fields[1].name.value, "name"));
 }
@@ -644,9 +644,9 @@ test "should parse a directive definition" {
     const def = dn.TypeSystemDefinition;
     try std.testing.expect(def == ast.TypeSystemDefinitionNode.DirectiveDefinition);
 
-    const dirDef = def.DirectiveDefinition;
-    try std.testing.expect(dirDef.description == null);
-    try std.testing.expect(std.mem.eql(u8, dirDef.name.value, "auth"));
+    const dir_def = def.DirectiveDefinition;
+    try std.testing.expect(dir_def.description == null);
+    try std.testing.expect(std.mem.eql(u8, dir_def.name.value, "auth"));
 }
 
 test "should parse a fragment definition" {
@@ -670,23 +670,23 @@ test "should parse a fragment definition" {
     const def = dn.ExecutableDefinition;
     try std.testing.expect(def == ast.ExecutableDefinitionNode.FragmentDefinition);
 
-    const fragDef = def.FragmentDefinition;
-    try std.testing.expect(std.mem.eql(u8, fragDef.name.value, "UserFragment"));
+    const frag_def = def.FragmentDefinition;
+    try std.testing.expect(std.mem.eql(u8, frag_def.name.value, "UserFragment"));
 
-    try std.testing.expect(std.mem.eql(u8, fragDef.typeCondition.name.value, "User"));
-    try std.testing.expect(fragDef.selectionSet.selections.len == 2);
+    try std.testing.expect(std.mem.eql(u8, frag_def.type_condition.name.value, "User"));
+    try std.testing.expect(frag_def.selection_set.selections.len == 2);
 
-    const selOne = fragDef.selectionSet.selections[0];
-    try std.testing.expect(selOne == ast.SelectionNode.Field);
+    const sel_one = frag_def.selection_set.selections[0];
+    try std.testing.expect(sel_one == ast.SelectionNode.Field);
 
-    const fOne = selOne.Field;
-    try std.testing.expect(std.mem.eql(u8, fOne.name.value, "id"));
+    const f_one = sel_one.Field;
+    try std.testing.expect(std.mem.eql(u8, f_one.name.value, "id"));
 
-    const selTwo = fragDef.selectionSet.selections[1];
-    try std.testing.expect(selTwo == ast.SelectionNode.Field);
+    const sel_two = frag_def.selection_set.selections[1];
+    try std.testing.expect(sel_two == ast.SelectionNode.Field);
 
-    const fTwo = selTwo.Field;
-    try std.testing.expect(std.mem.eql(u8, fTwo.name.value, "name"));
+    const f_two = sel_two.Field;
+    try std.testing.expect(std.mem.eql(u8, f_two.name.value, "name"));
 }
 
 test "should parse a schema extension" {
@@ -709,18 +709,18 @@ test "should parse a schema extension" {
 
     const def = dn.TypeSystemExtension;
     try std.testing.expect(def == ast.TypeSystemExtensionNode.SchemaExtension);
-    const schemaExt = def.SchemaExtension;
+    const schema_ext = def.SchemaExtension;
 
-    try std.testing.expect(schemaExt.directives != null);
-    try std.testing.expect(schemaExt.directives.?.len == 1);
-    try std.testing.expect(std.mem.eql(u8, schemaExt.directives.?[0].name.value, "directive"));
+    try std.testing.expect(schema_ext.directives != null);
+    try std.testing.expect(schema_ext.directives.?.len == 1);
+    try std.testing.expect(std.mem.eql(u8, schema_ext.directives.?[0].name.value, "directive"));
 
-    try std.testing.expect(schemaExt.operationTypes != null);
-    try std.testing.expect(schemaExt.operationTypes.?.len == 2);
-    try std.testing.expect(std.mem.eql(u8, schemaExt.operationTypes.?[0].type.name.value, "Query"));
-    try std.testing.expect(std.mem.eql(u8, schemaExt.operationTypes.?[1].type.name.value, "Mutation"));
-    try std.testing.expect(schemaExt.operationTypes.?[0].operation == ast.OperationType.Query);
-    try std.testing.expect(schemaExt.operationTypes.?[1].operation == ast.OperationType.Mutation);
+    try std.testing.expect(schema_ext.operation_types != null);
+    try std.testing.expect(schema_ext.operation_types.?.len == 2);
+    try std.testing.expect(std.mem.eql(u8, schema_ext.operation_types.?[0].type.name.value, "Query"));
+    try std.testing.expect(std.mem.eql(u8, schema_ext.operation_types.?[1].type.name.value, "Mutation"));
+    try std.testing.expect(schema_ext.operation_types.?[0].operation == ast.OperationType.Query);
+    try std.testing.expect(schema_ext.operation_types.?[1].operation == ast.OperationType.Mutation);
 }
 
 test "should parse nested types like [String!]" {
@@ -737,13 +737,13 @@ test "should parse nested types like [String!]" {
     const doc = try p.parse();
 
     const def = doc.definitions[0].TypeSystemDefinition.TypeDefinition.ObjectTypeDefinition;
-    const tagField = def.fields.?[0];
+    const tag_field = def.fields.?[0];
 
-    try std.testing.expect(tagField.type.* == ast.TypeNode.NonNullType); // !
-    try std.testing.expect(tagField.type.*.NonNullType.type.* == ast.TypeNode.ListType); // []
-    try std.testing.expect(tagField.type.*.NonNullType.type.*.ListType.type.* == ast.TypeNode.NonNullType); // !
-    try std.testing.expect(tagField.type.*.NonNullType.type.*.ListType.type.*.NonNullType.type.* == ast.TypeNode.NamedType); // String
-    try std.testing.expect(std.mem.eql(u8, tagField.type.*.NonNullType.type.*.ListType.type.*.NonNullType.type.*.NamedType.name.value, "String"));
+    try std.testing.expect(tag_field.type.* == ast.TypeNode.NonNullType); // !
+    try std.testing.expect(tag_field.type.*.NonNullType.type.* == ast.TypeNode.ListType); // []
+    try std.testing.expect(tag_field.type.*.NonNullType.type.*.ListType.type.* == ast.TypeNode.NonNullType); // !
+    try std.testing.expect(tag_field.type.*.NonNullType.type.*.ListType.type.*.NonNullType.type.* == ast.TypeNode.NamedType); // String
+    try std.testing.expect(std.mem.eql(u8, tag_field.type.*.NonNullType.type.*.ListType.type.*.NonNullType.type.*.NamedType.name.value, "String"));
 }
 
 test "should parse a field with a single directive without arguments" {
@@ -763,7 +763,7 @@ test "should parse a field with a single directive without arguments" {
 
     try std.testing.expect(doc.definitions.len == 1);
     const op = doc.definitions[0].ExecutableDefinition.OperationDefinition;
-    const field = op.selectionSet.?.selections[0].Field;
+    const field = op.selection_set.?.selections[0].Field;
 
     try std.testing.expect(std.mem.eql(u8, field.name.value, "user"));
     try std.testing.expect(field.directives != null);
@@ -790,7 +790,7 @@ test "should parse a field with a directive with arguments" {
     const doc = try p.parse();
 
     const op = doc.definitions[0].ExecutableDefinition.OperationDefinition;
-    const field = op.selectionSet.?.selections[0].Field;
+    const field = op.selection_set.?.selections[0].Field;
 
     try std.testing.expect(field.directives != null);
     try std.testing.expect(field.directives.?.len == 1);
@@ -820,19 +820,19 @@ test "should parse directives on type definition" {
     var p = Parser.init(allocator, source);
     const doc = try p.parse();
 
-    const objDef = doc.definitions[0].TypeSystemDefinition.TypeDefinition.ObjectTypeDefinition;
+    const obj_def = doc.definitions[0].TypeSystemDefinition.TypeDefinition.ObjectTypeDefinition;
 
-    try std.testing.expect(objDef.directives != null);
-    try std.testing.expect(objDef.directives.?.len == 2);
+    try std.testing.expect(obj_def.directives != null);
+    try std.testing.expect(obj_def.directives.?.len == 2);
 
-    const dir1 = objDef.directives.?[0];
-    try std.testing.expect(std.mem.eql(u8, dir1.name.value, "auth"));
-    try std.testing.expect(dir1.arguments == null);
+    const dir_one = obj_def.directives.?[0];
+    try std.testing.expect(std.mem.eql(u8, dir_one.name.value, "auth"));
+    try std.testing.expect(dir_one.arguments == null);
 
-    const dir2 = objDef.directives.?[1];
-    try std.testing.expect(std.mem.eql(u8, dir2.name.value, "cached"));
-    try std.testing.expect(dir2.arguments != null);
-    try std.testing.expect(dir2.arguments.?.len == 1);
+    const dir_two = obj_def.directives.?[1];
+    try std.testing.expect(std.mem.eql(u8, dir_two.name.value, "cached"));
+    try std.testing.expect(dir_two.arguments != null);
+    try std.testing.expect(dir_two.arguments.?.len == 1);
 }
 
 test "should parse directives on field definition" {
@@ -848,8 +848,8 @@ test "should parse directives on field definition" {
     var p = Parser.init(allocator, source);
     const doc = try p.parse();
 
-    const objDef = doc.definitions[0].TypeSystemDefinition.TypeDefinition.ObjectTypeDefinition;
-    const field = objDef.fields.?[0];
+    const obj_def = doc.definitions[0].TypeSystemDefinition.TypeDefinition.ObjectTypeDefinition;
+    const field = obj_def.fields.?[0];
 
     try std.testing.expect(std.mem.eql(u8, field.name.value, "email"));
     try std.testing.expect(field.directives != null);
