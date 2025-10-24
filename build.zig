@@ -13,7 +13,7 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
         .version = .{
             .major = 0,
-            .minor = 0,
+            .minor = 1,
             .patch = 0,
         },
     });
