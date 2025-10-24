@@ -1,7 +1,6 @@
 const std = @import("std");
 const text = @import("../util/text.zig");
 const tokens = @import("tokens.zig");
-const CharIterator = text.CharIterator;
 const Token = tokens.Token;
 const TokenKind = tokens.TokenKind;
 
@@ -9,16 +8,16 @@ pub const Cursor = struct {
     pending: ?u8,
     index: usize,
     offset: usize,
+    read_pos: usize,
     source: []const u8,
-    chars: CharIterator,
 
     pub fn init(input: []const u8) Cursor {
         return Cursor{
+            .pending = null,
             .index = 0,
             .offset = 0,
+            .read_pos = 0,
             .source = input,
-            .chars = CharIterator.init(input),
-            .pending = null,
         };
     }
 
@@ -40,16 +39,19 @@ pub const Cursor = struct {
     pub fn currentStr(self: *Cursor) []const u8 {
         self.pending = null;
 
-        const nxt = self.chars.next();
-        if (nxt != null) {
+        if (self.read_pos < self.source.len) {
             const current = self.index;
-            self.index = nxt.?.pos;
-            self.offset = nxt.?.pos;
-            self.pending = nxt.?.char;
-            return self.source[current..nxt.?.pos];
+            const c = self.source[self.read_pos];
+            const pos = self.read_pos;
+            self.read_pos += 1;
+
+            self.index = pos;
+            self.offset = pos;
+            self.pending = c;
+            return self.source[current..pos];
         } else {
             const current = self.index;
-            self.index = self.source.len - 1;
+            self.index = self.source.len;
             return self.source[current..];
         }
     }
@@ -60,16 +62,14 @@ pub const Cursor = struct {
             return c;
         }
 
-        if (self.offset >= self.source.len) {
+        if (self.read_pos >= self.source.len) {
             return null;
         }
 
-        const ex = self.chars.next();
-        if (ex == null) {
-            return null;
-        }
-        const c = ex.?.char;
-        self.offset = ex.?.pos;
+        const c = self.source[self.read_pos];
+        const pos = self.read_pos;
+        self.read_pos += 1;
+        self.offset = pos;
 
         return c;
     }
@@ -80,14 +80,11 @@ pub const Cursor = struct {
             return error.InvalidState;
         }
 
-        if (self.offset < self.source.len) {
-            const ex = self.chars.next();
-            if (ex == null) {
-                return false;
-            }
-
-            const c_in = ex.?.char;
-            self.offset = ex.?.pos;
+        if (self.read_pos < self.source.len) {
+            const c_in = self.source[self.read_pos];
+            const pos = self.read_pos;
+            self.read_pos += 1;
+            self.offset = pos;
 
             if (c_in == c) {
                 return true;

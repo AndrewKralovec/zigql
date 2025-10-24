@@ -46,28 +46,3 @@ pub fn isNameStart(c: u8) bool {
         else => false,
     };
 }
-
-pub const CharExponent = struct {
-    char: u8,
-    pos: usize,
-};
-
-pub const CharIterator = struct {
-    source: []const u8,
-    index: usize = 0,
-    pub fn init(source: []const u8) CharIterator {
-        return CharIterator{ .source = source };
-    }
-    pub fn next(self: *CharIterator) ?CharExponent {
-        if (self.index >= self.source.len) {
-            return null;
-        }
-
-        const index = self.index;
-        const c = self.source[index];
-        const r = CharExponent{ .char = c, .pos = index };
-
-        self.index += 1;
-        return r;
-    }
-};
