@@ -2,6 +2,13 @@
 A graphql parsing library written in zig.
 After reading that [bun](https://bun.sh/) was coded in zig, i wanted to try it out.
 
+## Table of Contents
+
+- [Getting Started](#getting-started)
+- [Usage](#usage)
+- [TODO](#todo)
+- [Inspiration And Resources](#inspiration-and-resources)
+
 ## Getting Started
 
 ### Prerequisites
@@ -106,14 +113,14 @@ It is recommended to limit how far the lexer can scan. Use `withLimit()` to crea
 Example.
 ```zig
 var lexer = Lexer.init(source);
-var limitedLexer = lexer.withLimit(10); // Only scan up to 10 tokens
+var limited_lexer = lexer.withLimit(10); // Only scan up to 10 tokens
 
 const result = try limitedLexer.lex(allocator);
 defer {
     allocator.free(result.tokens);
     allocator.free(result.errors);
 }
-// result.errors will contain LimitReached if we hit the limit
+// result.errors will contain limited_lexer if we hit the limit
 ```
 
 ### Parser
@@ -176,18 +183,13 @@ const doc = try zigql.parseWithLimit(allocator, source, 100);
 Example with `withLimit()`.
 ```zig
 var parser = Parser.init(allocator, source);
-var limitedParser = parser.withLimit(100); // Only process up to 100 tokens
+var limited_parser = parser.withLimit(100); // Only process up to 100 tokens
 
 const doc = try limitedParser.parse();
 // Will throw LimitReached error if we hit the limit
 ```
 
 ## TODO
-
-### Known Issues
-
-#### LLVM Issue
-There seems to be a problem with the LLVM version when splitting long-running functions into smaller ones. Investigate why valid syntax raises issues with LLVM 18.1.7. Once this is resolved we can clean up the code.
 
 ### Improvements
 
@@ -214,7 +216,7 @@ Investigate a Ziggy way to handle repeated parsing logic without duplicating cod
 #### Testing
 Research best practices for organizing and executing tests in Zig. Currently, unit tests are embedded in the source files, which seems to align with Zig conventions but may not scale well as the project gets bigger.
 
-### Inspiration And Resources
+## Inspiration And Resources
 This project was inspired by a mix of curiosity for [zig](https://ziglang.org/), and a desire to see its use in web services.
 
 I also drew inspiration from existing GraphQL libraries like [graphql-js](https://github.com/graphql/graphql-js) ([MIT](https://github.com/apollographql/apollo-rs/blob/main/LICENSE-MIT)) and [apollo-rs](https://github.com/apollographql/apollo-rs) ([MIT](https://github.com/apollographql/apollo-rs/blob/main/LICENSE-MIT)). They provided a great reference for how a GraphQL parser should behave.
