@@ -115,12 +115,12 @@ Example.
 var lexer = Lexer.init(source);
 var limited_lexer = lexer.withLimit(10); // Only scan up to 10 tokens
 
-const result = try limitedLexer.lex(allocator);
+const result = try limited_lexer.lex(allocator);
 defer {
     allocator.free(result.tokens);
     allocator.free(result.errors);
 }
-// result.errors will contain limited_lexer if we hit the limit
+// result.errors will contain LimitReached if we hit the limit
 ```
 
 ### Parser
