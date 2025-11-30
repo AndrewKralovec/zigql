@@ -96,6 +96,35 @@ pub const Cursor = struct {
         return false;
     }
 
+    fn handleEof(self: *Cursor, state: State, token: Token) !Token {
+        var result = token;
+        switch (state) {
+            State.Start => {
+                result.index = result.index + 1;
+                return result;
+            },
+            State.StringLiteralStart => {
+                return error.UnexpectedEndOfData;
+            },
+            State.StringLiteral, State.BlockStringLiteral, State.StringLiteralEscapedUnicode, State.BlockStringLiteralBackslash, State.StringLiteralBackslash => {
+                return error.UnterminatedString;
+            },
+            State.SpreadOperator => {
+                return error.UnterminatedSpreadOperator;
+            },
+            State.MinusSign => {
+                return error.UnexpectedCharacter;
+            },
+            State.DecimalPoint, State.ExponentIndicator, State.ExponentSign => {
+                return error.UnexpectedEOFInFloat;
+            },
+            State.Ident, State.LeadingZero, State.IntegerPart, State.FractionalPart, State.ExponentDigit, State.Whitespace, State.Comment => {
+                result.data = self.currentStr();
+                return result;
+            },
+        }
+    }
+
     // TODO: Split this up into smaller functions. There seems to be a problem with the LLVM version when doing so.
     // Need to investigate further.
     pub fn advance(self: *Cursor) !Token {
@@ -107,40 +136,12 @@ pub const Cursor = struct {
             .data = "",
             .index = self.index,
         };
-
         while (true) {
-            var c_opt = self.bump();
+            const c_opt = self.bump();
             if (c_opt == null) {
-                // TODO: Fix llvm error (version: 0.14.0-dev.544+7aaebd17).
-                // Make this long running block of code a self.eof func once zig is fixed.
-                switch (state) {
-                    State.Start => {
-                        token.index = token.index + 1;
-                        return token;
-                    },
-                    State.StringLiteralStart => {
-                        return error.UnexpectedEndOfData;
-                    },
-                    State.StringLiteral, State.BlockStringLiteral, State.StringLiteralEscapedUnicode, State.BlockStringLiteralBackslash, State.StringLiteralBackslash => {
-                        return error.UnterminatedString;
-                    },
-                    State.SpreadOperator => {
-                        return error.UnterminatedSpreadOperator;
-                    },
-                    State.MinusSign => {
-                        return error.UnexpectedCharacter;
-                    },
-                    State.DecimalPoint, State.ExponentIndicator, State.ExponentSign => {
-                        return error.UnexpectedEOFInFloat;
-                    },
-                    State.Ident, State.LeadingZero, State.IntegerPart, State.FractionalPart, State.ExponentDigit, State.Whitespace, State.Comment => {
-                        token.data = self.currentStr();
-                        return token;
-                    },
-                }
+                return self.handleEof(state, token);
             }
             const c = c_opt.?;
-            c_opt = null; // TODO: trick compiler so i can use var, figure out proper way to do this in zig.
             switch (state) {
                 State.Start => {
                     const t = tokens.punctuationKind(c);
