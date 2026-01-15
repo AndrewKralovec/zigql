@@ -27,7 +27,8 @@ pub fn parseScalarTypeExtension(p: *Parser) !ast.ScalarTypeExtensionNode {
     const name = try parseName(p);
     const directives = try parseConstDirectives(p);
 
-    if (directives.?.len == 0) {
+    const directives_empty = if (directives) |d| d.len == 0 else true;
+    if (directives_empty) {
         return error.UnexpectedToken;
     }
 

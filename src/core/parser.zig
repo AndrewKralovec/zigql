@@ -862,6 +862,38 @@ test "should parse directives on field definition" {
     try std.testing.expect(std.mem.eql(u8, directive.arguments.?[0].name.value, "reason"));
 }
 
+test "should parse query mixed type definitions" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    const allocator = arena.allocator();
+    const source =
+        \\ query Foo {
+        \\   user {
+        \\     name
+        \\   }
+        \\ }
+        \\ type User {
+        \\   name: String
+        \\ }
+        \\ extend type Guest {
+        \\   role: String
+        \\ }
+    ;
+    var p = Parser.init(allocator, source);
+    const doc = try p.parse();
+    try std.testing.expect(doc.definitions.len == 3);
+
+    const operation_def = doc.definitions[0].ExecutableDefinition.OperationDefinition;
+    try std.testing.expect(std.mem.eql(u8, operation_def.name.?.value, "Foo"));
+
+    const type_def = doc.definitions[1].TypeSystemDefinition.TypeDefinition;
+    try std.testing.expect(std.mem.eql(u8, type_def.ObjectTypeDefinition.name.value, "User"));
+
+    const type_ext = doc.definitions[2].TypeSystemExtension.TypeExtension;
+    try std.testing.expect(std.mem.eql(u8, type_ext.ObjectTypeExtension.name.value, "Guest"));
+}
+
 test "should return error when limit is reached" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();

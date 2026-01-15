@@ -28,7 +28,9 @@ pub fn parseSchemaExtension(p: *Parser) !ast.SchemaExtensionNode {
     const directives = try parseConstDirectives(p);
     const operation_types = try parseOptionalOperationTypeDefinitions(p);
 
-    if (directives.?.len == 0 and operation_types.?.len == 0) {
+    const directives_empty = if (directives) |d| d.len == 0 else true;
+    const operation_types_empty = if (operation_types) |o| o.len == 0 else true;
+    if (directives_empty and operation_types_empty) {
         return error.UnexpectedToken;
     }
 
