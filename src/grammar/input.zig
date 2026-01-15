@@ -71,7 +71,9 @@ pub fn parseInputObjectTypeExtension(p: *Parser) !ast.InputObjectTypeExtensionNo
     const directives = try parseConstDirectives(p);
     const fields = try parseInputFieldsDefinition(p);
 
-    if (directives.?.len == 0 and fields.?.len == 0) {
+    const directives_empty = if (directives) |d| d.len == 0 else true;
+    const fields_empty = if (fields) |f| f.len == 0 else true;
+    if (directives_empty and fields_empty) {
         return error.UnexpectedToken;
     }
 

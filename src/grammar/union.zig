@@ -52,7 +52,9 @@ pub fn parseUnionTypeExtension(p: *Parser) !ast.UnionTypeExtensionNode {
     const directives = try parseConstDirectives(p);
     const types = try parseUnionMemberTypes(p);
 
-    if (directives.?.len == 0 and types.?.len == 0) {
+    const directives_empty = if (directives) |d| d.len == 0 else true;
+    const types_empty = if (types) |f| f.len == 0 else true;
+    if (directives_empty and types_empty) {
         return error.UnexpectedToken;
     }
 

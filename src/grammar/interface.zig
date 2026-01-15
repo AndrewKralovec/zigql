@@ -56,7 +56,10 @@ pub fn parseInterfaceTypeExtension(p: *Parser) !ast.InterfaceTypeExtensionNode {
     const directives = try parseConstDirectives(p);
     const fields = try parseFieldsDefinition(p);
 
-    if (interfaces.?.len == 0 and directives.?.len == 0 and fields.?.len == 0) {
+    const interfaces_empty = if (interfaces) |i| i.len == 0 else true;
+    const directives_empty = if (directives) |d| d.len == 0 else true;
+    const fields_empty = if (fields) |f| f.len == 0 else true;
+    if (interfaces_empty and directives_empty and fields_empty) {
         return error.UnexpectedToken;
     }
 
