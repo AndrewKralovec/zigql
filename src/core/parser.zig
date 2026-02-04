@@ -649,6 +649,55 @@ test "should parse a directive definition" {
     try std.testing.expect(std.mem.eql(u8, dir_def.name.value, "auth"));
 }
 
+test "should parse a directive definition with arguments" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    const allocator = arena.allocator();
+    const source =
+        \\ directive @deprecated(
+        \\   reason: String = "No longer supported"
+        \\   removeDate: String
+        \\ ) on FIELD_DEFINITION | ENUM_VALUE
+    ;
+    var p = Parser.init(allocator, source);
+    const doc = try p.parse();
+    try std.testing.expect(doc.definitions.len == 1);
+
+    const dn = doc.definitions[0];
+    try std.testing.expect(dn == ast.DefinitionNode.TypeSystemDefinition);
+
+    const def = dn.TypeSystemDefinition;
+    try std.testing.expect(def == ast.TypeSystemDefinitionNode.DirectiveDefinition);
+
+    const dir_def = def.DirectiveDefinition;
+    try std.testing.expect(dir_def.description == null);
+    try std.testing.expect(std.mem.eql(u8, dir_def.name.value, "deprecated"));
+
+    // Verify arguments are parsed correctly (this is the bug fix verification)
+    try std.testing.expect(dir_def.arguments != null);
+    try std.testing.expect(dir_def.arguments.?.len == 2);
+
+    const args = dir_def.arguments.?;
+    try std.testing.expect(std.mem.eql(u8, args[0].name.value, "reason"));
+    try std.testing.expect(args[0].type.* == ast.TypeNode.NamedType);
+    try std.testing.expect(std.mem.eql(u8, args[0].type.*.NamedType.name.value, "String"));
+    try std.testing.expect(args[0].default_value != null);
+
+    try std.testing.expect(std.mem.eql(u8, args[1].name.value, "removeDate"));
+    try std.testing.expect(args[1].type.* == ast.TypeNode.NamedType);
+    try std.testing.expect(std.mem.eql(u8, args[1].type.*.NamedType.name.value, "String"));
+    try std.testing.expect(args[1].default_value == null);
+
+    // Verify repeatable is false
+    try std.testing.expect(dir_def.repeatable == false);
+
+    // Verify locations
+    try std.testing.expect(dir_def.locations.len == 2);
+    try std.testing.expect(std.mem.eql(u8, dir_def.locations[0].value, "FIELD_DEFINITION"));
+    try std.testing.expect(std.mem.eql(u8, dir_def.locations[1].value, "ENUM_VALUE"));
+}
+
 test "should parse a fragment definition" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();

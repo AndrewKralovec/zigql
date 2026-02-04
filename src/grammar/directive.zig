@@ -5,8 +5,8 @@ const TokenKind = @import("../core/tokens.zig").TokenKind;
 
 const parseDescription = @import("./description.zig").parseDescription;
 const parseName = @import("./name.zig").parseName;
-const parseInputFieldsDefinition = @import("./input.zig").parseInputFieldsDefinition;
 const parseArguments = @import("./argument.zig").parseArguments;
+const parseArgumentDefs = @import("./argument.zig").parseArgumentDefs;
 
 pub fn parseDirectiveDefinition(p: *Parser) !ast.DirectiveDefinitionNode {
     p.debug("parseDirectiveDefinition");
@@ -15,7 +15,7 @@ pub fn parseDirectiveDefinition(p: *Parser) !ast.DirectiveDefinitionNode {
     _ = try p.expect(TokenKind.At);
 
     const name = try parseName(p);
-    const args = try parseInputFieldsDefinition(p);
+    const args = try parseArgumentDefs(p);
     const repeatable = try p.expectOptionalKeyword(ast.SyntaxKeyWord.Repeatable);
     _ = try p.expectKeyword(ast.SyntaxKeyWord.On);
 
