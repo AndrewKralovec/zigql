@@ -14,7 +14,7 @@ pub fn build(b: *std.Build) void {
         .version = .{
             .major = 0,
             .minor = 1,
-            .patch = 1,
+            .patch = 2,
         },
     });
 
