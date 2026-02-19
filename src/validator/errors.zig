@@ -3,6 +3,9 @@ const Allocator = std.mem.Allocator;
 
 pub const ValidationErrorKind = enum {
     NonExecutableDefinition,
+    // TODO: remove later. This is a default error just to let zig build.
+    // an enum of one will lead to a division by zero error
+    Unknown,
 };
 
 // TODO: import the validation object in the future
