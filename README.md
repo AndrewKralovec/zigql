@@ -42,10 +42,11 @@ zig build test
 
 ## Usage
 
-ZigQL provides two main components for working with GraphQL.
+ZigQL provides three main components for working with GraphQL.
 
 - [Lexer](#lexer) for tokenization.
 - [Parser](#parser) for building an abstract syntax tree (AST).
+- [Validator](#validator) (Work in progress) for validating GraphQL documents against the specification.
 
 ### Lexer
 
@@ -54,7 +55,7 @@ The `Lexer` tokenizes GraphQL text into individual tokens, which can then be pro
 #### Batch Lexing
 
 The simplest way to use the lexer is to tokenize an entire GraphQL document at once. The `lex()` method returns both tokens and any errors encountered during scanning.
-This approach is useful when you need an error resilient lexer that will not stop at the first error it encounters. This method instead collections errors and tokens, giving you the complete tokenized data.
+This approach is useful when you need an error resilient lexer that will not stop at the first error it encounters. This method instead collections errors and tokens, giving you the TODO tokenized data.
 
 
 Example.
@@ -188,6 +189,55 @@ var limited_parser = parser.withLimit(100); // Only process up to 100 tokens
 const doc = try limitedParser.parse();
 // Will throw LimitReached error if we hit the limit
 ```
+
+### Validator
+
+TODO: WIP
+
+#### Validation Rules
+
+The validator implements the following GraphQL validation rules:
+
+| Rule | Description | Status |
+|------|-------------|--------|
+| **Executable Definition Rules** | | |
+| ExecutableDefinitionsRule | A GraphQL document is only valid for execution if all definitions are either operation or fragment definitions. | COMPLETE |
+| FieldsOnCorrectTypeRule | Fields selected on an object, interface, or union must be defined on that type. | TODO |
+| FragmentsOnCompositeTypesRule | Fragments can only be spread into a composite type (object, interface, or union). | TODO |
+| KnownArgumentNamesRule | All arguments provided to a field or directive must be defined by that field or directive. | TODO |
+| KnownDirectivesRule | All directives used must be defined in the schema and used in valid locations. | TODO |
+| KnownFragmentNamesRule | All fragment spreads must refer to fragments defined in the same document. | TODO |
+| KnownTypeNamesRule | All referenced types (in variable definitions and fragment conditions) must be defined in the schema. | TODO |
+| LoneAnonymousOperationRule | A document containing an anonymous operation must contain only that one operation. | COMPLETE |
+| NoFragmentCyclesRule | Fragments must not form cycles via fragment spreads. | TODO |
+| NoUndefinedVariablesRule | All variables used in an operation must be defined by that operation. | TODO |
+| NoUnusedFragmentsRule | All fragment definitions must be used within operations or other used fragments. | TODO |
+| NoUnusedVariablesRule | All variables defined by an operation must be used in that operation. | TODO |
+| OverlappingFieldsCanBeMergedRule | Fields selected in the same scope must have compatible types and arguments. | TODO |
+| PossibleFragmentSpreadsRule | Fragment spreads must be on types that are possible given the parent type. | TODO |
+| ProvidedRequiredArgumentsRule | All required arguments on fields and directives must be provided. | TODO |
+| ScalarLeafsRule | Leaf fields (fields without sub-selections) must be scalar or enum types. | TODO |
+| SingleFieldSubscriptionsRule | Subscription operations must contain exactly one root field. | TODO |
+| UniqueArgumentNamesRule | Argument names must be unique within a field or directive call. | TODO |
+| UniqueDirectivesPerLocationRule | Directives that are not repeatable must appear at most once per location. | TODO |
+| UniqueFragmentNamesRule | Fragment names must be unique within a document. | TODO |
+| UniqueInputFieldNamesRule | Input field names must be unique within an input object value. | TODO |
+| UniqueOperationNamesRule | Operation names must be unique within a document. | TODO |
+| UniqueVariableNamesRule | Variable names must be unique within an operation. | TODO |
+| ValuesOfCorrectTypeRule | Input values must be compatible with their expected input types. | TODO |
+| VariablesAreInputTypesRule | Variables must be of input types (scalar, enum, or input object). | TODO |
+| VariablesInAllowedPositionRule | Variables must be used in locations compatible with their defined types. | TODO |
+| **Schema Definition Rules** | | |
+| LoneSchemaDefinitionRule | A document must contain at most one schema definition. | TODO |
+| UniqueOperationTypesRule | There must be at most one of each operation type (query, mutation, subscription) in a schema definition. | TODO |
+| UniqueTypeNamesRule | Type names must be unique within a schema. | TODO |
+| UniqueEnumValueNamesRule | Enum value names must be unique within an enum type definition. | TODO |
+| UniqueFieldDefinitionNamesRule | Field names must be unique within an object, interface, or input object type definition. | TODO |
+| UniqueArgumentDefinitionNamesRule | Argument names must be unique within a field or directive definition. | TODO |
+| UniqueDirectiveNamesRule | Directive names must be unique within the schema. | TODO |
+| PossibleTypeExtensionsRule | Type extensions must extend a type that exists in the schema. | TODO |
+| **Recommended Security Rules** | | |
+| MaxIntrospectionDepthRule | Introspection queries must not exceed a depth limit to prevent DoS attacks. | TODO |
 
 ## TODO
 
