@@ -7,9 +7,10 @@ const std = @import("std");
 pub const ast = @import("grammar/ast.zig");
 pub const Lexer = @import("core/lexer.zig").Lexer;
 pub const Parser = @import("core/parser.zig").Parser;
+pub const Validator = @import("validator/validator.zig").Validator;
 pub const parse = @import("core/parser.zig").parse;
 pub const parseWithLimit = @import("core/parser.zig").parseWithLimit;
-
+pub const validateQuery = @import("validator/validator.zig").validateQuery;
 //
 // Test cases for the zigql module
 //
@@ -22,4 +23,6 @@ test {
     _ = @import("grammar/ast.zig");
     _ = @import("core/lexer.zig");
     _ = @import("core/parser.zig");
+    _ = @import("validator/validator.zig");
+    _ = @import("validator/validate.zig");
 }

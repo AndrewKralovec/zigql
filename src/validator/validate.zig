@@ -1,0 +1,9 @@
+const std = @import("std");
+const ast = @import("../grammar/ast.zig");
+const ValidationContext = @import("validation_context.zig").ValidationContext;
+
+const document_checks = @import("checks/document.zig");
+
+pub fn validateDocument(ctx: *ValidationContext, doc: ast.DocumentNode) !void {
+    try document_checks.checkExecutableDefinitions(ctx, doc.definitions);
+}
