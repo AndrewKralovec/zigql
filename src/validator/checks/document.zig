@@ -1,6 +1,13 @@
 const std = @import("std");
 const ast = @import("../../grammar/ast.zig");
 const ValidationContext = @import("../validation_context.zig").ValidationContext;
+
+/// Executable definitions
+///
+/// A GraphQL document is only valid for execution if all definitions are either
+/// operation or fragment definitions.
+///
+/// See https://spec.graphql.org/draft/#sec-Executable-Definitions
 pub fn checkExecutableDefinitions(ctx: *ValidationContext, definitions: []const ast.DefinitionNode) !void {
     for (definitions) |definition| {
         switch (definition) {
