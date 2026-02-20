@@ -41,6 +41,10 @@ pub const ValidationContext = struct {
             err.deinit();
         }
         self.errors.deinit();
+
+        self.seen_names.deinit();
+        self.operation_names.deinit();
+        self.fragment_names.deinit();
     }
 
     pub fn addError(self: *ValidationContext, kind: ValidationErrorKind) !void {

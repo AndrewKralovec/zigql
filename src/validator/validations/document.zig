@@ -9,8 +9,8 @@ pub fn validateDocument(ctx: *ValidationContext, doc: ast.DocumentNode) !void {
     for (doc.definitions) |def| {
         switch (def) {
             .ExecutableDefinition => |ex| switch (ex) {
-                .OperationDefinition => |op| try validateOperation(op),
-                .FragmentDefinition => |frag| try validateFragment(frag),
+                .OperationDefinition => |op| try validateOperation(ctx, op),
+                .FragmentDefinition => |frag| try validateFragment(ctx, frag),
             },
             .TypeSystemDefinition, .TypeSystemExtension => {
                 try ctx.addError(.NonExecutableDefinition);

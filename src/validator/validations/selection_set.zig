@@ -5,7 +5,7 @@ const ValidationContext = @import("../validation_context.zig").ValidationContext
 const checkUniqueArgs = @import("./argument.zig").checkUniqueArgs;
 const validateDirectives = @import("./directives.zig").validateDirectives;
 
-pub fn validateSelectionSet(ctx: *ValidationContext, sel_set: ast.SelectionSetNode) void {
+pub fn validateSelectionSet(ctx: *ValidationContext, sel_set: ast.SelectionSetNode) !void {
     for (sel_set.selections) |sel| {
         switch (sel) {
             .Field => |field| {

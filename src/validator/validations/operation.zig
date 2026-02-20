@@ -5,7 +5,7 @@ const ValidationContext = @import("../validation_context.zig").ValidationContext
 const validateDirectives = @import("./directives.zig").validateDirectives;
 const validateSelectionSet = @import("./selection_set.zig").validateSelectionSet;
 
-pub fn validateOperation(ctx: *ValidationContext, op: ast.OperationDefinitionNode) void {
+pub fn validateOperation(ctx: *ValidationContext, op: ast.OperationDefinitionNode) !void {
     // LoneAnonymousOperationRule, count operations
     ctx.operation_count += 1;
     if (op.name == null) {
@@ -38,8 +38,8 @@ pub fn validateOperation(ctx: *ValidationContext, op: ast.OperationDefinitionNod
         }
     }
 
-    try validateDirectives(op.directives);
+    try validateDirectives(ctx, op.directives);
     if (op.selection_set) |sel_set| {
-        try validateSelectionSet(sel_set);
+        try validateSelectionSet(ctx, sel_set);
     }
 }
