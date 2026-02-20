@@ -7,6 +7,7 @@ pub const ValidationErrorKind = enum {
     DuplicateOperationName,
     DuplicateFragmentName,
     DuplicateVariableName,
+    DuplicateArgumentName,
 };
 
 // TODO: import the validation object in the future

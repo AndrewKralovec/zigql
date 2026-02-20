@@ -10,7 +10,7 @@ const ValidationContext = @import("../validation_context.zig").ValidationContext
 /// See https:///spec.graphql.org/draft/#sec-Lone-Anonymous-Operation
 pub fn checkLoneAnonymousOperation(ctx: *ValidationContext, definitions: []const ast.DefinitionNode) !void {
     // TODO: remove later. writing out a fn for the rule just to get it out there.
-    // instead this data should be collected and checked in a single pass of definitions
+    // validation is doing multiple pass enhance laster
     var operation_count: u32 = 0;
     for (definitions) |definition| {
         switch (definition) {
@@ -48,7 +48,7 @@ pub fn checkLoneAnonymousOperation(ctx: *ValidationContext, definitions: []const
 /// See https://spec.graphql.org/draft/#sec-Operation-Name-Uniqueness
 pub fn checkUniqueOperationNames(ctx: *ValidationContext, definitions: []const ast.DefinitionNode) !void {
     // TODO: remove later. writing out a fn for the rule just to get it out there.
-    // instead this data should be collected and checked in a single pass of definitions
+    // validation is doing multiple pass enhance laster
     var known_operation_names = std.StringHashMap(void).init(ctx.allocator);
     defer known_operation_names.deinit();
 

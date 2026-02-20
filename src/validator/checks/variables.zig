@@ -9,7 +9,7 @@ const ValidationContext = @import("../validation_context.zig").ValidationContext
 // See https://spec.graphql.org/draft/#sec-Variable-Uniqueness
 pub fn checkUniqueVariableNames(ctx: *ValidationContext, definitions: []const ast.DefinitionNode) !void {
     // TODO: remove later. writing out a fn for the rule just to get it out there.
-    // instead this data should be collected and checked in a single pass of definitions
+    // validation is doing multiple pass enhance laster
     for (definitions) |definition| {
         switch (definition) {
             .ExecutableDefinition => |ex| switch (ex) {

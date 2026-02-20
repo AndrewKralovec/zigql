@@ -9,7 +9,7 @@ const ValidationContext = @import("../validation_context.zig").ValidationContext
 // See https://spec.graphql.org/draft/#sec-Fragment-Name-Uniqueness
 pub fn checkUniqueFragmentNames(ctx: *ValidationContext, definitions: []const ast.DefinitionNode) !void {
     // TODO: remove later. writing out a fn for the rule just to get it out there.
-    // instead this data should be collected and checked in a single pass of definitions
+    // validation is doing multiple pass enhance laster
     var known_fragment_ames = std.StringHashMap(void).init(ctx.allocator);
     defer known_fragment_ames.deinit();
 
