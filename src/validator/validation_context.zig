@@ -10,11 +10,29 @@ pub const ValidationContext = struct {
     errors: std.ArrayList(ValidationError),
     allocator: std.mem.Allocator,
 
+    // reusable map for uniqueness checks (arguments, variables, etc etc).
+    // clearred via clearRetainingCapacity
+    seen_names: std.StringHashMap(bool),
+
+    // doc uniqueness tracking (lives for entire validation)
+    operation_names: std.StringHashMap(void),
+    fragment_names: std.StringHashMap(void),
+
+    // operation tracking
+    operation_count: u32,
+    anonymous_operation_count: u32,
+
     pub fn init(allocator: std.mem.Allocator, schema_ref: *const schema.Schema) ValidationContext {
         return ValidationContext{
             .schema = schema_ref,
             .errors = std.ArrayList(ValidationError).init(allocator),
             .allocator = allocator,
+
+            .seen_names = std.StringHashMap(bool).init(allocator),
+            .operation_names = std.StringHashMap(void).init(allocator),
+            .fragment_names = std.StringHashMap(void).init(allocator),
+            .operation_count = 0,
+            .anonymous_operation_count = 0,
         };
     }
 
