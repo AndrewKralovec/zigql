@@ -4,6 +4,7 @@ const Allocator = std.mem.Allocator;
 pub const ValidationErrorKind = enum {
     NonExecutableDefinition,
     ManyAnonymousOperations,
+    DuplicateOperationName,
 };
 
 // TODO: import the validation object in the future

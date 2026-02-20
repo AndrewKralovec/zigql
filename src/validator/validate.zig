@@ -7,4 +7,5 @@ const document_checks = @import("checks/document.zig");
 pub fn validateDocument(ctx: *ValidationContext, doc: ast.DocumentNode) !void {
     try document_checks.checkExecutableDefinitions(ctx, doc.definitions);
     try document_checks.checkLoneAnonymousOperation(ctx, doc.definitions);
+    try document_checks.checkUniqueOperationNames(ctx, doc.definitions);
 }
