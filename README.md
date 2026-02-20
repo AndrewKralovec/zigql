@@ -220,7 +220,7 @@ The validator implements the following GraphQL validation rules:
 | SingleFieldSubscriptionsRule | Subscription operations must contain exactly one root field. | TODO |
 | UniqueArgumentNamesRule | Argument names must be unique within a field or directive call. | TODO |
 | UniqueDirectivesPerLocationRule | Directives that are not repeatable must appear at most once per location. | TODO |
-| UniqueFragmentNamesRule | Fragment names must be unique within a document. | TODO |
+| UniqueFragmentNamesRule | Fragment names must be unique within a document. | COMPLETE |
 | UniqueInputFieldNamesRule | Input field names must be unique within an input object value. | TODO |
 | UniqueOperationNamesRule | Operation names must be unique within a document. | COMPLETE |
 | UniqueVariableNamesRule | Variable names must be unique within an operation. | TODO |

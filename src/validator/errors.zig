@@ -5,6 +5,7 @@ pub const ValidationErrorKind = enum {
     NonExecutableDefinition,
     ManyAnonymousOperations,
     DuplicateOperationName,
+    DuplicateFragmentName,
 };
 
 // TODO: import the validation object in the future
