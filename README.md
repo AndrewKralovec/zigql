@@ -223,7 +223,7 @@ The validator implements the following GraphQL validation rules:
 | UniqueFragmentNamesRule | Fragment names must be unique within a document. | COMPLETE |
 | UniqueInputFieldNamesRule | Input field names must be unique within an input object value. | TODO |
 | UniqueOperationNamesRule | Operation names must be unique within a document. | COMPLETE |
-| UniqueVariableNamesRule | Variable names must be unique within an operation. | TODO |
+| UniqueVariableNamesRule | Variable names must be unique within an operation. | COMPLETE |
 | ValuesOfCorrectTypeRule | Input values must be compatible with their expected input types. | TODO |
 | VariablesAreInputTypesRule | Variables must be of input types (scalar, enum, or input object). | TODO |
 | VariablesInAllowedPositionRule | Variables must be used in locations compatible with their defined types. | TODO |
