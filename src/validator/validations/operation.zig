@@ -4,6 +4,7 @@ const ValidationContext = @import("../validation_context.zig").ValidationContext
 
 const validateDirectives = @import("./directives.zig").validateDirectives;
 const validateSelectionSet = @import("./selection.zig").validateSelectionSet;
+const validateVariableDefinitions = @import("variable.zig").validateVariableDefinitions;
 
 pub fn validateOperation(ctx: *ValidationContext, op: ast.OperationDefinitionNode) !void {
     // LoneAnonymousOperationRule, count operations
@@ -21,31 +22,12 @@ pub fn validateOperation(ctx: *ValidationContext, op: ast.OperationDefinitionNod
         }
     }
 
-    // UniqueVariableNamesRule
     if (op.variable_definitions) |var_defs| {
-        try checkUniqueVariableNames(ctx, var_defs);
+        try validateVariableDefinitions(ctx, var_defs);
     }
 
     try validateDirectives(ctx, op.directives);
     if (op.selection_set) |sel_set| {
         try validateSelectionSet(ctx, sel_set);
-    }
-}
-
-fn checkUniqueVariableNames(ctx: *ValidationContext, var_defs: []const ast.VariableDefinitionNode) !void {
-    var seen_vars = std.StringHashMap(bool).init(ctx.allocator);
-    defer seen_vars.deinit();
-
-    for (var_defs) |var_def| {
-        const name = var_def.variable.name.value;
-        const entry = try seen_vars.getOrPut(name);
-        if (entry.found_existing) {
-            if (!entry.value_ptr.*) {
-                entry.value_ptr.* = true;
-                try ctx.addError(.DuplicateVariableName);
-            }
-        } else {
-            entry.value_ptr.* = false;
-        }
     }
 }
