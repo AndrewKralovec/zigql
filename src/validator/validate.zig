@@ -348,7 +348,7 @@ test "should return errors on many duplicate directive arguments" {
 
 test "should allow no fragments" {
     try expectValid(
-        \\ query Foo {
+        \\ {
         \\   field
         \\ }
     );
@@ -356,25 +356,63 @@ test "should allow no fragments" {
 
 test "should allow one fragment" {
     try expectValid(
+        \\ {
+        \\   ...fragA
+        \\ }
         \\ fragment fragA on Type {
         \\   field
         \\ }
     );
 }
 
-test "should allow multiple uniquely named fragments" {
+test "should allow many fragment" {
     try expectValid(
+        \\ {
+        \\   ...fragA
+        \\   ...fragB
+        \\   ...fragC
+        \\ }
         \\ fragment fragA on Type {
-        \\   field
+        \\   fieldA
         \\ }
         \\ fragment fragB on Type {
+        \\   fieldB
+        \\ }
+        \\ fragment fragC on Type {
+        \\   fieldC
+        \\ }
+    );
+}
+
+test "should allow unique inline fragments" {
+    try expectValid(
+        \\ {
+        \\   ...on Type {
+        \\     fieldA
+        \\   }
+        \\   ...on Type {
+        \\     fieldB
+        \\   }
+        \\ }
+    );
+}
+
+test "should allow a fragment and operation named the same" {
+    try expectValid(
+        \\ query Foo {
+        \\   ...Foo
+        \\ }
+        \\ fragment Foo on Type {
         \\   field
         \\ }
     );
 }
 
-test "should return errors for duplicate fragment names" {
+test "should return errors when fragments are named the same" {
     try expectErrors(
+        \\ {
+        \\   ...fragA
+        \\ }
         \\ fragment fragA on Type {
         \\   fieldA
         \\ }
@@ -384,26 +422,12 @@ test "should return errors for duplicate fragment names" {
     , 1);
 }
 
-test "should return errors for multiple duplicate fragment names" {
+test "should return errors when fragments named the same without being referenced" {
     try expectErrors(
         \\ fragment fragA on Type {
         \\   fieldA
         \\ }
         \\ fragment fragA on Type {
-        \\   fieldB
-        \\ }
-        \\ fragment fragA on Type {
-        \\   fieldC
-        \\ }
-    , 2);
-}
-
-test "should return errors for fragments with same name but different type conditions" {
-    try expectErrors(
-        \\ fragment fragA on Dog {
-        \\   fieldA
-        \\ }
-        \\ fragment fragA on Cat {
         \\   fieldB
         \\ }
     , 1);
