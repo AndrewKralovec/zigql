@@ -237,6 +237,113 @@ test "should return errors for duplicate variable names" {
     , 3);
 }
 
+// UniqueArgumentNamesRule
+
+test "should allow fields with no arguments" {
+    try expectValid(
+        \\ {
+        \\   field
+        \\ }
+    );
+}
+
+test "should allow no arguments on directive" {
+    try expectValid(
+        \\ {
+        \\   field @directive
+        \\ }
+    );
+}
+
+test "should allow fields with one argument" {
+    try expectValid(
+        \\ {
+        \\   field(arg: "value")
+        \\ }
+    );
+}
+
+test "should allow argument on directive" {
+    try expectValid(
+        \\ {
+        \\   field @directive(arg: "value")
+        \\ }
+    );
+}
+
+test "should allow same argument on two fields" {
+    try expectValid(
+        \\ {
+        \\   one: field(arg: "value")
+        \\   two: field(arg: "value")
+        \\ }
+    );
+}
+
+test "should allow same argument on field and directive" {
+    try expectValid(
+        \\ {
+        \\   field(arg: "value") @directive(arg: "value")
+        \\ }
+    );
+}
+
+test "should allow same argument on two directives" {
+    try expectValid(
+        \\ {
+        \\   field @directive1(arg: "value") @directive2(arg: "value")
+        \\ }
+    );
+}
+
+test "should allow multiple field arguments" {
+    try expectValid(
+        \\ {
+        \\   field(arg1: "value", arg2: "value", arg3: "value")
+        \\ }
+    );
+}
+
+test "should allow multiple directive arguments" {
+    try expectValid(
+        \\ {
+        \\   field @directive(arg1: "value", arg2: "value", arg3: "value")
+        \\ }
+    );
+}
+
+test "should return errors on duplicate field arguments" {
+    try expectErrors(
+        \\ {
+        \\   field(arg1: "value", arg1: "value")
+        \\ }
+    , 1);
+}
+
+test "should return errors on many duplicate field arguments" {
+    try expectErrors(
+        \\ {
+        \\   field(arg1: "value", arg1: "value", arg1: "value")
+        \\ }
+    , 1);
+}
+
+test "should return errors on duplicate directive arguments" {
+    try expectErrors(
+        \\ {
+        \\   field @directive(arg1: "value", arg1: "value")
+        \\ }
+    , 1);
+}
+
+test "should return errors on many duplicate directive arguments" {
+    try expectErrors(
+        \\ {
+        \\   field @directive(arg1: "value", arg1: "value", arg1: "value")
+        \\ }
+    , 1);
+}
+
 // Test helpers
 
 fn expectErrors(
