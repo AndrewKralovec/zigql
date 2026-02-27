@@ -17,4 +17,12 @@ pub fn validateDocument(ctx: *ValidationContext, doc: ast.DocumentNode) !void {
             },
         }
     }
+
+    // LoneAnonymousOperationRule
+    if (ctx.anonymous_operation_count > 0 and ctx.operation_count > 1) {
+        var i: u32 = 0;
+        while (i < ctx.anonymous_operation_count) : (i += 1) {
+            try ctx.addError(.ManyAnonymousOperations);
+        }
+    }
 }

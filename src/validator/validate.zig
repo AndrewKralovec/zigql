@@ -30,59 +30,210 @@ pub fn validateDocument(ctx: *ValidationContext, doc: ast.DocumentNode) !void {
 const parse = @import("../zig_ql.zig").parse;
 const Schema = @import("./schema.zig").Schema;
 
-// ExecutableDefinitions
+// LoneAnonymousOperation
 
-// ExecutableDefinitions
-
-test "should allow executable definitions with only operations" {
+test "should allow no operations" {
     try expectValid(
-        \\ query Foo {
-        \\   user {
-        \\     name
-        \\   }
+        \\ fragment fragA on Type {
+        \\   field
         \\ }
     );
 }
 
-test "should allow executable definitions with operation and fragment" {
+test "should allow one operation" {
     try expectValid(
-        \\ query Foo {
-        \\   user {
-        \\     name
-        \\     ...Frag
-        \\   }
-        \\ }
-        \\ fragment Frag on User {
-        \\   name
+        \\ {
+        \\   field
         \\ }
     );
 }
 
-test "should return for executable definitions with type definition" {
+test "should allow multiple named operations" {
+    try expectValid(
+        \\ query Foo {
+        \\   field
+        \\ }
+        \\ query Bar {
+        \\   field
+        \\ }
+    );
+}
+
+test "should allow anonymous operation with fragment" {
+    try expectValid(
+        \\ {
+        \\   ...Foo
+        \\ }
+        \\ fragment Foo on Type {
+        \\   field
+        \\ }
+    );
+}
+
+test "should return errors when multiple anon operations are used" {
     try expectErrors(
-        \\ query Foo {
-        \\   user {
-        \\     name
-        \\   }
+        \\ {
+        \\   fieldA
         \\ }
-        \\ type User {
-        \\   name: String
-        \\ }
-        \\ extend type Guest {
-        \\   role: String
+        \\ {
+        \\   fieldB
         \\ }
     , 2);
 }
 
-test "should return for executable definitions with schema definition" {
+test "should return errors when anon operation with a mutation are used" {
     try expectErrors(
-        \\ schema {
-        \\   query: Query
+        \\ {
+        \\   fieldA
         \\ }
-        \\ type Query {
-        \\   test: String
+        \\ mutation Foo {
+        \\   fieldB
         \\ }
-        \\ extend schema @directive
+    , 1);
+}
+
+test "should return errors when anon operation with a subscription are used" {
+    try expectErrors(
+        \\ {
+        \\   fieldA
+        \\ }
+        \\ subscription Foo {
+        \\   fieldB
+        \\ }
+    , 1);
+}
+
+// UniqueOperationNames
+
+test "should allow no operations for unique operation names" {
+    try expectValid(
+        \\ fragment fragA on Type {
+        \\   field
+        \\ }
+    );
+}
+
+test "should allow anonymous operation" {
+    try expectValid(
+        \\ {
+        \\  field
+        \\ }
+    );
+}
+
+test "should allow one operation for unique operation names" {
+    try expectValid(
+        \\ query Foo {
+        \\   field
+        \\ }
+    );
+}
+
+test "should allow multiple operations" {
+    try expectValid(
+        \\ query Foo {
+        \\   field
+        \\ }
+        \\ query Bar {
+        \\   field
+        \\ }
+    );
+}
+
+test "should allow multiple operations with different types" {
+    try expectValid(
+        \\ query Foo {
+        \\   field
+        \\ }
+        \\ mutation Bar {
+        \\   field
+        \\ }
+        \\ subscription Baz {
+        \\   field
+        \\ }
+    );
+}
+
+test "should allow fragment and operation named the same" {
+    try expectValid(
+        \\ query Foo {
+        \\   ...Foo
+        \\ }
+        \\ fragment Foo on Type {
+        \\   field
+        \\ }
+    );
+}
+
+test "should return errors when operations have the same name" {
+    try expectErrors(
+        \\ query Foo {
+        \\   fieldA
+        \\ }
+        \\ query Foo {
+        \\   fieldB
+        \\ }
+    , 1);
+}
+
+test "should return errors when operations ops of same name and different types (mutation)" {
+    try expectErrors(
+        \\ query Foo {
+        \\   fieldA
+        \\ }
+        \\ mutation Foo {
+        \\   fieldB
+        \\ }
+    , 1);
+}
+
+test "should return errors when operations ops of same name and different types (subscription)" {
+    try expectErrors(
+        \\ query Foo {
+        \\   fieldA
+        \\ }
+        \\ subscription Foo {
+        \\   fieldB
+        \\ }
+    , 1);
+}
+
+// UniqueVariableNamesRule
+
+test "should allow operations with no variables" {
+    try expectValid(
+        \\ query {
+        \\   field
+        \\ }
+    );
+}
+
+test "should allow unique variable names" {
+    try expectValid(
+        \\ query A($x: Int, $y: String) { __typename }
+        \\ query B($x: String, $y: Int) { __typename }
+    );
+}
+
+test "should return errors for duplicate variables with different types" {
+    try expectErrors(
+        \\ query($bar: String, $foo: Int, $bar: Boolean) {
+        \\   field
+        \\ }
+    , 1);
+}
+
+test "should return errors for duplicate variable names" {
+    // NOTE: why expect 3 errors? errors are grouped, explained...
+    // query A: $x x3 => grouped: 1 error, actual: 2 errors (after first $x)
+    // query B: $x x2 => grouped: 1 error, actual: 1 error
+    // query C: $x x2 => grouped: 1 error, actual: 1 error
+    // total  :          grouped: 3,       actual: 4
+
+    try expectErrors(
+        \\ query A($x: Int, $x: Int, $x: String) { __typename }
+        \\ query B($x: String, $x: Int) { __typename }
+        \\ query C($x: Int, $x: Int) { __typename }
     , 3);
 }
 
