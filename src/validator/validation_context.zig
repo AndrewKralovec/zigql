@@ -10,10 +10,6 @@ pub const ValidationContext = struct {
     errors: std.ArrayList(ValidationError),
     allocator: std.mem.Allocator,
 
-    // reusable map for uniqueness checks (arguments, variables, etc etc).
-    // clearred via clearRetainingCapacity
-    seen_names: std.StringHashMap(bool),
-
     // doc uniqueness tracking (lives for entire validation)
     operation_names: std.StringHashMap(void),
     fragment_names: std.StringHashMap(void),
@@ -28,7 +24,6 @@ pub const ValidationContext = struct {
             .errors = std.ArrayList(ValidationError).init(allocator),
             .allocator = allocator,
 
-            .seen_names = std.StringHashMap(bool).init(allocator),
             .operation_names = std.StringHashMap(void).init(allocator),
             .fragment_names = std.StringHashMap(void).init(allocator),
             .operation_count = 0,
@@ -42,7 +37,6 @@ pub const ValidationContext = struct {
         }
         self.errors.deinit();
 
-        self.seen_names.deinit();
         self.operation_names.deinit();
         self.fragment_names.deinit();
     }
