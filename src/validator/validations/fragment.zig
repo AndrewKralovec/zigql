@@ -2,7 +2,7 @@ const std = @import("std");
 const ast = @import("../../grammar/ast.zig");
 const ValidationContext = @import("../validation_context.zig").ValidationContext;
 
-const validateDirectives = @import("./directives.zig").validateDirectives;
+const validateDirectives = @import("./directive.zig").validateDirectives;
 const validateSelectionSet = @import("./selection.zig").validateSelectionSet;
 
 pub fn validateFragment(ctx: *ValidationContext, frag: ast.FragmentDefinitionNode) !void {

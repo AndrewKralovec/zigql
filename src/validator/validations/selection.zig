@@ -3,7 +3,7 @@ const ast = @import("../../grammar/ast.zig");
 const ValidationContext = @import("../validation_context.zig").ValidationContext;
 
 const validateArguments = @import("./argument.zig").validateArguments;
-const validateDirectives = @import("./directives.zig").validateDirectives;
+const validateDirectives = @import("./directive.zig").validateDirectives;
 
 pub fn validateSelectionSet(ctx: *ValidationContext, sel_set: ast.SelectionSetNode) !void {
     for (sel_set.selections) |sel| {
