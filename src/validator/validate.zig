@@ -344,6 +344,71 @@ test "should return errors on many duplicate directive arguments" {
     , 1);
 }
 
+// UniqueFragmentNamesRule
+
+test "should allow no fragments" {
+    try expectValid(
+        \\ query Foo {
+        \\   field
+        \\ }
+    );
+}
+
+test "should allow one fragment" {
+    try expectValid(
+        \\ fragment fragA on Type {
+        \\   field
+        \\ }
+    );
+}
+
+test "should allow multiple uniquely named fragments" {
+    try expectValid(
+        \\ fragment fragA on Type {
+        \\   field
+        \\ }
+        \\ fragment fragB on Type {
+        \\   field
+        \\ }
+    );
+}
+
+test "should return errors for duplicate fragment names" {
+    try expectErrors(
+        \\ fragment fragA on Type {
+        \\   fieldA
+        \\ }
+        \\ fragment fragA on Type {
+        \\   fieldB
+        \\ }
+    , 1);
+}
+
+test "should return errors for multiple duplicate fragment names" {
+    try expectErrors(
+        \\ fragment fragA on Type {
+        \\   fieldA
+        \\ }
+        \\ fragment fragA on Type {
+        \\   fieldB
+        \\ }
+        \\ fragment fragA on Type {
+        \\   fieldC
+        \\ }
+    , 2);
+}
+
+test "should return errors for fragments with same name but different type conditions" {
+    try expectErrors(
+        \\ fragment fragA on Dog {
+        \\   fieldA
+        \\ }
+        \\ fragment fragA on Cat {
+        \\   fieldB
+        \\ }
+    , 1);
+}
+
 // Test helpers
 
 fn expectErrors(
