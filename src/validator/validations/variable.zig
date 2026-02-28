@@ -2,22 +2,18 @@ const std = @import("std");
 const ast = @import("../../grammar/ast.zig");
 const ValidationContext = @import("../validation_context.zig").ValidationContext;
 
+const validateDirectives = @import("./directive.zig").validateDirectives;
+
 pub fn validateVariableDefinitions(ctx: *ValidationContext, var_defs: []const ast.VariableDefinitionNode) !void {
-    // UniqueVariableNamesRule
-    try checkUniqueVariableNames(ctx, var_defs);
-}
-
-pub fn validateUnusedVariables(ctx: *ValidationContext, operation: ast.OperationDefinitionNode) !void {
-    _ = ctx;
-    _ = operation;
-    // TODO: add validation logic
-}
-
-fn checkUniqueVariableNames(ctx: *ValidationContext, var_defs: []const ast.VariableDefinitionNode) !void {
     var seen_vars = std.StringHashMap(bool).init(ctx.allocator);
     defer seen_vars.deinit();
 
     for (var_defs) |var_def| {
+        if (var_def.directives) |directives| {
+            try validateDirectives(ctx, directives);
+        }
+
+        // UniqueVariableNamesRule
         const name = var_def.variable.name.value;
         const entry = try seen_vars.getOrPut(name);
         if (entry.found_existing) {
@@ -29,4 +25,10 @@ fn checkUniqueVariableNames(ctx: *ValidationContext, var_defs: []const ast.Varia
             entry.value_ptr.* = false;
         }
     }
+}
+
+pub fn validateUnusedVariables(ctx: *ValidationContext, operation: ast.OperationDefinitionNode) !void {
+    _ = ctx;
+    _ = operation;
+    // TODO: add validation logic
 }
