@@ -17,6 +17,8 @@ const specified_directives = std.StaticStringMap([]const []const u8).initComptim
 
 pub fn validateDirectives(ctx: *ValidationContext, directives: ?[]const ast.DirectiveNode) !void {
     const dirs = directives orelse return;
+
+    // const seen_directives = std.StringHashMap(bool).init(ctx.allocator);
     for (dirs) |directive| {
         try validateArguments(ctx, directive.arguments);
     }
