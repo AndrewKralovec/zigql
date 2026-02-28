@@ -491,6 +491,81 @@ test "should return errors for undefined and duplicate fragment" {
     , 2);
 }
 
+// KnownArgumentNamesRule
+// TODO: add field argument tests when schema is implemented
+
+test "should allow when directive args are known" {
+    try expectValid(
+        \\ {
+        \\   dog @skip(if: true)
+        \\ }
+    );
+}
+
+test "should return errors when field args are invalid" {
+    try expectErrors(
+        \\ {
+        \\   dog @skip(unless: true)
+        \\ }
+    , 1);
+}
+
+test "should allow when directive without args is valid" {
+    try expectValid(
+        \\ {
+        \\   dog @onField
+        \\ }
+    );
+}
+
+test "should return errors when misspelled directive args are reported" {
+    try expectErrors(
+        \\ {
+        \\   dog @skip(iff: true)
+        \\ }
+    , 1);
+}
+
+test "should allow known arguments on multiple directives" {
+    try expectValid(
+        \\ {
+        \\   field @skip(if: true) @include(if: false)
+        \\ }
+    );
+}
+
+test "should return error for unknown argument on include directive" {
+    try expectErrors(
+        \\ {
+        \\   field @include(when: true)
+        \\ }
+    , 1);
+}
+
+test "should return error for unknown argument on deprecated directive" {
+    try expectErrors(
+        \\ {
+        \\   field @deprecated(message: "old")
+        \\ }
+    , 1);
+}
+
+test "should return errors for multiple unknown arguments on directive" {
+    try expectErrors(
+        \\ {
+        \\   field @skip(unless: true, when: false)
+        \\ }
+    , 2);
+}
+
+test "should return error for mixed known and unknown directive arguments" {
+    try expectErrors(
+        \\ {
+        \\   field @skip(if: true, unless: false)
+        \\ }
+    , 1);
+}
+
 // Test helpers
 
 fn expectErrors(

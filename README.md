@@ -204,7 +204,7 @@ The validator implements the following GraphQL validation rules:
 | ExecutableDefinitionsRule | A GraphQL document is only valid for execution if all definitions are either operation or fragment definitions. | COMPLETE |
 | FieldsOnCorrectTypeRule | Fields selected on an object, interface, or union must be defined on that type. | TODO |
 | FragmentsOnCompositeTypesRule | Fragments can only be spread into a composite type (object, interface, or union). | TODO |
-| KnownArgumentNamesRule | All arguments provided to a field or directive must be defined by that field or directive. | TODO |
+| KnownArgumentNamesRule | All arguments provided to a field or directive must be defined by that field or directive. | WIP |
 | KnownDirectivesRule | All directives used must be defined in the schema and used in valid locations. | TODO |
 | KnownFragmentNamesRule | All fragment spreads must refer to fragments defined in the same document. | COMPLETE |
 | KnownTypeNamesRule | All referenced types (in variable definitions and fragment conditions) must be defined in the schema. | TODO |

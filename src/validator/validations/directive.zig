@@ -21,5 +21,31 @@ pub fn validateDirectives(ctx: *ValidationContext, directives: ?[]const ast.Dire
     // const seen_directives = std.StringHashMap(bool).init(ctx.allocator);
     for (dirs) |directive| {
         try validateArguments(ctx, directive.arguments);
+
+        // KnownArgumentNamesRule
+        try checkKnownDirectiveArguments(ctx, directive);
     }
+}
+
+// validate that arguments on built in directives are actually defined
+// custom directives not in `specified_directives`, is skipped until schema support is implemented
+fn checkKnownDirectiveArguments(ctx: *ValidationContext, directive: ast.DirectiveNode) !void {
+    const args = directive.arguments orelse return;
+
+    if (specified_directives.get(directive.name.value)) |known_args| {
+        for (args) |arg| {
+            var found = false;
+            for (known_args) |known_arg| {
+                if (std.mem.eql(u8, arg.name.value, known_arg)) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                try ctx.addError(.UndefinedArgument);
+            }
+        }
+    }
+    // TODO: look up custom directive definition from schema and validate arguments against it
+    // need to still implement schema
 }

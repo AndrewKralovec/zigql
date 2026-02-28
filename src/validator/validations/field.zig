@@ -8,13 +8,20 @@ const validateSelectionSet = @import("./selection.zig").validateSelectionSet;
 
 pub fn validateField(ctx: *ValidationContext, field: ast.FieldNode) anyerror!void {
     // first do all the validation that we can without knowing the type of the field.
-
     try validateDirectives(ctx, field.directives);
-
     try validateArguments(ctx, field.arguments);
+
+    // TODO: KnownArgumentNamesRule for field arguments, requires Schema
+    // try checkKnownFieldArguments(ctx, field);
+
     if (field.selection_set) |nested| {
         try validateSelectionSet(ctx, nested);
     }
+}
+
+fn checkKnownFieldArguments(ctx: *ValidationContext, field: ast.FieldNode) !void {
+    _ = ctx;
+    _ = field;
 }
 
 pub fn validateFieldDefinition(ctx: *ValidationContext, field: ast.FieldNode) anyerror!void {
