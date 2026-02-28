@@ -32,3 +32,9 @@ pub fn validateUnusedVariables(ctx: *ValidationContext, operation: ast.Operation
     _ = operation;
     // TODO: add validation logic
 }
+
+pub fn validateVariableUsage(ctx: *ValidationContext, argument: ast.ArgumentNode) !void {
+    _ = ctx;
+    _ = argument;
+    // TODO: add validation logic
+}

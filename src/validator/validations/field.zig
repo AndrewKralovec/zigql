@@ -16,3 +16,21 @@ pub fn validateField(ctx: *ValidationContext, field: ast.FieldNode) anyerror!voi
         try validateSelectionSet(ctx, nested);
     }
 }
+
+pub fn validateFieldDefinition(ctx: *ValidationContext, field: ast.FieldNode) anyerror!void {
+    _ = ctx;
+    _ = field;
+    // TODO: add validation logic
+}
+
+pub fn validateFieldDefinitions(ctx: *ValidationContext, field: ast.FieldNode) anyerror!void {
+    _ = ctx;
+    _ = field;
+    // TODO: add validation logic
+}
+
+pub fn validateLeafFieldSelection(ctx: *ValidationContext, field: ast.FieldNode) anyerror!void {
+    _ = ctx;
+    _ = field;
+    // TODO: add validation logic
+}
