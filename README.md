@@ -206,7 +206,7 @@ The validator implements the following GraphQL validation rules:
 | FragmentsOnCompositeTypesRule | Fragments can only be spread into a composite type (object, interface, or union). | TODO |
 | KnownArgumentNamesRule | All arguments provided to a field or directive must be defined by that field or directive. | TODO |
 | KnownDirectivesRule | All directives used must be defined in the schema and used in valid locations. | TODO |
-| KnownFragmentNamesRule | All fragment spreads must refer to fragments defined in the same document. | TODO |
+| KnownFragmentNamesRule | All fragment spreads must refer to fragments defined in the same document. | COMPLETE |
 | KnownTypeNamesRule | All referenced types (in variable definitions and fragment conditions) must be defined in the schema. | TODO |
 | LoneAnonymousOperationRule | A document containing an anonymous operation must contain only that one operation. | COMPLETE |
 | NoFragmentCyclesRule | Fragments must not form cycles via fragment spreads. | TODO |

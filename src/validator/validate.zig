@@ -418,6 +418,63 @@ test "should return errors when fragments named the same without being reference
     , 1);
 }
 
+// KnownFragmentNamesRule (UndefinedFragment)
+
+test "should allow known fragment spread" {
+    try expectValid(
+        \\ {
+        \\   ...fragA
+        \\ }
+        \\ fragment fragA on Type {
+        \\   field
+        \\ }
+    );
+}
+
+test "should allow known fragment spread defined before use" {
+    try expectValid(
+        \\ fragment fragA on Type {
+        \\   field
+        \\ }
+        \\ {
+        \\   ...fragA
+        \\ }
+    );
+}
+
+test "should return errors for undefined fragment spread" {
+    try expectErrors(
+        \\ {
+        \\   ...fragA
+        \\ }
+    , 1);
+}
+
+test "should return errors for multiple undefined fragment spreads" {
+    try expectErrors(
+        \\ {
+        \\   ...fragA
+        \\   ...fragB
+        \\ }
+    , 2);
+}
+
+test "should return errors for undefined and duplicate fragment" {
+    // fragA is defined (twice, so 1 duplicate error), fragB is undefined (1 undefined error)
+    try expectErrors(
+        \\ {
+        \\   ...fragA
+        \\   ...fragB
+        \\ }
+        \\ fragment fragA on Type {
+        \\   field
+        \\ }
+        \\ fragment fragA on Type {
+        \\   field
+        \\ }
+    , 2);
+}
+
 // Test helpers
 
 fn expectErrors(
