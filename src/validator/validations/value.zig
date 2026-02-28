@@ -19,6 +19,8 @@ pub fn validateInputValue(ctx: *ValidationContext, value: ast.ValueNode) anyerro
 }
 
 fn validateObjectFields(ctx: *ValidationContext, fields: []const ast.ObjectFieldNode) !void {
+    // TODO: the graphql-js implementation does not group by name, like UniqueArgumentNamesRule,
+    // but these should be consistent. think about if we want all of these grouped by name or just summed.
     var seen_fields = std.StringHashMap(bool).init(ctx.allocator);
     defer seen_fields.deinit();
 

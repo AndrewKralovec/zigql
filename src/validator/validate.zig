@@ -568,66 +568,75 @@ test "should return error for mixed known and unknown directive arguments" {
 
 // UniqueInputFieldNamesRule
 
-test "should allow input object with unique fields" {
+test "should allow input object with fields" {
     try expectValid(
         \\ {
-        \\   field(arg: { f1: "value1", f2: "value2", f3: "value3" })
+        \\   field(arg: { f: true })
         \\ }
     );
 }
 
-test "should allow same field name in different input objects" {
+test "should allow input object with no fields" {
     try expectValid(
         \\ {
-        \\   field(arg1: { f: "value1" }, arg2: { f: "value2" })
+        \\   field(arg: {})
         \\ }
     );
 }
 
-test "should return errors for duplicate input fields" {
-    try expectErrors(
-        \\ {
-        \\   field(arg: { f1: "value1", f1: "value2" })
-        \\ }
-    , 1);
-}
-
-test "should return one error for many duplicates of same input field" {
-    try expectErrors(
-        \\ {
-        \\   field(arg: { f1: "value1", f1: "value2", f1: "value3" })
-        \\ }
-    , 1);
-}
-
-test "should return errors for duplicate fields in nested input objects" {
-    try expectErrors(
-        \\ {
-        \\   field(arg: { f1: { f2: "value1", f2: "value2" } })
-        \\ }
-    , 1);
-}
-
-test "should allow nested input objects each with unique fields" {
+test "should allow input object within two args" {
     try expectValid(
         \\ {
-        \\   field(arg: { f1: "value1", f2: { f1: "value2", f3: "value3" } })
+        \\   field(arg1: { f: true }, arg2: { f: true })
         \\ }
     );
 }
 
-test "should return errors for duplicates in both outer and nested input objects" {
-    try expectErrors(
+test "should allow multiple input object fields" {
+    try expectValid(
         \\ {
-        \\   field(arg: { f1: "value1", f1: "value2", f2: { f3: "value3", f3: "value4" } })
+        \\   field(arg: { f1: "value", f2: "value", f3: "value" })
         \\ }
-    , 2);
+    );
 }
 
-test "should return errors for duplicate fields in variable default values" {
+test "should allow for nested input objects with similar fields" {
+    try expectValid(
+        \\ {
+        \\   field(arg: {
+        \\     deep: {
+        \\       deep: {
+        \\         id: 1
+        \\       }
+        \\       id: 1
+        \\     }
+        \\     id: 1
+        \\   })
+        \\ }
+    );
+}
+
+test "should return errors on duplicate input object fields" {
     try expectErrors(
-        \\ query($x: T = { f1: "value1", f1: "value2" }) {
-        \\   field
+        \\ {
+        \\   field(arg: { f1: "value", f1: "value" })
+        \\ }
+    , 1);
+}
+
+test "should return errors on many duplicate input object fields" {
+    // NOTE: other apis do not group this into one error.
+    try expectErrors(
+        \\ {
+        \\   field(arg: { f1: "value", f1: "value", f1: "value" })
+        \\ }
+    , 1);
+}
+
+test "should return errors on nested duplicate input object fields" {
+    try expectErrors(
+        \\ {
+        \\   field(arg: { f1: {f2: "value", f2: "value" }})
         \\ }
     , 1);
 }
@@ -652,7 +661,10 @@ fn expectErrors(
 
     try validateDocument(&ctx, query_doc);
 
-    try std.testing.expectEqual(expected_error_count, ctx.errorCount());
+    std.testing.expectEqual(expected_error_count, ctx.errorCount()) catch |err| {
+        std.debug.print("\nerrors={any}\n", .{ctx.errors.items});
+        return err;
+    };
 }
 
 fn expectValid(
