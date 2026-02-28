@@ -4,23 +4,21 @@ const ValidationContext = @import("../validation_context.zig").ValidationContext
 
 const validateArguments = @import("./argument.zig").validateArguments;
 const validateDirectives = @import("./directive.zig").validateDirectives;
+const validateField = @import("./field.zig").validateField;
+const validateInlineFragment = @import("./fragment.zig").validateInlineFragment;
+const validateFragmentSpread = @import("./fragment.zig").validateFragmentSpread;
 
 pub fn validateSelectionSet(ctx: *ValidationContext, sel_set: ast.SelectionSetNode) !void {
     for (sel_set.selections) |sel| {
         switch (sel) {
             .Field => |field| {
-                try validateArguments(ctx, field.arguments);
-                try validateDirectives(ctx, field.directives);
-                if (field.selection_set) |nested| {
-                    try validateSelectionSet(ctx, nested);
-                }
+                try validateField(ctx, field);
             },
-            .FragmentSpread => |spread| {
-                try validateDirectives(ctx, spread.directives);
+            .FragmentSpread => |frag_spread| {
+                try validateFragmentSpread(ctx, frag_spread);
             },
             .InlineFragment => |inline_frag| {
-                try validateDirectives(ctx, inline_frag.directives);
-                try validateSelectionSet(ctx, inline_frag.selection_set);
+                try validateInlineFragment(ctx, inline_frag);
             },
         }
     }

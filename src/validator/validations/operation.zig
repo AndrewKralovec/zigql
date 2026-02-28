@@ -5,16 +5,17 @@ const ValidationContext = @import("../validation_context.zig").ValidationContext
 const validateDirectives = @import("./directive.zig").validateDirectives;
 const validateSelectionSet = @import("./selection.zig").validateSelectionSet;
 const validateVariableDefinitions = @import("variable.zig").validateVariableDefinitions;
+const validateUnusedVariables = @import("variable.zig").validateUnusedVariables;
 
-pub fn validateOperation(ctx: *ValidationContext, op: ast.OperationDefinitionNode) !void {
+pub fn validateOperation(ctx: *ValidationContext, operation: ast.OperationDefinitionNode) !void {
     // LoneAnonymousOperationRule, count operations
     ctx.operation_count += 1;
-    if (op.name == null) {
+    if (operation.name == null) {
         ctx.anonymous_operation_count += 1;
     }
 
     // UniqueOperationNamesRule
-    if (op.name) |name| {
+    if (operation.name) |name| {
         if (ctx.operation_names.contains(name.value)) {
             try ctx.addError(.DuplicateOperationName);
         } else {
@@ -22,12 +23,13 @@ pub fn validateOperation(ctx: *ValidationContext, op: ast.OperationDefinitionNod
         }
     }
 
-    if (op.variable_definitions) |var_defs| {
+    try validateDirectives(ctx, operation.directives);
+    if (operation.variable_definitions) |var_defs| {
         try validateVariableDefinitions(ctx, var_defs);
     }
 
-    try validateDirectives(ctx, op.directives);
-    if (op.selection_set) |sel_set| {
+    try validateUnusedVariables(ctx, operation);
+    if (operation.selection_set) |sel_set| {
         try validateSelectionSet(ctx, sel_set);
     }
 }

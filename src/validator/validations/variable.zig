@@ -7,6 +7,12 @@ pub fn validateVariableDefinitions(ctx: *ValidationContext, var_defs: []const as
     try checkUniqueVariableNames(ctx, var_defs);
 }
 
+pub fn validateUnusedVariables(ctx: *ValidationContext, operation: ast.OperationDefinitionNode) !void {
+    _ = ctx;
+    _ = operation;
+    // TODO: add validation logic
+}
+
 fn checkUniqueVariableNames(ctx: *ValidationContext, var_defs: []const ast.VariableDefinitionNode) !void {
     var seen_vars = std.StringHashMap(bool).init(ctx.allocator);
     defer seen_vars.deinit();

@@ -17,3 +17,12 @@ pub fn validateFragment(ctx: *ValidationContext, frag: ast.FragmentDefinitionNod
     try validateDirectives(ctx, frag.directives);
     try validateSelectionSet(ctx, frag.selection_set);
 }
+
+pub fn validateFragmentSpread(ctx: *ValidationContext, frag: ast.FragmentSpreadNode) !void {
+    try validateDirectives(ctx, frag.directives);
+}
+
+pub fn validateInlineFragment(ctx: *ValidationContext, frag: ast.InlineFragmentNode) anyerror!void {
+    try validateDirectives(ctx, frag.directives);
+    try validateSelectionSet(ctx, frag.selection_set);
+}
