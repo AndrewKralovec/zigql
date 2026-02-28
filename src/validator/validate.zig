@@ -418,17 +418,49 @@ test "should return errors when fragments named the same without being reference
     , 1);
 }
 
-// KnownFragmentNamesRule (UndefinedFragment)
+// KnownFragmentNamesRule
 
-test "should allow known fragment spread" {
-    try expectValid(
+test "should allow known fragment names" {
+    try expectErrors(
         \\ {
-        \\   ...fragA
+        \\   human(id: 4) {
+        \\     ...HumanFields1
+        \\     ... on Human {
+        \\       ...HumanFields2
+        \\     }
+        \\     ... {
+        \\       name
+        \\     }
+        \\   }
         \\ }
-        \\ fragment fragA on Type {
-        \\   field
+        \\ fragment HumanFields1 on Human {
+        \\   name
+        \\   ...HumanFields3
         \\ }
-    );
+        \\ fragment HumanFields2 on Human {
+        \\   name
+        \\ }
+        \\ fragment HumanFields3 on Human {
+        \\   name
+        \\ }
+    , 0);
+}
+
+test "should return errors when fragment names are unknown" {
+    try expectErrors(
+        \\ {
+        \\   human(id: 4) {
+        \\     ...UnknownFragment1
+        \\     ... on Human {
+        \\       ...UnknownFragment2
+        \\     }
+        \\   }
+        \\ }
+        \\ fragment HumanFields on Human {
+        \\   name
+        \\   ...UnknownFragment3
+        \\ }
+    , 3);
 }
 
 test "should allow known fragment spread defined before use" {
@@ -442,25 +474,9 @@ test "should allow known fragment spread defined before use" {
     );
 }
 
-test "should return errors for undefined fragment spread" {
-    try expectErrors(
-        \\ {
-        \\   ...fragA
-        \\ }
-    , 1);
-}
-
-test "should return errors for multiple undefined fragment spreads" {
-    try expectErrors(
-        \\ {
-        \\   ...fragA
-        \\   ...fragB
-        \\ }
-    , 2);
-}
-
 test "should return errors for undefined and duplicate fragment" {
-    // fragA is defined (twice, so 1 duplicate error), fragB is undefined (1 undefined error)
+    // fragA is defined twice, 1 duplicate error
+    // fragB is undefined, 1 undefined error
     try expectErrors(
         \\ {
         \\   ...fragA
