@@ -30,8 +30,8 @@ pub const ValidationErrorKind = enum {
     DuplicateFragmentName,
     /// Known fragment names
     ///
-    /// A fragment spread must refer to a fragment that is defined in the same
-    /// document.
+    /// A GraphQL document is only valid if all `...Fragment` fragment spreads refer
+    /// to fragments defined in the same document.
     ///
     /// See https://spec.graphql.org/draft/#sec-Fragment-spread-target-defined
     UndefinedFragment,
