@@ -221,7 +221,7 @@ The validator implements the following GraphQL validation rules:
 | UniqueArgumentNamesRule | Argument names must be unique within a field or directive call. | COMPLETE |
 | UniqueDirectivesPerLocationRule | Directives that are not repeatable must appear at most once per location. | TODO |
 | UniqueFragmentNamesRule | Fragment names must be unique within a document. | COMPLETE |
-| UniqueInputFieldNamesRule | Input field names must be unique within an input object value. | TODO |
+| UniqueInputFieldNamesRule | Input field names must be unique within an input object value. | WIP |
 | UniqueOperationNamesRule | Operation names must be unique within a document. | COMPLETE |
 | UniqueVariableNamesRule | Variable names must be unique within an operation. | COMPLETE |
 | ValuesOfCorrectTypeRule | Input values must be compatible with their expected input types. | TODO |

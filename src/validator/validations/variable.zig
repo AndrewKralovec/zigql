@@ -3,6 +3,7 @@ const ast = @import("../../grammar/ast.zig");
 const ValidationContext = @import("../validation_context.zig").ValidationContext;
 
 const validateDirectives = @import("./directive.zig").validateDirectives;
+const validateInputValue = @import("./value.zig").validateInputValue;
 
 pub fn validateVariableDefinitions(ctx: *ValidationContext, var_defs: []const ast.VariableDefinitionNode) !void {
     var seen_vars = std.StringHashMap(bool).init(ctx.allocator);
@@ -23,6 +24,11 @@ pub fn validateVariableDefinitions(ctx: *ValidationContext, var_defs: []const as
             }
         } else {
             entry.value_ptr.* = false;
+        }
+
+        // UniqueInputFieldNamesRule, validate default values for input object uniqueness
+        if (var_def.default_value) |default_val| {
+            try validateInputValue(ctx, default_val);
         }
     }
 }

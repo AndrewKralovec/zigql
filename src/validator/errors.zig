@@ -56,6 +56,13 @@ pub const ValidationErrorKind = enum {
     /// See https:///spec.graphql.org/draft/#sec-Argument-Names
     /// See https://spec.graphql.org/draft/#sec-Directives-Are-In-Valid-Locations
     UndefinedArgument,
+    /// Unique input field names
+    ///
+    /// A GraphQL input object value is only valid if all supplied fields are
+    /// uniquely named.
+    ///
+    /// See https://spec.graphql.org/draft/#sec-Input-Object-Field-Uniqueness
+    DuplicateInputField,
 };
 
 // TODO: import the validation object in the future

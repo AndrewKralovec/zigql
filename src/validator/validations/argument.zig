@@ -2,14 +2,21 @@ const std = @import("std");
 const ast = @import("../../grammar/ast.zig");
 const ValidationContext = @import("../validation_context.zig").ValidationContext;
 
+const validateInputValue = @import("./value.zig").validateInputValue;
+
 pub fn validateArguments(ctx: *ValidationContext, arguments: ?[]const ast.ArgumentNode) !void {
     const args = arguments orelse return;
 
     // UniqueArgumentNamesRule
-    try checkUniqueArgs(ctx, args);
+    try validateUniqueArguments(ctx, args);
+
+    // UniqueInputFieldNamesRule, validate input object values within arguments
+    for (args) |arg| {
+        try validateInputValue(ctx, arg.value);
+    }
 }
 
-fn checkUniqueArgs(ctx: *ValidationContext, args: []const ast.ArgumentNode) !void {
+fn validateUniqueArguments(ctx: *ValidationContext, args: []const ast.ArgumentNode) !void {
     var seen_args = std.StringHashMap(bool).init(ctx.allocator);
     defer seen_args.deinit();
 

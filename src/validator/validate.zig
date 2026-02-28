@@ -566,6 +566,72 @@ test "should return error for mixed known and unknown directive arguments" {
     , 1);
 }
 
+// UniqueInputFieldNamesRule
+
+test "should allow input object with unique fields" {
+    try expectValid(
+        \\ {
+        \\   field(arg: { f1: "value1", f2: "value2", f3: "value3" })
+        \\ }
+    );
+}
+
+test "should allow same field name in different input objects" {
+    try expectValid(
+        \\ {
+        \\   field(arg1: { f: "value1" }, arg2: { f: "value2" })
+        \\ }
+    );
+}
+
+test "should return errors for duplicate input fields" {
+    try expectErrors(
+        \\ {
+        \\   field(arg: { f1: "value1", f1: "value2" })
+        \\ }
+    , 1);
+}
+
+test "should return one error for many duplicates of same input field" {
+    try expectErrors(
+        \\ {
+        \\   field(arg: { f1: "value1", f1: "value2", f1: "value3" })
+        \\ }
+    , 1);
+}
+
+test "should return errors for duplicate fields in nested input objects" {
+    try expectErrors(
+        \\ {
+        \\   field(arg: { f1: { f2: "value1", f2: "value2" } })
+        \\ }
+    , 1);
+}
+
+test "should allow nested input objects each with unique fields" {
+    try expectValid(
+        \\ {
+        \\   field(arg: { f1: "value1", f2: { f1: "value2", f3: "value3" } })
+        \\ }
+    );
+}
+
+test "should return errors for duplicates in both outer and nested input objects" {
+    try expectErrors(
+        \\ {
+        \\   field(arg: { f1: "value1", f1: "value2", f2: { f3: "value3", f3: "value4" } })
+        \\ }
+    , 2);
+}
+
+test "should return errors for duplicate fields in variable default values" {
+    try expectErrors(
+        \\ query($x: T = { f1: "value1", f1: "value2" }) {
+        \\   field
+        \\ }
+    , 1);
+}
+
 // Test helpers
 
 fn expectErrors(
