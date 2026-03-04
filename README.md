@@ -191,6 +191,14 @@ const doc = try limitedParser.parse();
 
 ## TODO
 
+### Features
+
+#### Validator
+
+Create a graphql validator for validating graphql documents.
+This is a work in progress, see: https://github.com/AndrewKralovec/zigql/tree/feat/graphql-validator
+Help wanted if you happen to be reading this.
+
 ### Improvements
 
 #### ArrayList vs Slices.
@@ -204,14 +212,6 @@ An `ArrayList` can be appended to. But, for our use case the document and nodes 
 #### Custom Deinit Methods
 The user has to manage the memory of the document. It would be nice to have a deinit method so they dont have to recursively free the memory. We can add a deinit method on the document to do this for the user.
 The allocator can be passed in. Using an arena allocator, also provides an elegant way to free the memory after use without having to recursively free the memory.
-
-#### Enhanced Error Handling
-Zig has a way of creating custom error types. We should implement this, as the native error type does not include context of the issue.
-
-Lets also think about error resilience. It seems more useful to collect the errors it encounters, than to return on the first occurrence. 
-
-#### Repeat Parsing Loop
-Investigate a Ziggy way to handle repeated parsing logic without duplicating code. Currently, methods with a bound `self` cannot be passed as arguments.
 
 #### Testing
 Research best practices for organizing and executing tests in Zig. Currently, unit tests are embedded in the source files, which seems to align with Zig conventions but may not scale well as the project gets bigger.
