@@ -28,11 +28,25 @@ pub const Validator = struct {
 
         return try context.errors.toOwnedSlice();
     }
+
+    pub fn validateSchema(self: *Validator, document: ast.DocumentNode) ![]ValidationError {
+        var context = ValidationContext.init(self.allocator, self.schema);
+        defer context.deinit();
+
+        try validate.validateSchema(&context, document);
+
+        return try context.errors.toOwnedSlice();
+    }
 };
 
 pub fn validateQuery(allocator: std.mem.Allocator, schema: *const Schema, document: ast.DocumentNode) ![]ValidationError {
     var validator = Validator.init(allocator, schema);
     return try validator.validateQuery(document);
+}
+
+pub fn validateSchema(allocator: std.mem.Allocator, schema: *const Schema, document: ast.DocumentNode) ![]ValidationError {
+    var validator = Validator.init(allocator, schema);
+    return try validator.validateSchema(document);
 }
 
 //

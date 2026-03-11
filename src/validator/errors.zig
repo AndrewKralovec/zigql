@@ -35,6 +35,13 @@ pub const ValidationErrorKind = enum {
     ///
     /// See https://spec.graphql.org/draft/#sec-Fragment-spread-target-defined
     UndefinedFragment,
+    /// No unused fragments
+    ///
+    /// A GraphQL document is only valid if all fragment definitions are spread
+    /// within operations, or spread within other fragments spread within operations.
+    ///
+    /// See https://spec.graphql.org/draft/#sec-Fragments-Must-Be-Used
+    UnusedFragment,
     /// Unique variable names
     ///
     /// A GraphQL operation is only valid if all its variables are uniquely named.
@@ -48,7 +55,7 @@ pub const ValidationErrorKind = enum {
     ///
     /// See https://spec.graphql.org/draft/#sec-Argument-Names
     DuplicateArgumentName,
-    /// Known Argument Names
+    /// Known argument names
     ///
     /// A GraphQL field is only valid if all supplied arguments are defined by
     /// that field.

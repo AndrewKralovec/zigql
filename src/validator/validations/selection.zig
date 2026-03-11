@@ -8,11 +8,11 @@ const validateField = @import("./field.zig").validateField;
 const validateInlineFragment = @import("./fragment.zig").validateInlineFragment;
 const validateFragmentSpread = @import("./fragment.zig").validateFragmentSpread;
 
-pub fn validateSelectionSet(ctx: *ValidationContext, sel_set: ast.SelectionSetNode) !void {
+pub fn validateSelectionSet(ctx: *ValidationContext, sel_set: ast.SelectionSetNode, parent_type_name: ?[]const u8) !void {
     for (sel_set.selections) |sel| {
         switch (sel) {
             .Field => |field| {
-                try validateField(ctx, field);
+                try validateField(ctx, field, parent_type_name);
             },
             .FragmentSpread => |frag_spread| {
                 try validateFragmentSpread(ctx, frag_spread);

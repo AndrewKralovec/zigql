@@ -27,11 +27,10 @@ pub fn validateDirectives(ctx: *ValidationContext, directives: ?[]const ast.Dire
     }
 }
 
-// validate that arguments on built in directives are actually defined
-// custom directives not in `specified_directives`, is skipped until schema support is implemented
 fn checkKnownDirectiveArguments(ctx: *ValidationContext, directive: ast.DirectiveNode) !void {
     const args = directive.arguments orelse return;
 
+    // check built in spec directives
     if (specified_directives.get(directive.name.value)) |known_args| {
         for (args) |arg| {
             var found = false;
@@ -45,7 +44,23 @@ fn checkKnownDirectiveArguments(ctx: *ValidationContext, directive: ast.Directiv
                 try ctx.addError(.UndefinedArgument);
             }
         }
+        return;
     }
-    // TODO: look up custom directive definition from schema and validate arguments against it
-    // need to still implement schema
+
+    // check custom directive definitions from schema
+    if (ctx.schema.getDirectiveArguments(directive.name.value)) |arg_defs| {
+        for (args) |arg| {
+            var found = false;
+            for (arg_defs) |arg_def| {
+                if (std.mem.eql(u8, arg.name.value, arg_def.name.value)) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                try ctx.addError(.UndefinedArgument);
+            }
+        }
+    }
+    // KnownDirectivesRule, handles directives not found in built ins or schema
 }

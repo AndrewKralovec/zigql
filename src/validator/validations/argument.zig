@@ -8,7 +8,7 @@ pub fn validateArguments(ctx: *ValidationContext, arguments: ?[]const ast.Argume
     const args = arguments orelse return;
 
     // UniqueArgumentNamesRule
-    try validateUniqueArguments(ctx, args);
+    try checkUniqueArguments(ctx, args);
 
     // UniqueInputFieldNamesRule, validate input object values within arguments
     for (args) |arg| {
@@ -16,7 +16,7 @@ pub fn validateArguments(ctx: *ValidationContext, arguments: ?[]const ast.Argume
     }
 }
 
-fn validateUniqueArguments(ctx: *ValidationContext, args: []const ast.ArgumentNode) !void {
+fn checkUniqueArguments(ctx: *ValidationContext, args: []const ast.ArgumentNode) !void {
     var seen_args = std.StringHashMap(bool).init(ctx.allocator);
     defer seen_args.deinit();
 

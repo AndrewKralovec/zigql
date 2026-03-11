@@ -11,6 +11,7 @@ pub const Validator = @import("validator/validator.zig").Validator;
 pub const parse = @import("core/parser.zig").parse;
 pub const parseWithLimit = @import("core/parser.zig").parseWithLimit;
 pub const validateQuery = @import("validator/validator.zig").validateQuery;
+pub const validateSchema = @import("validator/validator.zig").validateSchema;
 //
 // Test cases for the zigql module
 //

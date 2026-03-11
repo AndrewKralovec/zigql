@@ -2,10 +2,17 @@ const std = @import("std");
 const ast = @import("../grammar/ast.zig");
 const ValidationContext = @import("validation_context.zig").ValidationContext;
 
+// TODO: im using this file to basically house the tests
+// break this up and make it more readable once i settle on the testing structure
+
 const document_validation = @import("validations/document.zig");
 
 pub fn validateDocument(ctx: *ValidationContext, doc: ast.DocumentNode) !void {
     try document_validation.validateDocument(ctx, doc);
+}
+
+pub fn validateSchema(ctx: *ValidationContext, doc: ast.DocumentNode) !void {
+    try document_validation.validateSchema(ctx, doc);
 }
 
 //
@@ -14,14 +21,18 @@ pub fn validateDocument(ctx: *ValidationContext, doc: ast.DocumentNode) !void {
 
 const parse = @import("../zig_ql.zig").parse;
 const Schema = @import("./schema.zig").Schema;
+const ValidationErrorKind = @import("errors.zig").ValidationErrorKind;
 
 // LoneAnonymousOperation
 
 test "should allow no operations" {
-    try expectValid(
+    try expectErrorCount(
         \\ fragment fragA on Type {
         \\   field
         \\ }
+    ,
+        0,
+        .ManyAnonymousOperations,
     );
 }
 
@@ -91,11 +102,12 @@ test "should return errors when anon operation with a subscription are used" {
 // UniqueOperationNames
 
 test "should allow no operations for unique operation names" {
-    try expectValid(
+    // fragment fragA is unused, no operations reference itv
+    try expectErrors(
         \\ fragment fragA on Type {
         \\   field
         \\ }
-    );
+    , 1);
 }
 
 test "should allow anonymous operation" {
@@ -408,14 +420,17 @@ test "should return errors when fragments are named the same" {
 }
 
 test "should return errors when fragments named the same without being referenced" {
-    try expectErrors(
+    try expectErrorCount(
         \\ fragment fragA on Type {
         \\   fieldA
         \\ }
         \\ fragment fragA on Type {
         \\   fieldB
         \\ }
-    , 1);
+    ,
+        1,
+        .DuplicateFragmentName,
+    );
 }
 
 // KnownFragmentNamesRule
@@ -447,7 +462,7 @@ test "should allow known fragment names" {
 }
 
 test "should return errors when fragment names are unknown" {
-    try expectErrors(
+    try expectErrorCount(
         \\ {
         \\   human(id: 4) {
         \\     ...UnknownFragment1
@@ -460,7 +475,10 @@ test "should return errors when fragment names are unknown" {
         \\   name
         \\   ...UnknownFragment3
         \\ }
-    , 3);
+    ,
+        3,
+        .UndefinedFragment,
+    );
 }
 
 test "should allow known fragment spread defined before use" {
@@ -491,8 +509,284 @@ test "should return errors for undefined and duplicate fragment" {
     , 2);
 }
 
-// KnownArgumentNamesRule
-// TODO: add field argument tests when schema is implemented
+// NoUnusedFragmentsRule
+
+test "should allow all fragment names to be used" {
+    try expectValid(
+        \\ query Foo {
+        \\   human(id: 4) {
+        \\     ...HumanFields1
+        \\     ... on Human {
+        \\       ...HumanFields2
+        \\     }
+        \\   }
+        \\ }
+        \\ fragment HumanFields1 on Human {
+        \\   name
+        \\   ...HumanFields3
+        \\ }
+        \\ fragment HumanFields2 on Human {
+        \\   name
+        \\ }
+        \\ fragment HumanFields3 on Human {
+        \\   name
+        \\ }
+    );
+}
+
+test "should allow all fragment names to be used by multiple operations" {
+    try expectValid(
+        \\ query Foo {
+        \\   human(id: 4) {
+        \\     ...HumanFields1
+        \\   }
+        \\ }
+        \\ query Bar {
+        \\   human(id: 4) {
+        \\     ...HumanFields2
+        \\   }
+        \\ }
+        \\ fragment HumanFields1 on Human {
+        \\   name
+        \\ }
+        \\ fragment HumanFields2 on Human {
+        \\   name
+        \\ }
+    );
+}
+
+test "should allow fragments used by other fragments" {
+    try expectValid(
+        \\ query Foo {
+        \\   human(id: 4) {
+        \\     ...HumanFields1
+        \\   }
+        \\ }
+        \\ fragment HumanFields1 on Human {
+        \\   name
+        \\   ...HumanFields2
+        \\ }
+        \\ fragment HumanFields2 on Human {
+        \\   name
+        \\ }
+    );
+}
+
+test "should allow deeply nested transitive fragment usage" {
+    try expectValid(
+        \\ {
+        \\   ...fragA
+        \\ }
+        \\ fragment fragA on Type {
+        \\   ...fragB
+        \\ }
+        \\ fragment fragB on Type {
+        \\   ...fragC
+        \\ }
+        \\ fragment fragC on Type {
+        \\   field
+        \\ }
+    );
+}
+
+test "should detect unused fragment" {
+    try expectErrors(
+        \\ query Foo {
+        \\   human(id: 4) {
+        \\     ...HumanFields1
+        \\   }
+        \\ }
+        \\ fragment HumanFields1 on Human {
+        \\   name
+        \\ }
+        \\ fragment HumanFields2 on Human {
+        \\   name
+        \\ }
+    , 1);
+}
+
+test "should return errors for multiple unused fragments" {
+    try expectErrors(
+        \\ {
+        \\   field
+        \\ }
+        \\ fragment fragA on Type {
+        \\   fieldA
+        \\ }
+        \\ fragment fragB on Type {
+        \\   fieldB
+        \\ }
+    , 2);
+}
+
+test "should return errors when fragment is only used by another unused fragment" {
+    try expectErrors(
+        \\ {
+        \\   field
+        \\ }
+        \\ fragment fragA on Type {
+        \\   ...fragB
+        \\ }
+        \\ fragment fragB on Type {
+        \\   field
+        \\ }
+    , 2);
+}
+
+test "should allow fragment used alongside inline fragments" {
+    try expectValid(
+        \\ {
+        \\   ... on Type {
+        \\     ...fragA
+        \\   }
+        \\ }
+        \\ fragment fragA on Type {
+        \\   field
+        \\ }
+    );
+}
+
+test "should allow fragment used in nested field selection" {
+    try expectValid(
+        \\ {
+        \\   parent {
+        \\     ...fragA
+        \\   }
+        \\ }
+        \\ fragment fragA on Type {
+        \\   field
+        \\ }
+    );
+}
+
+// KnownArgumentNamesRule, field argument tests
+
+test "should allow known arguments on field defined in schema" {
+    try expectErrorsWithSchema(
+        \\ type Query {
+        \\   dog(name: String, breed: String): Dog
+        \\ }
+        \\ type Dog {
+        \\   name: String
+        \\ }
+    ,
+        \\ {
+        \\   dog(name: "Rex", breed: "Husky")
+        \\ }
+    , 0);
+}
+
+test "should return error for unknown argument on field" {
+    try expectErrorsWithSchema(
+        \\ type Query {
+        \\   dog(name: String): Dog
+        \\ }
+        \\ type Dog {
+        \\   name: String
+        \\ }
+    ,
+        \\ {
+        \\   dog(unknown: true)
+        \\ }
+    , 1);
+}
+
+test "should return errors for multiple unknown arguments on field" {
+    try expectErrorsWithSchema(
+        \\ type Query {
+        \\   dog(name: String): Dog
+        \\ }
+        \\ type Dog {
+        \\   name: String
+        \\ }
+    ,
+        \\ {
+        \\   dog(bad1: true, bad2: false)
+        \\ }
+    , 2);
+}
+
+test "should return error for mixed known and unknown arguments on field" {
+    try expectErrorsWithSchema(
+        \\ type Query {
+        \\   dog(name: String): Dog
+        \\ }
+        \\ type Dog {
+        \\   name: String
+        \\ }
+    ,
+        \\ {
+        \\   dog(name: "Rex", unknown: true)
+        \\ }
+    , 1);
+}
+
+test "should allow field with no arguments when none defined" {
+    try expectErrorsWithSchema(
+        \\ type Query {
+        \\   dog: Dog
+        \\ }
+        \\ type Dog {
+        \\   name: String
+        \\ }
+    ,
+        \\ {
+        \\   dog
+        \\ }
+    , 0);
+}
+
+test "should not error for arguments on field not defined in schema" {
+    try expectErrorsWithSchema(
+        \\ type Query {
+        \\   dog: Dog
+        \\ }
+        \\ type Dog {
+        \\   name: String
+        \\ }
+    ,
+        \\ {
+        \\   unknownField(arg: true)
+        \\ }
+    , 0);
+}
+
+test "should validate field arguments inside fragment with type condition" {
+    try expectErrorsWithSchema(
+        \\ type Query {
+        \\   dog: Dog
+        \\ }
+        \\ type Dog {
+        \\   name(style: String): String
+        \\ }
+    ,
+        \\ {
+        \\   ...DogFields
+        \\ }
+        \\ fragment DogFields on Dog {
+        \\   name(unknown: true)
+        \\ }
+    , 1);
+}
+
+test "should validate field arguments on interface via inline fragment" {
+    try expectErrorsWithSchema(
+        \\ type Query {
+        \\   node: Node
+        \\ }
+        \\ interface Node {
+        \\   id(format: String): ID
+        \\ }
+    ,
+        \\ {
+        \\   ... on Node {
+        \\     id(bad: true)
+        \\   }
+        \\ }
+    , 1);
+}
+
+// KnownArgumentNamesRule, directive argument tests
 
 test "should allow when directive args are known" {
     try expectValid(
@@ -564,6 +858,68 @@ test "should return error for mixed known and unknown directive arguments" {
         \\   field @skip(if: true, unless: false)
         \\ }
     , 1);
+}
+
+// KnownArgumentNamesRule, custom directive tests
+
+test "should allow known args on custom directive" {
+    try expectErrorsWithSchema(
+        \\ directive @myDirective(arg1: String, arg2: Int) on FIELD
+    ,
+        \\ {
+        \\   field @myDirective(arg1: "hello", arg2: 42)
+        \\ }
+    , 0);
+}
+
+test "should return error for unknown arg on custom directive" {
+    try expectErrorsWithSchema(
+        \\ directive @myDirective(arg1: String) on FIELD
+    ,
+        \\ {
+        \\   field @myDirective(unknown: true)
+        \\ }
+    , 1);
+}
+
+test "should return errors for multiple unknown args on custom directive" {
+    try expectErrorsWithSchema(
+        \\ directive @myDirective(arg1: String) on FIELD
+    ,
+        \\ {
+        \\   field @myDirective(bad1: true, bad2: false)
+        \\ }
+    , 2);
+}
+
+test "should return error for mix of known and unknown args on custom directive" {
+    try expectErrorsWithSchema(
+        \\ directive @myDirective(arg1: String, arg2: Int) on FIELD
+    ,
+        \\ {
+        \\   field @myDirective(arg1: "hello", unknown: true)
+        \\ }
+    , 1);
+}
+
+test "should not error for directive not defined in schema or built-ins" {
+    try expectErrorsWithSchema(
+        \\ directive @other(x: String) on FIELD
+    ,
+        \\ {
+        \\   field @unknownDirective(arg: true)
+        \\ }
+    , 0);
+}
+
+test "should allow custom directive with no args when definition has no args" {
+    try expectErrorsWithSchema(
+        \\ directive @simple on FIELD
+    ,
+        \\ {
+        \\   field @simple
+        \\ }
+    , 0);
 }
 
 // UniqueInputFieldNamesRule
@@ -641,6 +997,28 @@ test "should return errors on nested duplicate input object fields" {
     , 1);
 }
 
+// Schema test
+
+// UniqueInputFieldNamesRule schema tests
+
+test "should allow input object with unique fields via the schema" {
+    try expectSchemaValid(
+        \\ input Point {
+        \\   x: Float
+        \\   y: Float
+        \\ }
+    );
+}
+
+test "should return error for input object with duplicate fields via the schema" {
+    try expectSchemaErrors(
+        \\ input Point {
+        \\   x: Float
+        \\   x: Int
+        \\ }
+    , 1);
+}
+
 // Test helpers
 
 fn expectErrors(
@@ -671,4 +1049,95 @@ fn expectValid(
     query_source: []const u8,
 ) !void {
     try expectErrors(query_source, 0);
+}
+
+const buildSchema = @import("./schema.zig").buildSchema;
+
+fn expectErrorsWithSchema(
+    schema_source: []const u8,
+    query_source: []const u8,
+    expected_error_count: usize,
+) !void {
+    const allocator = std.testing.allocator;
+
+    var arena = std.heap.ArenaAllocator.init(allocator);
+    defer arena.deinit();
+
+    const schema_doc = try parse(arena.allocator(), schema_source);
+    var s = try buildSchema(allocator, schema_doc);
+    defer s.deinit();
+
+    const query_doc = try parse(arena.allocator(), query_source);
+
+    var ctx = ValidationContext.init(allocator, &s);
+    defer ctx.deinit();
+
+    try validateDocument(&ctx, query_doc);
+
+    std.testing.expectEqual(expected_error_count, ctx.errorCount()) catch |err| {
+        std.debug.print("\nerrors={any}\n", .{ctx.errors.items});
+        return err;
+    };
+}
+
+fn expectSchemaErrors(
+    schema_source: []const u8,
+    expected_error_count: usize,
+) !void {
+    const allocator = std.testing.allocator;
+    var s = Schema.init(allocator);
+    defer s.deinit();
+
+    var arena = std.heap.ArenaAllocator.init(allocator);
+    defer arena.deinit();
+
+    const doc = try parse(arena.allocator(), schema_source);
+
+    var ctx = ValidationContext.init(allocator, &s);
+    defer ctx.deinit();
+
+    try validateSchema(&ctx, doc);
+
+    std.testing.expectEqual(expected_error_count, ctx.errorCount()) catch |err| {
+        std.debug.print("\nschema errors={any}\n", .{ctx.errors.items});
+        return err;
+    };
+}
+
+fn expectErrorCount(
+    query_source: []const u8,
+    expected_error_count: usize,
+    expected_error: ValidationErrorKind,
+) !void {
+    const allocator = std.testing.allocator;
+    var schema = Schema.init(allocator);
+    defer schema.deinit();
+
+    var arena = std.heap.ArenaAllocator.init(allocator);
+    defer arena.deinit();
+
+    const query_doc = try parse(arena.allocator(), query_source);
+
+    var ctx = ValidationContext.init(allocator, &schema);
+    defer ctx.deinit();
+
+    try validateDocument(&ctx, query_doc);
+
+    var err_count: u32 = 0;
+    for (ctx.errors.items) |err| {
+        if (err.kind == expected_error) {
+            err_count = err_count + 1;
+        }
+    }
+
+    std.testing.expectEqual(expected_error_count, err_count) catch |err| {
+        std.debug.print("\nerrors={any}\n", .{ctx.errors.items});
+        return err;
+    };
+}
+
+fn expectSchemaValid(
+    schema_source: []const u8,
+) !void {
+    try expectSchemaErrors(schema_source, 0);
 }
