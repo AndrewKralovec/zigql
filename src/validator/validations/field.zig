@@ -8,7 +8,6 @@ const validateSelectionSet = @import("./selection.zig").validateSelectionSet;
 const validateArgumentDefinitions = @import("./input.zig").validateArgumentDefinitions;
 
 pub fn validateField(ctx: *ValidationContext, field: ast.FieldNode, parent_type_name: ?[]const u8) anyerror!void {
-    // first do all the validation that we can without knowing the type of the field
     try validateDirectives(ctx, field.directives);
     try validateArguments(ctx, field.arguments);
 

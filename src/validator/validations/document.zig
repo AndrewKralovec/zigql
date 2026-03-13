@@ -3,6 +3,7 @@ const ast = @import("../../grammar/ast.zig");
 const ValidationContext = @import("../validation_context.zig").ValidationContext;
 
 const validateOperation = @import("./operation.zig").validateOperation;
+const validateSubscription = @import("./operation.zig").validateSubscription;
 const validateFragment = @import("./fragment.zig").validateFragment;
 const checkUnusedFragments = @import("./fragment.zig").checkUnusedFragments;
 const validateInputObjectDefinition = @import("./input.zig").validateInputObjectDefinition;
@@ -18,10 +19,6 @@ pub fn validateDocument(ctx: *ValidationContext, doc: ast.DocumentNode) !void {
     // collect all fragment definition names
     // this is to find undefined fragments even when a spread appears before its corresponding fragment definition
     // and do other things maybe.
-
-    var fragment_defs = std.StringHashMap(ast.FragmentDefinitionNode).init(ctx.allocator);
-    defer fragment_defs.deinit();
-
     for (doc.definitions) |def| {
         switch (def) {
             .ExecutableDefinition => |ex| switch (ex) {
@@ -32,7 +29,7 @@ pub fn validateDocument(ctx: *ValidationContext, doc: ast.DocumentNode) !void {
                         try ctx.addError(.DuplicateFragmentName);
                     } else {
                         try ctx.fragment_names.put(name, {});
-                        try fragment_defs.put(name, frag);
+                        try ctx.fragment_defs.put(name, frag);
                     }
                 },
                 else => {},
@@ -58,12 +55,23 @@ pub fn validateDocument(ctx: *ValidationContext, doc: ast.DocumentNode) !void {
     if (ctx.anonymous_operation_count > 0 and ctx.operation_count > 1) {
         var i: u32 = 0;
         while (i < ctx.anonymous_operation_count) : (i += 1) {
-            try ctx.addError(.ManyAnonymousOperations);
+            try ctx.addError(.MultipleAnonymousOperations);
         }
     }
 
     // NoUnusedFragmentsRule
-    try checkUnusedFragments(ctx, doc, &fragment_defs);
+    try checkUnusedFragments(ctx, doc);
+
+    // subscription validation pass
+    for (doc.definitions) |def| {
+        switch (def) {
+            .ExecutableDefinition => |ex| switch (ex) {
+                .OperationDefinition => |op| try validateSubscription(ctx, op),
+                else => {},
+            },
+            else => {},
+        }
+    }
 }
 
 pub fn validateSchema(ctx: *ValidationContext, doc: ast.DocumentNode) !void {
@@ -87,6 +95,9 @@ fn validateTypeSystemDefinition(ctx: *ValidationContext, def: ast.TypeSystemDefi
             // TODO: validate schema definition
         },
         .DirectiveDefinition => |dir_def| {
+            // ReservedNameRule
+            try validateTypeSystemName(ctx, dir_def.name.value);
+
             // UniqueInputFieldNamesRule, directive arguments must have unique names
             if (dir_def.arguments) |args| {
                 try validateArgumentDefinitions(ctx, args);
@@ -96,6 +107,17 @@ fn validateTypeSystemDefinition(ctx: *ValidationContext, def: ast.TypeSystemDefi
 }
 
 fn validateTypeDefinition(ctx: *ValidationContext, type_def: ast.TypeDefinitionNode) !void {
+    // ReservedNameRule
+    const name = switch (type_def) {
+        .ScalarTypeDefinition => |d| d.name.value,
+        .ObjectTypeDefinition => |d| d.name.value,
+        .InterfaceTypeDefinition => |d| d.name.value,
+        .UnionTypeDefinition => |d| d.name.value,
+        .EnumTypeDefinition => |d| d.name.value,
+        .InputObjectTypeDefinition => |d| d.name.value,
+    };
+    try validateTypeSystemName(ctx, name);
+
     switch (type_def) {
         .InputObjectTypeDefinition => |input| try validateInputObjectDefinition(ctx, input),
         .ObjectTypeDefinition => |obj| {
@@ -113,6 +135,12 @@ fn validateTypeDefinition(ctx: *ValidationContext, type_def: ast.TypeDefinitionN
         .EnumTypeDefinition => {
             // TODO: validate enum definition
         },
+    }
+}
+
+fn validateTypeSystemName(ctx: *ValidationContext, name: []const u8) !void {
+    if (std.mem.startsWith(u8, name, "__")) {
+        try ctx.addError(.ReservedName);
     }
 }
 

@@ -29,7 +29,6 @@ pub fn validateInlineFragment(ctx: *ValidationContext, frag: ast.InlineFragmentN
 pub fn checkUnusedFragments(
     ctx: *ValidationContext,
     doc: ast.DocumentNode,
-    fragment_defs: *const std.StringHashMap(ast.FragmentDefinitionNode),
 ) !void {
     var used = std.StringHashMap(void).init(ctx.allocator);
     defer used.deinit();
@@ -39,7 +38,7 @@ pub fn checkUnusedFragments(
             .ExecutableDefinition => |ex| switch (ex) {
                 .OperationDefinition => |op| {
                     if (op.selection_set) |sel_set| {
-                        try collectUsedFragments(sel_set, fragment_defs, &used);
+                        try collectUsedFragments(sel_set, &ctx.fragment_defs, &used);
                     }
                 },
                 else => {},

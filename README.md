@@ -204,24 +204,24 @@ The validator implements the following GraphQL validation rules:
 | ExecutableDefinitionsRule | A GraphQL document is only valid for execution if all definitions are either operation or fragment definitions. | COMPLETE |
 | FieldsOnCorrectTypeRule | Fields selected on an object, interface, or union must be defined on that type. | TODO |
 | FragmentsOnCompositeTypesRule | Fragments can only be spread into a composite type (object, interface, or union). | TODO |
-| KnownArgumentNamesRule | All arguments provided to a field or directive must be defined by that field or directive. | WIP |
+| KnownArgumentNamesRule | All arguments provided to a field or directive must be defined by that field or directive. | COMPLETE |
 | KnownDirectivesRule | All directives used must be defined in the schema and used in valid locations. | TODO |
 | KnownFragmentNamesRule | All fragment spreads must refer to fragments defined in the same document. | COMPLETE |
 | KnownTypeNamesRule | All referenced types (in variable definitions and fragment conditions) must be defined in the schema. | TODO |
 | LoneAnonymousOperationRule | A document containing an anonymous operation must contain only that one operation. | COMPLETE |
 | NoFragmentCyclesRule | Fragments must not form cycles via fragment spreads. | TODO |
-| NoUndefinedVariablesRule | All variables used in an operation must be defined by that operation. | TODO |
-| NoUnusedFragmentsRule | All fragment definitions must be used within operations or other used fragments. | TODO |
-| NoUnusedVariablesRule | All variables defined by an operation must be used in that operation. | TODO |
+| NoUndefinedVariablesRule | All variables used in an operation must be defined by that operation. | COMPLETE |
+| NoUnusedFragmentsRule | All fragment definitions must be used within operations or other used fragments. | COMPLETE |
+| NoUnusedVariablesRule | All variables defined by an operation must be used in that operation. | COMPLETE |
 | OverlappingFieldsCanBeMergedRule | Fields selected in the same scope must have compatible types and arguments. | TODO |
 | PossibleFragmentSpreadsRule | Fragment spreads must be on types that are possible given the parent type. | TODO |
 | ProvidedRequiredArgumentsRule | All required arguments on fields and directives must be provided. | TODO |
 | ScalarLeafsRule | Leaf fields (fields without sub-selections) must be scalar or enum types. | TODO |
-| SingleFieldSubscriptionsRule | Subscription operations must contain exactly one root field. | TODO |
+| SingleFieldSubscriptionsRule | Subscription operations must contain exactly one root field. | COMPLETE |
 | UniqueArgumentNamesRule | Argument names must be unique within a field or directive call. | COMPLETE |
 | UniqueDirectivesPerLocationRule | Directives that are not repeatable must appear at most once per location. | TODO |
 | UniqueFragmentNamesRule | Fragment names must be unique within a document. | COMPLETE |
-| UniqueInputFieldNamesRule | Input field names must be unique within an input object value. | WIP |
+| UniqueInputFieldNamesRule | Input field names must be unique within an input object value. | COMPLETE |
 | UniqueOperationNamesRule | Operation names must be unique within a document. | COMPLETE |
 | UniqueVariableNamesRule | Variable names must be unique within an operation. | COMPLETE |
 | ValuesOfCorrectTypeRule | Input values must be compatible with their expected input types. | TODO |
@@ -236,6 +236,7 @@ The validator implements the following GraphQL validation rules:
 | UniqueArgumentDefinitionNamesRule | Argument names must be unique within a field or directive definition. | TODO |
 | UniqueDirectiveNamesRule | Directive names must be unique within the schema. | TODO |
 | PossibleTypeExtensionsRule | Type extensions must extend a type that exists in the schema. | TODO |
+| ReservedNamesRule | Names starting with `__` are reserved by the GraphQL introspection system. | COMPLETE |
 | **Recommended Security Rules** | | |
 | MaxIntrospectionDepthRule | Introspection queries must not exceed a depth limit to prevent DoS attacks. | TODO |
 

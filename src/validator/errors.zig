@@ -15,7 +15,7 @@ pub const ValidationErrorKind = enum {
     /// (the query short-hand) that it contains only that one operation definition.
     ///
     /// See https:///spec.graphql.org/draft/#sec-Lone-Anonymous-Operation
-    ManyAnonymousOperations,
+    MultipleAnonymousOperations,
     /// Unique operation names
     ///
     /// A GraphQL document is only valid if all defined operations have unique names.
@@ -70,6 +70,46 @@ pub const ValidationErrorKind = enum {
     ///
     /// See https://spec.graphql.org/draft/#sec-Input-Object-Field-Uniqueness
     DuplicateInputField,
+    /// No undefined variables
+    ///
+    /// A GraphQL operation is only valid if all variables encountered, both directly
+    /// and via fragment spreads, are defined by that operation.
+    ///
+    /// See https://spec.graphql.org/draft/#sec-All-Variable-Uses-Defined
+    UndefinedVariable,
+    /// No unused variables
+    ///
+    /// A GraphQL operation is only valid if all variables defined by an operation
+    /// are used, either directly or within a spread fragment.
+    ///
+    /// See https://spec.graphql.org/draft/#sec-All-Variables-Used
+    UnusedVariable,
+    /// Reserved names
+    ///
+    /// Names beginning with "__" (two underscores) are reserved by the
+    /// GraphQL introspection system and must not be used by user-defined entities.
+    ///
+    /// See https://spec.graphql.org/draft/#sec-Names.Reserved-Names
+    ReservedName,
+    /// Single root field subscriptions
+    ///
+    /// A subscription operation must have exactly one root field.
+    ///
+    /// See https://spec.graphql.org/draft/#sec-Single-root-field
+    SubscriptionMultipleRootFields,
+    /// Subscription must not use introspection fields
+    ///
+    /// The root field of a subscription operation must not be an introspection
+    /// field like __schema or __type.
+    ///
+    /// See https://spec.graphql.org/draft/#sec-Single-root-field
+    SubscriptionIntrospection,
+    /// Subscription must not use conditional selection
+    ///
+    /// The root selections of a subscription must not use @skip or @include directives.
+    ///
+    /// See https://spec.graphql.org/draft/#sec-Single-root-field
+    SubscriptionConditionalSelection,
 };
 
 // TODO: import the validation object in the future

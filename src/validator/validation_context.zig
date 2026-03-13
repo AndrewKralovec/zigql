@@ -10,9 +10,12 @@ pub const ValidationContext = struct {
     errors: std.ArrayList(ValidationError),
     allocator: std.mem.Allocator,
 
-    // doc uniqueness tracking (lives for entire validation)
+    // doc uniqueness tracking
     operation_names: std.StringHashMap(void),
     fragment_names: std.StringHashMap(void),
+
+    // fragment definition lookup
+    fragment_defs: std.StringHashMap(ast.FragmentDefinitionNode),
 
     // operation tracking
     operation_count: u32,
@@ -26,6 +29,7 @@ pub const ValidationContext = struct {
 
             .operation_names = std.StringHashMap(void).init(allocator),
             .fragment_names = std.StringHashMap(void).init(allocator),
+            .fragment_defs = std.StringHashMap(ast.FragmentDefinitionNode).init(allocator),
             .operation_count = 0,
             .anonymous_operation_count = 0,
         };
@@ -39,6 +43,7 @@ pub const ValidationContext = struct {
 
         self.operation_names.deinit();
         self.fragment_names.deinit();
+        self.fragment_defs.deinit();
     }
 
     pub fn addError(self: *ValidationContext, kind: ValidationErrorKind) !void {

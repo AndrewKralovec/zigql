@@ -32,7 +32,7 @@ test "should allow no operations" {
         \\ }
     ,
         0,
-        .ManyAnonymousOperations,
+        .MultipleAnonymousOperations,
     );
 }
 
@@ -207,17 +207,20 @@ test "should allow operations with no variables" {
 
 test "should allow unique variable names" {
     try expectValid(
-        \\ query A($x: Int, $y: String) { __typename }
-        \\ query B($x: String, $y: Int) { __typename }
+        \\ query A($x: Int, $y: String) { field(a: $x, b: $y) }
+        \\ query B($x: String, $y: Int) { field(a: $x, b: $y) }
     );
 }
 
 test "should return errors for duplicate variables with different types" {
-    try expectErrors(
+    try expectErrorCount(
         \\ query($bar: String, $foo: Int, $bar: Boolean) {
         \\   field
         \\ }
-    , 1);
+    ,
+        1,
+        .DuplicateVariableName,
+    );
 }
 
 test "should return errors for duplicate variable names" {
@@ -227,11 +230,14 @@ test "should return errors for duplicate variable names" {
     // query C: $x x2 => grouped: 1 error, actual: 1 error
     // total  :          grouped: 3,       actual: 4
 
-    try expectErrors(
+    try expectErrorCount(
         \\ query A($x: Int, $x: Int, $x: String) { __typename }
         \\ query B($x: String, $x: Int) { __typename }
         \\ query C($x: Int, $x: Int) { __typename }
-    , 3);
+    ,
+        3,
+        .DuplicateVariableName,
+    );
 }
 
 // UniqueArgumentNamesRule
@@ -1017,6 +1023,255 @@ test "should return error for input object with duplicate fields via the schema"
         \\   x: Int
         \\ }
     , 1);
+}
+
+// NoUndefinedVariablesRule
+
+test "should allow all variables to be defined" {
+    try expectValid(
+        \\ query Foo($a: String, $b: String) {
+        \\   field(a: $a, b: $b)
+        \\ }
+    );
+}
+
+test "should return error for undefined variable" {
+    try expectErrorCount(
+        \\ query Foo {
+        \\   field(a: $a)
+        \\ }
+    ,
+        1,
+        .UndefinedVariable,
+    );
+}
+
+test "should return error for variable used in fragment but not defined in operation" {
+    try expectErrorCount(
+        \\ query Foo {
+        \\   ...FragA
+        \\ }
+        \\ fragment FragA on Type {
+        \\   field(a: $a)
+        \\ }
+    ,
+        1,
+        .UndefinedVariable,
+    );
+}
+
+test "should allow variable defined in operation used in fragment" {
+    try expectValid(
+        \\ query Foo($a: String) {
+        \\   ...FragA
+        \\ }
+        \\ fragment FragA on Type {
+        \\   field(a: $a)
+        \\ }
+    );
+}
+
+test "should allow variable used in nested fragment" {
+    try expectValid(
+        \\ query Foo($a: String) {
+        \\   ...FragA
+        \\ }
+        \\ fragment FragA on Type {
+        \\   ...FragB
+        \\ }
+        \\ fragment FragB on Type {
+        \\   field(a: $a)
+        \\ }
+    );
+}
+
+test "should return error for multiple undefined variables" {
+    try expectErrorCount(
+        \\ query Foo($a: String) {
+        \\   field(a: $a, b: $b, c: $c)
+        \\ }
+    ,
+        2,
+        .UndefinedVariable,
+    );
+}
+
+// NoUnusedVariablesRule
+
+test "should return error for unused variable" {
+    try expectErrorCount(
+        \\ query Foo($a: String) {
+        \\   field
+        \\ }
+    ,
+        1,
+        .UnusedVariable,
+    );
+}
+
+test "should not return error when variable is used" {
+    try expectValid(
+        \\ query Foo($a: String) {
+        \\   field(a: $a)
+        \\ }
+    );
+}
+
+test "should not return error when variable used in fragment" {
+    try expectValid(
+        \\ query Foo($a: String) {
+        \\   ...FragA
+        \\ }
+        \\ fragment FragA on Type {
+        \\   field(a: $a)
+        \\ }
+    );
+}
+
+test "should return error for multiple unused variables" {
+    try expectErrorCount(
+        \\ query Foo($a: String, $b: Int, $c: Float) {
+        \\   field(a: $a)
+        \\ }
+    ,
+        2,
+        .UnusedVariable,
+    );
+}
+
+test "should allow variable used in directive argument" {
+    try expectValid(
+        \\ query Foo($cond: Boolean) {
+        \\   field @skip(if: $cond)
+        \\ }
+    );
+}
+
+// ReservedNameRule (schema-level only, matching Apollo-RS)
+
+test "should return error for type name starting with __" {
+    try expectSchemaErrors(
+        \\ type __Foo {
+        \\   field: String
+        \\ }
+    , 1);
+}
+
+test "should return error for enum name starting with __" {
+    try expectSchemaErrors(
+        \\ enum __Bar {
+        \\   VALUE
+        \\ }
+    , 1);
+}
+
+test "should return error for directive name starting with __" {
+    try expectSchemaErrors(
+        \\ directive @__myDir on FIELD
+    , 1);
+}
+
+test "should allow type with normal name" {
+    try expectSchemaValid(
+        \\ type Query {
+        \\   field: String
+        \\ }
+    );
+}
+
+// SubscriptionUsesMultipleFieldsRule
+
+test "should allow subscription with one field" {
+    try expectValid(
+        \\ subscription Foo {
+        \\   newMessage
+        \\ }
+    );
+}
+
+test "should return error for subscription with multiple fields" {
+    try expectErrorCount(
+        \\ subscription Foo {
+        \\   newMessage
+        \\   disallowedSecondField
+        \\ }
+    ,
+        1,
+        .SubscriptionMultipleRootFields,
+    );
+}
+
+test "should return error for subscription with multiple fields via fragment" {
+    try expectErrorCount(
+        \\ subscription Foo {
+        \\   ...multiFields
+        \\ }
+        \\ fragment multiFields on Subscription {
+        \\   newMessage
+        \\   disallowedSecondField
+        \\ }
+    ,
+        1,
+        .SubscriptionMultipleRootFields,
+    );
+}
+
+// SubscriptionUsesIntrospectionRule
+
+test "should return error for subscription using __schema" {
+    try expectErrorCount(
+        \\ subscription Foo {
+        \\   __schema { queryType { name } }
+        \\ }
+    ,
+        1,
+        .SubscriptionIntrospection,
+    );
+}
+
+test "should return error for subscription using __type" {
+    try expectErrorCount(
+        \\ subscription Foo {
+        \\   __type(name: "Foo") { name }
+        \\ }
+    ,
+        1,
+        .SubscriptionIntrospection,
+    );
+}
+
+// SubscriptionUsesConditionalSelectionRule
+
+test "should return error for subscription with @skip on root field" {
+    try expectErrorCount(
+        \\ subscription Foo($cond: Boolean) {
+        \\   newMessage @skip(if: $cond)
+        \\ }
+    ,
+        1,
+        .SubscriptionConditionalSelection,
+    );
+}
+
+test "should return error for subscription with @include on root field" {
+    try expectErrorCount(
+        \\ subscription Foo($cond: Boolean) {
+        \\   newMessage @include(if: $cond)
+        \\ }
+    ,
+        1,
+        .SubscriptionConditionalSelection,
+    );
+}
+
+test "should allow subscription with @skip on nested field" {
+    try expectValid(
+        \\ subscription Foo($cond: Boolean) {
+        \\   newMessage {
+        \\     body @skip(if: $cond)
+        \\   }
+        \\ }
+    );
 }
 
 // Test helpers
