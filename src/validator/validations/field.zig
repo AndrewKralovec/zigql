@@ -6,10 +6,17 @@ const validateArguments = @import("./argument.zig").validateArguments;
 const validateDirectives = @import("./directive.zig").validateDirectives;
 const validateSelectionSet = @import("./selection.zig").validateSelectionSet;
 const validateArgumentDefinitions = @import("./input.zig").validateArgumentDefinitions;
+const validateInputValue = @import("./value.zig").validateInputValue;
 
 pub fn validateField(ctx: *ValidationContext, field: ast.FieldNode, parent_type_name: ?[]const u8) anyerror!void {
     try validateDirectives(ctx, field.directives);
     try validateArguments(ctx, field.arguments);
+
+    if (field.arguments) |args| {
+        for (args) |arg| {
+            try validateInputValue(ctx, arg.value);
+        }
+    }
 
     // KnownArgumentNamesRule for field arguments
     try checkKnownFieldArguments(ctx, field, parent_type_name);

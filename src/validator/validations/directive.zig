@@ -3,6 +3,7 @@ const ast = @import("../../grammar/ast.zig");
 const ValidationContext = @import("../validation_context.zig").ValidationContext;
 
 const validateArguments = @import("./argument.zig").validateArguments;
+const validateInputValue = @import("./value.zig").validateInputValue;
 
 // TODO: find out what has better performance, the custom map (keyword example) or the StaticStringMap.
 /// Built in spec directive arguments.
@@ -21,6 +22,12 @@ pub fn validateDirectives(ctx: *ValidationContext, directives: ?[]const ast.Dire
     // const seen_directives = std.StringHashMap(bool).init(ctx.allocator);
     for (dirs) |directive| {
         try validateArguments(ctx, directive.arguments);
+
+        if (directive.arguments) |args| {
+            for (args) |arg| {
+                try validateInputValue(ctx, arg.value);
+            }
+        }
 
         // KnownArgumentNamesRule
         try checkKnownDirectiveArguments(ctx, directive);
