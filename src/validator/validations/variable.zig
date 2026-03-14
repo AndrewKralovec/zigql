@@ -74,6 +74,20 @@ pub fn validateUnusedVariables(ctx: *ValidationContext, operation: ast.Operation
     }
 }
 
+pub fn validateVariableUsage(
+    ctx: *ValidationContext,
+    arg_definition: ast.InputValueDefinitionNode,
+    argument: ast.ArgumentNode,
+    var_defs: ?[]const ast.VariableDefinitionNode,
+) bool {
+    _ = ctx;
+    _ = arg_definition;
+    _ = argument;
+    _ = var_defs;
+    // TODO: add validation logic
+    return true;
+}
+
 fn collectUsedVariables(
     sel_set: ast.SelectionSetNode,
     fragment_defs: *const std.StringHashMap(ast.FragmentDefinitionNode),
