@@ -4,32 +4,49 @@ const ast = @import("../grammar/ast.zig");
 pub const Schema = struct {
     allocator: std.mem.Allocator,
     directive_definitions: std.StringHashMap([]const ast.InputValueDefinitionNode),
-    field_arguments: std.StringHashMap(std.StringHashMap([]const ast.InputValueDefinitionNode)),
+    types: std.StringHashMap(TypeDefinition),
+    query_type: ?[]const u8,
 
     pub fn init(allocator: std.mem.Allocator) Schema {
         return Schema{
             .allocator = allocator,
             .directive_definitions = std.StringHashMap([]const ast.InputValueDefinitionNode).init(allocator),
-            .field_arguments = std.StringHashMap(std.StringHashMap([]const ast.InputValueDefinitionNode)).init(allocator),
+            .types = std.StringHashMap(TypeDefinition).init(allocator),
+            .query_type = null,
         };
     }
 
     pub fn deinit(self: *Schema) void {
-        var it = self.field_arguments.valueIterator();
-        while (it.next()) |inner_map| {
-            @constCast(inner_map).deinit();
-        }
-        self.field_arguments.deinit();
         self.directive_definitions.deinit();
+        self.types.deinit();
     }
 
     pub fn getDirectiveArguments(self: *const Schema, directive_name: []const u8) ?[]const ast.InputValueDefinitionNode {
         return self.directive_definitions.get(directive_name);
     }
 
-    pub fn getFieldArguments(self: *const Schema, type_name: []const u8, field_name: []const u8) ?[]const ast.InputValueDefinitionNode {
-        const fields_map = self.field_arguments.get(type_name) orelse return null;
-        return fields_map.get(field_name);
+    pub fn getType(self: *const Schema, name: []const u8) ?TypeDefinition {
+        return self.types.get(name);
+    }
+
+    pub fn typeField(self: *const Schema, type_name: []const u8, field_name: []const u8) FieldLookupError!ast.FieldDefinitionNode {
+        const type_info = self.types.get(type_name) orelse return error.NoSuchType;
+
+        const fields: ?[]const ast.FieldDefinitionNode = switch (type_info) {
+            .Object => |obj| obj.fields,
+            .Interface => |iface| iface.fields,
+            .Scalar, .Union, .Enum, .InputObject => null,
+        };
+
+        if (fields) |field_defs| {
+            for (field_defs) |field_def| {
+                if (std.mem.eql(u8, field_def.name.value, field_name)) {
+                    return field_def;
+                }
+            }
+        }
+
+        return error.NoSuchField;
     }
 };
 
@@ -45,16 +62,19 @@ pub fn buildSchema(allocator: std.mem.Allocator, document: ast.DocumentNode) !Sc
                         try schema.directive_definitions.put(dir_def.name.value, dir_def.arguments orelse &.{});
                     },
                     .TypeDefinition => |type_def| {
-                        try collectTypeFieldArguments(&schema, type_def);
+                        try collectType(&schema, type_def);
                     },
-                    else => {},
+                    .SchemaDefinition => |schema_def| {
+                        for (schema_def.operation_types) |op_type| {
+                            if (op_type.operation == .Query) {
+                                schema.query_type = op_type.type.name.value;
+                            }
+                        }
+                    },
                 }
             },
             .TypeSystemExtension => |type_sys_ext| {
                 switch (type_sys_ext) {
-                    .TypeExtension => |type_ext| {
-                        try collectExtensionFieldArguments(&schema, type_ext);
-                    },
                     else => {},
                 }
             },
@@ -62,48 +82,97 @@ pub fn buildSchema(allocator: std.mem.Allocator, document: ast.DocumentNode) !Sc
         }
     }
 
+    // default query type per GraphQL spec
+    if (schema.query_type == null) {
+        schema.query_type = "Query";
+    }
+
     return schema;
 }
 
-fn collectTypeFieldArguments(schema: *Schema, type_def: ast.TypeDefinitionNode) !void {
+fn collectType(schema: *Schema, type_def: ast.TypeDefinitionNode) !void {
     switch (type_def) {
+        .ScalarTypeDefinition => |scalar| {
+            try schema.types.put(scalar.name.value, .{ .Scalar = .{
+                .directives = scalar.directives,
+            } });
+        },
         .ObjectTypeDefinition => |obj| {
-            if (obj.fields) |fields| {
-                try collectFieldArguments(schema, obj.name.value, fields);
-            }
+            try schema.types.put(obj.name.value, .{ .Object = .{
+                .fields = obj.fields,
+                .interfaces = obj.interfaces,
+                .directives = obj.directives,
+            } });
         },
         .InterfaceTypeDefinition => |iface| {
-            if (iface.fields) |fields| {
-                try collectFieldArguments(schema, iface.name.value, fields);
-            }
+            try schema.types.put(iface.name.value, .{ .Interface = .{
+                .fields = iface.fields,
+                .interfaces = iface.interfaces,
+                .directives = iface.directives,
+            } });
         },
-        else => {},
+        .UnionTypeDefinition => |union_def| {
+            try schema.types.put(union_def.name.value, .{ .Union = .{
+                .members = union_def.types,
+                .directives = union_def.directives,
+            } });
+        },
+        .EnumTypeDefinition => |enum_def| {
+            try schema.types.put(enum_def.name.value, .{ .Enum = .{
+                .values = enum_def.values,
+                .directives = enum_def.directives,
+            } });
+        },
+        .InputObjectTypeDefinition => |input| {
+            try schema.types.put(input.name.value, .{ .InputObject = .{
+                .fields = input.fields,
+                .directives = input.directives,
+            } });
+        },
     }
 }
 
-fn collectExtensionFieldArguments(schema: *Schema, type_ext: ast.TypeExtensionNode) !void {
-    switch (type_ext) {
-        .ObjectTypeExtension => |obj_ext| {
-            if (obj_ext.fields) |fields| {
-                try collectFieldArguments(schema, obj_ext.name.value, fields);
-            }
-        },
-        .InterfaceTypeExtension => |iface_ext| {
-            if (iface_ext.fields) |fields| {
-                try collectFieldArguments(schema, iface_ext.name.value, fields);
-            }
-        },
-        else => {},
-    }
-}
+pub const FieldLookupError = error{
+    NoSuchType,
+    NoSuchField,
+};
 
-fn collectFieldArguments(schema: *Schema, type_name: []const u8, fields: []const ast.FieldDefinitionNode) !void {
-    for (fields) |field_def| {
-        const args = field_def.arguments orelse continue;
-        const gop = try schema.field_arguments.getOrPut(type_name);
-        if (!gop.found_existing) {
-            gop.value_ptr.* = std.StringHashMap([]const ast.InputValueDefinitionNode).init(schema.allocator);
-        }
-        try gop.value_ptr.*.put(field_def.name.value, args);
-    }
-}
+pub const TypeDefinition = union(enum) {
+    Scalar: ScalarType,
+    Object: ObjectType,
+    Interface: InterfaceType,
+    Union: UnionType,
+    Enum: EnumType,
+    InputObject: InputObjectType,
+};
+
+pub const ScalarType = struct {
+    directives: ?[]const ast.DirectiveNode,
+};
+
+pub const ObjectType = struct {
+    fields: ?[]const ast.FieldDefinitionNode,
+    interfaces: ?[]const ast.NamedTypeNode,
+    directives: ?[]const ast.DirectiveNode,
+};
+
+pub const InterfaceType = struct {
+    fields: ?[]const ast.FieldDefinitionNode,
+    interfaces: ?[]const ast.NamedTypeNode,
+    directives: ?[]const ast.DirectiveNode,
+};
+
+pub const UnionType = struct {
+    members: ?[]const ast.NamedTypeNode,
+    directives: ?[]const ast.DirectiveNode,
+};
+
+pub const EnumType = struct {
+    values: ?[]const ast.EnumValueDefinitionNode,
+    directives: ?[]const ast.DirectiveNode,
+};
+
+pub const InputObjectType = struct {
+    fields: ?[]const ast.InputValueDefinitionNode,
+    directives: ?[]const ast.DirectiveNode,
+};

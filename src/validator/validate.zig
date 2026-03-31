@@ -224,18 +224,17 @@ test "should return errors for duplicate variables with different types" {
 }
 
 test "should return errors for duplicate variable names" {
-    // NOTE: why expect 3 errors? errors are grouped, explained...
-    // query A: $x x3 => grouped: 1 error, actual: 2 errors (after first $x)
-    // query B: $x x2 => grouped: 1 error, actual: 1 error
-    // query C: $x x2 => grouped: 1 error, actual: 1 error
-    // total  :          grouped: 3,       actual: 4
+    // query A: $x x3 => 2 errors (one for each occurrence after the first)
+    // query B: $x x2 => 1 error
+    // query C: $x x2 => 1 error
+    // total  : 4 errors
 
     try expectErrorCount(
         \\ query A($x: Int, $x: Int, $x: String) { __typename }
         \\ query B($x: String, $x: Int) { __typename }
         \\ query C($x: Int, $x: Int) { __typename }
     ,
-        3,
+        4,
         .DuplicateVariableName,
     );
 }
@@ -328,7 +327,7 @@ test "should return errors on many duplicate field arguments" {
         \\ {
         \\   field(arg1: "value", arg1: "value", arg1: "value")
         \\ }
-    , 1);
+    , 2);
 }
 
 test "should return errors on duplicate directive arguments" {
@@ -344,7 +343,7 @@ test "should return errors on many duplicate directive arguments" {
         \\ {
         \\   field @directive(arg1: "value", arg1: "value", arg1: "value")
         \\ }
-    , 1);
+    , 2);
 }
 
 // UniqueFragmentNamesRule
@@ -979,7 +978,14 @@ test "should allow for nested input objects with similar fields" {
 }
 
 test "should return errors on duplicate input object fields" {
-    try expectErrors(
+    try expectErrorsWithSchema(
+        \\ type Query {
+        \\   field(arg: SomeInput): String
+        \\ }
+        \\ input SomeInput {
+        \\   f1: String
+        \\ }
+    ,
         \\ {
         \\   field(arg: { f1: "value", f1: "value" })
         \\ }
@@ -987,16 +993,32 @@ test "should return errors on duplicate input object fields" {
 }
 
 test "should return errors on many duplicate input object fields" {
-    // NOTE: other apis do not group this into one error.
-    try expectErrors(
+    try expectErrorsWithSchema(
+        \\ type Query {
+        \\   field(arg: SomeInput): String
+        \\ }
+        \\ input SomeInput {
+        \\   f1: String
+        \\ }
+    ,
         \\ {
         \\   field(arg: { f1: "value", f1: "value", f1: "value" })
         \\ }
-    , 1);
+    , 2);
 }
 
 test "should return errors on nested duplicate input object fields" {
-    try expectErrors(
+    try expectErrorsWithSchema(
+        \\ type Query {
+        \\   field(arg: SomeInput): String
+        \\ }
+        \\ input SomeInput {
+        \\   f1: NestedInput
+        \\ }
+        \\ input NestedInput {
+        \\   f2: String
+        \\ }
+    ,
         \\ {
         \\   field(arg: { f1: {f2: "value", f2: "value" }})
         \\ }

@@ -28,6 +28,7 @@ pub const ValidationErrorKind = enum {
     //
     /// See https://spec.graphql.org/draft/#sec-Fragment-Name-Uniqueness
     DuplicateFragmentName,
+    // KnownFragmentNamesRule
     /// Known fragment names
     ///
     /// A GraphQL document is only valid if all `...Fragment` fragment spreads refer
@@ -42,6 +43,7 @@ pub const ValidationErrorKind = enum {
     ///
     /// See https://spec.graphql.org/draft/#sec-Fragments-Must-Be-Used
     UnusedFragment,
+    // UniqueVariableNamesRule
     /// Unique variable names
     ///
     /// A GraphQL operation is only valid if all its variables are uniquely named.
@@ -63,6 +65,7 @@ pub const ValidationErrorKind = enum {
     /// See https:///spec.graphql.org/draft/#sec-Argument-Names
     /// See https://spec.graphql.org/draft/#sec-Directives-Are-In-Valid-Locations
     UndefinedArgument,
+    // UniqueInputFieldNamesRule
     /// Unique input field names
     ///
     /// A GraphQL input object value is only valid if all supplied fields are
@@ -70,6 +73,7 @@ pub const ValidationErrorKind = enum {
     ///
     /// See https://spec.graphql.org/draft/#sec-Input-Object-Field-Uniqueness
     DuplicateInputField,
+    // NoUndefinedVariablesRule
     /// No undefined variables
     ///
     /// A GraphQL operation is only valid if all variables encountered, both directly
@@ -77,6 +81,7 @@ pub const ValidationErrorKind = enum {
     ///
     /// See https://spec.graphql.org/draft/#sec-All-Variable-Uses-Defined
     UndefinedVariable,
+    // NoUnusedVariablesRule
     /// No unused variables
     ///
     /// A GraphQL operation is only valid if all variables defined by an operation
@@ -110,6 +115,40 @@ pub const ValidationErrorKind = enum {
     ///
     /// See https://spec.graphql.org/draft/#sec-Single-root-field
     SubscriptionConditionalSelection,
+    /// Required argument
+    ///
+    /// A field or directive argument is required if it has a non-null type
+    /// and does not have a default value.
+    ///
+    /// See https://spec.graphql.org/draft/#sec-Required-Arguments
+    RequiredArgument,
+    /// Fields on correct type
+    ///
+    /// A GraphQL document is only valid if all fields selected are defined by the
+    /// parent type, or are an allowed meta field such as __typename.
+    ///
+    /// See https://spec.graphql.org/draft/#sec-Field-Selections
+    FieldNotFound,
+    /// Leaf field selections
+    ///
+    /// Field selections on scalars or enums must not have subselections,
+    /// and field selections on objects, interfaces, or unions must have subselections.
+    ///
+    /// See https://spec.graphql.org/draft/#sec-Leaf-Field-Selections
+    MissingSubselection,
+    /// Value literals of correct type
+    ///
+    /// A GraphQL document is only valid if all value literals are of the type
+    /// expected at their position.
+    ///
+    /// See https://spec.graphql.org/draft/#sec-Values-of-Correct-Type
+    UnsupportedValueType,
+    /// Variables in allowed position
+    ///
+    /// Variable usages must be compatible with the arguments they are passed to.
+    ///
+    /// See https://spec.graphql.org/draft/#sec-All-Variable-Usages-Are-Allowed
+    DisallowedVariableUsage,
 };
 
 // TODO: import the validation object in the future

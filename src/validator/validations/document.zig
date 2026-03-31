@@ -4,7 +4,7 @@ const ValidationContext = @import("../validation_context.zig").ValidationContext
 
 const validateOperation = @import("./operation.zig").validateOperation;
 const validateSubscription = @import("./operation.zig").validateSubscription;
-const validateFragment = @import("./fragment.zig").validateFragment;
+const validateFragmentDefinition = @import("./fragment.zig").validateFragmentDefinition;
 const checkUnusedFragments = @import("./fragment.zig").checkUnusedFragments;
 const validateInputObjectDefinition = @import("./input.zig").validateInputObjectDefinition;
 const validateInputObjectExtension = @import("./input.zig").validateInputObjectExtension;
@@ -16,9 +16,8 @@ const validateUnionDefinition = @import("./union.zig").validateUnionDefinition;
 pub fn validateDocument(ctx: *ValidationContext, doc: ast.DocumentNode) !void {
     // TODO: graphql-js does the walk in a single pass. optimize later.
     // the visitor per rule pattern is very readable, but the implementation isnt very ziggy.
-    // collect all fragment definition names
-    // this is to find undefined fragments even when a spread appears before its corresponding fragment definition
-    // and do other things maybe.
+
+    // fragment pass
     for (doc.definitions) |def| {
         switch (def) {
             .ExecutableDefinition => |ex| switch (ex) {
@@ -43,7 +42,7 @@ pub fn validateDocument(ctx: *ValidationContext, doc: ast.DocumentNode) !void {
         switch (def) {
             .ExecutableDefinition => |ex| switch (ex) {
                 .OperationDefinition => |op| try validateOperation(ctx, op),
-                .FragmentDefinition => |frag| try validateFragment(ctx, frag),
+                .FragmentDefinition => |frag| try validateFragmentDefinition(ctx, frag),
             },
             .TypeSystemDefinition, .TypeSystemExtension => {
                 try ctx.addError(.NonExecutableDefinition);

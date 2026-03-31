@@ -6,7 +6,7 @@ const validateDirectives = @import("./directive.zig").validateDirectives;
 const validateInputValue = @import("./value.zig").validateInputValue;
 
 pub fn validateVariableDefinitions(ctx: *ValidationContext, var_defs: []const ast.VariableDefinitionNode) !void {
-    var seen_vars = std.StringHashMap(bool).init(ctx.allocator);
+    var seen_vars = std.StringHashMap(void).init(ctx.allocator);
     defer seen_vars.deinit();
 
     for (var_defs) |var_def| {
@@ -14,16 +14,10 @@ pub fn validateVariableDefinitions(ctx: *ValidationContext, var_defs: []const as
             try validateDirectives(ctx, directives);
         }
 
-        // UniqueVariableNamesRule
         const name = var_def.variable.name.value;
         const entry = try seen_vars.getOrPut(name);
         if (entry.found_existing) {
-            if (!entry.value_ptr.*) {
-                entry.value_ptr.* = true;
-                try ctx.addError(.DuplicateVariableName);
-            }
-        } else {
-            entry.value_ptr.* = false;
+            try ctx.addError(.DuplicateVariableName);
         }
 
         // UniqueInputFieldNamesRule, validate default values for input object uniqueness
@@ -57,7 +51,6 @@ pub fn validateUnusedVariables(ctx: *ValidationContext, operation: ast.Operation
         try collectVariablesFromDirectives(directives, &used_vars);
     }
 
-    // NoUnusedVariablesRule
     var def_it = defined_vars.iterator();
     while (def_it.next()) |entry| {
         if (!used_vars.contains(entry.key_ptr.*)) {
@@ -65,7 +58,6 @@ pub fn validateUnusedVariables(ctx: *ValidationContext, operation: ast.Operation
         }
     }
 
-    // NoUndefinedVariablesRule
     var used_it = used_vars.iterator();
     while (used_it.next()) |entry| {
         if (!defined_vars.contains(entry.key_ptr.*)) {

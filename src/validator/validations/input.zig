@@ -22,19 +22,14 @@ pub fn validateArgumentDefinitions(ctx: *ValidationContext, input_values: []cons
 }
 
 fn validateInputValueDefinitions(ctx: *ValidationContext, input_values: []const ast.InputValueDefinitionNode) std.mem.Allocator.Error!void {
-    var seen = std.StringHashMap(bool).init(ctx.allocator);
+    var seen = std.StringHashMap(void).init(ctx.allocator);
     defer seen.deinit();
 
     for (input_values) |input_value| {
         const name = input_value.name.value;
         const entry = try seen.getOrPut(name);
         if (entry.found_existing) {
-            if (!entry.value_ptr.*) {
-                entry.value_ptr.* = true;
-                try ctx.addError(.DuplicateInputField);
-            }
-        } else {
-            entry.value_ptr.* = false;
+            try ctx.addError(.DuplicateInputField);
         }
     }
 }

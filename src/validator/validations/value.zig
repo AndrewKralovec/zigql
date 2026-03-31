@@ -19,24 +19,32 @@ pub fn validateInputValue(ctx: *ValidationContext, value: ast.ValueNode) anyerro
 }
 
 fn validateObjectFields(ctx: *ValidationContext, fields: []const ast.ObjectFieldNode) !void {
-    // TODO: the graphql-js implementation does not group by name, like UniqueArgumentNamesRule,
-    // but these should be consistent. think about if we want all of these grouped by name or just summed.
-    var seen_fields = std.StringHashMap(bool).init(ctx.allocator);
+    var seen_fields = std.StringHashMap(void).init(ctx.allocator);
     defer seen_fields.deinit();
 
     for (fields) |field| {
         const name = field.name.value;
         const entry = try seen_fields.getOrPut(name);
         if (entry.found_existing) {
-            if (!entry.value_ptr.*) {
-                entry.value_ptr.* = true;
-                try ctx.addError(.DuplicateInputField);
-            }
-        } else {
-            entry.value_ptr.* = false;
+            try ctx.addError(.DuplicateInputField);
         }
 
         // handle nested input objects
         try validateInputValue(ctx, field.value);
     }
+}
+
+pub fn validateValues(
+    ctx: *ValidationContext,
+    arg_def: ast.InputValueDefinitionNode,
+    arg: ast.ArgumentNode,
+    var_defs: ?[]const ast.VariableDefinitionNode,
+) anyerror!void {
+    _ = arg_def;
+    _ = var_defs;
+
+    // UniqueInputFieldNamesRule: check for duplicate fields in input object values.
+    // TODO: this will be subsumed by full value_of_correct_type validation,
+    // which also checks type coercion, enum values, required fields, etc.
+    try validateInputValue(ctx, arg.value);
 }

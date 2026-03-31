@@ -10,14 +10,11 @@ pub const ValidationContext = struct {
     errors: std.ArrayList(ValidationError),
     allocator: std.mem.Allocator,
 
-    // doc uniqueness tracking
     operation_names: std.StringHashMap(void),
     fragment_names: std.StringHashMap(void),
 
-    // fragment definition lookup
     fragment_defs: std.StringHashMap(ast.FragmentDefinitionNode),
 
-    // operation tracking
     operation_count: u32,
     anonymous_operation_count: u32,
 

@@ -15,6 +15,19 @@ const specified_directives = std.StaticStringMap([]const []const u8).initComptim
     .{ "specifiedBy", &.{"url"} },
 });
 
+pub fn validateDirectivesDefinition(ctx: *ValidationContext, def: ast.DirectiveDefinitionNode) !void {
+    _ = ctx;
+    _ = def;
+    // TODO: add validation logic
+    // TODO: try validateTypeSystemName(ctx, def.name, "");
+    // TODO: try validateArgumentDefinitions(ctx, args);
+}
+
+pub fn validateDirectivesDefinitions(ctx: *ValidationContext) !void {
+    _ = ctx;
+    // TODO: add validation logic
+}
+
 pub fn validateDirectives(ctx: *ValidationContext, directives: ?[]const ast.DirectiveNode) !void {
     const dirs = directives orelse return;
 

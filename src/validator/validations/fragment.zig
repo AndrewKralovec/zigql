@@ -5,13 +5,14 @@ const ValidationContext = @import("../validation_context.zig").ValidationContext
 const validateDirectives = @import("./directive.zig").validateDirectives;
 const validateSelectionSet = @import("./selection.zig").validateSelectionSet;
 
-pub fn validateFragment(ctx: *ValidationContext, frag: ast.FragmentDefinitionNode) !void {
+pub fn validateInlineFragment(ctx: *ValidationContext, frag: ast.InlineFragmentNode) anyerror!void {
     try validateDirectives(ctx, frag.directives);
-    try validateSelectionSet(ctx, frag.selection_set, frag.type_condition.name.value);
+
+    const parent_type: ?[]const u8 = if (frag.type_condition) |tc| tc.name.value else null;
+    try validateSelectionSet(ctx, frag.selection_set, parent_type);
 }
 
 pub fn validateFragmentSpread(ctx: *ValidationContext, frag: ast.FragmentSpreadNode) !void {
-    // KnownFragmentNamesRule
     if (!ctx.fragment_names.contains(frag.name.value)) {
         try ctx.addError(.UndefinedFragment);
     }
@@ -19,11 +20,9 @@ pub fn validateFragmentSpread(ctx: *ValidationContext, frag: ast.FragmentSpreadN
     try validateDirectives(ctx, frag.directives);
 }
 
-pub fn validateInlineFragment(ctx: *ValidationContext, frag: ast.InlineFragmentNode) anyerror!void {
+pub fn validateFragmentDefinition(ctx: *ValidationContext, frag: ast.FragmentDefinitionNode) !void {
     try validateDirectives(ctx, frag.directives);
-
-    const parent_type: ?[]const u8 = if (frag.type_condition) |tc| tc.name.value else null;
-    try validateSelectionSet(ctx, frag.selection_set, parent_type);
+    try validateSelectionSet(ctx, frag.selection_set, frag.type_condition.name.value);
 }
 
 pub fn checkUnusedFragments(
