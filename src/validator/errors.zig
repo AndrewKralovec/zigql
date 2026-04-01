@@ -129,6 +129,7 @@ pub const ValidationErrorKind = enum {
     ///
     /// See https://spec.graphql.org/draft/#sec-Required-Arguments
     RequiredArgument,
+    // FieldsOnCorrectTypeRule
     /// Fields on correct type
     ///
     /// A GraphQL document is only valid if all fields selected are defined by the
@@ -143,6 +144,7 @@ pub const ValidationErrorKind = enum {
     ///
     /// See https://spec.graphql.org/draft/#sec-Leaf-Field-Selections
     MissingSubselection,
+    // ValuesOfCorrectTypeRule
     /// Value literals of correct type
     ///
     /// A GraphQL document is only valid if all value literals are of the type
@@ -150,6 +152,7 @@ pub const ValidationErrorKind = enum {
     ///
     /// See https://spec.graphql.org/draft/#sec-Values-of-Correct-Type
     UnsupportedValueType,
+    // VariablesInAllowedPositionRule
     /// Variables in allowed position
     ///
     /// Variable usages must be compatible with the arguments they are passed to.
