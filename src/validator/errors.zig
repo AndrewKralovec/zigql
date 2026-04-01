@@ -2,6 +2,7 @@ const std = @import("std");
 const Allocator = std.mem.Allocator;
 
 pub const ValidationErrorKind = enum {
+    // ExecutableDefinitionsRule
     /// Executable definitions
     ///
     /// A GraphQL document is only valid for execution if all definitions are either
@@ -9,19 +10,22 @@ pub const ValidationErrorKind = enum {
     ///
     /// See https://spec.graphql.org/draft/#sec-Executable-Definitions
     NonExecutableDefinition,
+    // LoneAnonymousOperationRule
     /// Lone anonymous operation
     ///
     /// A GraphQL document is only valid if when it contains an anonymous operation
     /// (the query short-hand) that it contains only that one operation definition.
     ///
-    /// See https:///spec.graphql.org/draft/#sec-Lone-Anonymous-Operation
+    /// See https://spec.graphql.org/draft/#sec-Lone-Anonymous-Operation
     MultipleAnonymousOperations,
+    // UniqueOperationNamesRule
     /// Unique operation names
     ///
     /// A GraphQL document is only valid if all defined operations have unique names.
     ///
     /// See https://spec.graphql.org/draft/#sec-Operation-Name-Uniqueness
     DuplicateOperationName,
+    // UniqueFragmentNamesRule
     /// Unique fragment names
     ///
     /// A GraphQL document is only valid if all defined fragments have unique names.
@@ -36,6 +40,7 @@ pub const ValidationErrorKind = enum {
     ///
     /// See https://spec.graphql.org/draft/#sec-Fragment-spread-target-defined
     UndefinedFragment,
+    // NoUnusedFragmentsRule
     /// No unused fragments
     ///
     /// A GraphQL document is only valid if all fragment definitions are spread
@@ -50,6 +55,7 @@ pub const ValidationErrorKind = enum {
     ///
     /// See https://spec.graphql.org/draft/#sec-Variable-Uniqueness
     DuplicateVariableName,
+    // UniqueArgumentNamesRule
     /// Unique argument names
     ///
     /// A GraphQL field or directive is only valid if all supplied arguments are
@@ -57,6 +63,7 @@ pub const ValidationErrorKind = enum {
     ///
     /// See https://spec.graphql.org/draft/#sec-Argument-Names
     DuplicateArgumentName,
+    // KnownArgumentNamesRule
     /// Known argument names
     ///
     /// A GraphQL field is only valid if all supplied arguments are defined by
