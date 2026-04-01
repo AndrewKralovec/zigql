@@ -1418,13 +1418,14 @@ fn expectSchemaErrors(
     expected_error_count: usize,
 ) !void {
     const allocator = std.testing.allocator;
-    var s = Schema.init(allocator);
-    defer s.deinit();
 
     var arena = std.heap.ArenaAllocator.init(allocator);
     defer arena.deinit();
 
     const doc = try parse(arena.allocator(), schema_source);
+
+    var s = try buildSchema(allocator, doc);
+    defer s.deinit();
 
     var ctx = ValidationContext.init(allocator, &s);
     defer ctx.deinit();
@@ -1475,13 +1476,14 @@ fn expectSchemaErrorCount(
     expected_error: ValidationErrorKind,
 ) !void {
     const allocator = std.testing.allocator;
-    var s = Schema.init(allocator);
-    defer s.deinit();
 
     var arena = std.heap.ArenaAllocator.init(allocator);
     defer arena.deinit();
 
     const doc = try parse(arena.allocator(), schema_source);
+
+    var s = try buildSchema(allocator, doc);
+    defer s.deinit();
 
     var ctx = ValidationContext.init(allocator, &s);
     defer ctx.deinit();
@@ -1505,4 +1507,58 @@ fn expectSchemaValid(
     schema_source: []const u8,
 ) !void {
     try expectSchemaErrors(schema_source, 0);
+}
+
+// Union type validation
+
+test "valid union with object members" {
+    try expectSchemaValid(
+        \\type Query { field: String }
+        \\type Foo { a: String }
+        \\type Bar { b: String }
+        \\union MyUnion = Foo | Bar
+    );
+}
+
+test "empty union should return EmptyMemberSet error" {
+    try expectSchemaErrorCount(
+        \\type Query { field: String }
+        \\union MyUnion
+    ,
+        1,
+        .EmptyMemberSet,
+    );
+}
+
+test "union member must be object type" {
+    try expectSchemaErrorCount(
+        \\type Query { field: String }
+        \\scalar MyScalar
+        \\union MyUnion = MyScalar
+    ,
+        1,
+        .UnionMemberObjectType,
+    );
+}
+
+test "union member must be defined" {
+    try expectSchemaErrorCount(
+        \\type Query { field: String }
+        \\union MyUnion = Undefined
+    ,
+        1,
+        .UndefinedDefinition,
+    );
+}
+
+test "union with multiple non-object members" {
+    try expectSchemaErrorCount(
+        \\type Query { field: String }
+        \\scalar A
+        \\enum B { X Y }
+        \\union MyUnion = A | B
+    ,
+        2,
+        .UnionMemberObjectType,
+    );
 }

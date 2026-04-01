@@ -165,6 +165,24 @@ pub const ValidationErrorKind = enum {
     ///
     /// See https://spec.graphql.org/draft/#sel-DAHfFVFBAAEXBAAh7S
     EmptyValueSet,
+    /// Empty member set
+    ///
+    /// A Union type must include one or more unique member types.
+    ///
+    /// See https://spec.graphql.org/draft/#sel-HAHdfFBABAB6Bw3R
+    EmptyMemberSet,
+    /// Union member object type
+    ///
+    /// The member types of a Union type must all be Object base types.
+    ///
+    /// See https://spec.graphql.org/draft/#sel-HAHdfFBABAB6Bw3R
+    UnionMemberObjectType,
+    /// Undefined definition
+    ///
+    /// A referenced type must be defined in the schema.
+    ///
+    /// See https://spec.graphql.org/draft/#sel-HAHdfFBABAB6Bw3R
+    UndefinedDefinition,
 };
 
 // TODO: import the validation object in the future
