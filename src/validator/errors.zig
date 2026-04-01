@@ -159,6 +159,12 @@ pub const ValidationErrorKind = enum {
     ///
     /// See https://spec.graphql.org/draft/#sec-All-Variable-Usages-Are-Allowed
     DisallowedVariableUsage,
+    /// Empty value set
+    ///
+    /// An enum type must define one or more unique enum values.
+    ///
+    /// See https://spec.graphql.org/draft/#sel-DAHfFVFBAAEXBAAh7S
+    EmptyValueSet,
 };
 
 // TODO: import the validation object in the future

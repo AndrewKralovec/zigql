@@ -1201,6 +1201,62 @@ test "should allow type with normal name" {
     );
 }
 
+// EmptyValueSetRule (enum definitions)
+
+test "should allow enum with values" {
+    try expectSchemaValid(
+        \\ enum Color {
+        \\   RED
+        \\   GREEN
+        \\   BLUE
+        \\ }
+    );
+}
+
+test "should return error for enum with no values" {
+    // The parser requires at least one value inside braces,
+    // so we test the no-braces case where values is null.
+    try expectSchemaErrorCount(
+        \\ enum Empty @deprecated
+    ,
+        1,
+        .EmptyValueSet,
+    );
+}
+
+test "should return error for enum value name starting with __" {
+    try expectSchemaErrorCount(
+        \\ enum Bad {
+        \\   __reserved
+        \\ }
+    ,
+        1,
+        .ReservedName,
+    );
+}
+
+test "should allow enum value with normal name" {
+    try expectSchemaValid(
+        \\ enum Status {
+        \\   ACTIVE
+        \\   INACTIVE
+        \\ }
+    );
+}
+
+test "should return errors for multiple reserved enum value names" {
+    try expectSchemaErrorCount(
+        \\ enum Bad {
+        \\   __one
+        \\   __two
+        \\   GOOD
+        \\ }
+    ,
+        2,
+        .ReservedName,
+    );
+}
+
 // SubscriptionUsesMultipleFieldsRule
 
 test "should allow subscription with one field" {
@@ -1409,6 +1465,38 @@ fn expectErrorCount(
 
     std.testing.expectEqual(expected_error_count, err_count) catch |err| {
         std.debug.print("\nerrors={any}\n", .{ctx.errors.items});
+        return err;
+    };
+}
+
+fn expectSchemaErrorCount(
+    schema_source: []const u8,
+    expected_error_count: usize,
+    expected_error: ValidationErrorKind,
+) !void {
+    const allocator = std.testing.allocator;
+    var s = Schema.init(allocator);
+    defer s.deinit();
+
+    var arena = std.heap.ArenaAllocator.init(allocator);
+    defer arena.deinit();
+
+    const doc = try parse(arena.allocator(), schema_source);
+
+    var ctx = ValidationContext.init(allocator, &s);
+    defer ctx.deinit();
+
+    try validateSchema(&ctx, doc);
+
+    var err_count: u32 = 0;
+    for (ctx.errors.items) |err| {
+        if (err.kind == expected_error) {
+            err_count = err_count + 1;
+        }
+    }
+
+    std.testing.expectEqual(expected_error_count, err_count) catch |err| {
+        std.debug.print("\nschema errors={any}\n", .{ctx.errors.items});
         return err;
     };
 }

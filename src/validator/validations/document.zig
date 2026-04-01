@@ -12,6 +12,8 @@ const validateArgumentDefinitions = @import("./input.zig").validateArgumentDefin
 const validateFieldDefinitions = @import("./field.zig").validateFieldDefinitions;
 const validateScalarDefinition = @import("./scalar.zig").validateScalarDefinition;
 const validateUnionDefinition = @import("./union.zig").validateUnionDefinition;
+const validateEnumDefinition = @import("./enum.zig").validateEnumDefinition;
+const validateEnumExtension = @import("./enum.zig").validateEnumExtension;
 
 pub fn validateDocument(ctx: *ValidationContext, doc: ast.DocumentNode) !void {
     // TODO: graphql-js does the walk in a single pass. optimize later.
@@ -131,9 +133,7 @@ fn validateTypeDefinition(ctx: *ValidationContext, type_def: ast.TypeDefinitionN
         },
         .ScalarTypeDefinition => |scalar| try validateScalarDefinition(ctx, scalar),
         .UnionTypeDefinition => |union_def| try validateUnionDefinition(ctx, union_def),
-        .EnumTypeDefinition => {
-            // TODO: validate enum definition
-        },
+        .EnumTypeDefinition => |enum_def| try validateEnumDefinition(ctx, enum_def),
     }
 }
 
@@ -171,8 +171,6 @@ fn validateTypeExtension(ctx: *ValidationContext, type_ext: ast.TypeExtensionNod
         .UnionTypeExtension => {
             // TODO: validate union extension
         },
-        .EnumTypeExtension => {
-            // TODO: validate enum extension
-        },
+        .EnumTypeExtension => |enum_ext| try validateEnumExtension(ctx, enum_ext),
     }
 }
