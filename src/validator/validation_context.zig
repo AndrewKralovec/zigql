@@ -11,8 +11,6 @@ pub const ValidationContext = struct {
     allocator: std.mem.Allocator,
 
     operation_names: std.StringHashMap(void),
-    fragment_names: std.StringHashMap(void),
-
     fragment_defs: std.StringHashMap(ast.FragmentDefinitionNode),
 
     operation_count: u32,
@@ -25,7 +23,6 @@ pub const ValidationContext = struct {
             .allocator = allocator,
 
             .operation_names = std.StringHashMap(void).init(allocator),
-            .fragment_names = std.StringHashMap(void).init(allocator),
             .fragment_defs = std.StringHashMap(ast.FragmentDefinitionNode).init(allocator),
             .operation_count = 0,
             .anonymous_operation_count = 0,
@@ -39,7 +36,6 @@ pub const ValidationContext = struct {
         self.errors.deinit();
 
         self.operation_names.deinit();
-        self.fragment_names.deinit();
         self.fragment_defs.deinit();
     }
 

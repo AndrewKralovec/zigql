@@ -26,11 +26,10 @@ pub fn validateDocument(ctx: *ValidationContext, doc: ast.DocumentNode) !void {
             .ExecutableDefinition => |ex| switch (ex) {
                 .FragmentDefinition => |frag| {
                     const name = frag.name.value;
-                    if (ctx.fragment_names.contains(name)) {
+                    if (ctx.fragment_defs.contains(name)) {
                         // UniqueFragmentNamesRule
                         try ctx.addError(.DuplicateFragmentName);
                     } else {
-                        try ctx.fragment_names.put(name, {});
                         try ctx.fragment_defs.put(name, frag);
                     }
                 },

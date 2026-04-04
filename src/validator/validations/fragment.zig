@@ -13,7 +13,7 @@ pub fn validateInlineFragment(ctx: *ValidationContext, frag: ast.InlineFragmentN
 }
 
 pub fn validateFragmentSpread(ctx: *ValidationContext, frag: ast.FragmentSpreadNode) !void {
-    if (!ctx.fragment_names.contains(frag.name.value)) {
+    if (!ctx.fragment_defs.contains(frag.name.value)) {
         try ctx.addError(.UndefinedFragment);
     }
 
@@ -46,7 +46,7 @@ pub fn checkUnusedFragments(
         }
     }
 
-    var it = ctx.fragment_names.iterator();
+    var it = ctx.fragment_defs.iterator();
     while (it.next()) |entry| {
         if (!used.contains(entry.key_ptr.*)) {
             try ctx.addError(.UnusedFragment);
