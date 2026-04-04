@@ -547,7 +547,7 @@ pub const DirectiveDefinitionNode = struct {
     name: NameNode,
     arguments: ?[]const InputValueDefinitionNode,
     repeatable: bool,
-    locations: []const NameNode,
+    locations: []const DirectiveLocation,
 };
 
 /// See: https://spec.graphql.org/October2021/#FragmentDefinition
@@ -679,37 +679,79 @@ pub const InputObjectTypeExtensionNode = struct {
     fields: ?[]const InputValueDefinitionNode,
 };
 
-const directive_locations = [_][]const u8{
-    "QUERY",
-    "MUTATION",
-    "SUBSCRIPTION",
-    "FIELD",
-    "FRAGMENT_DEFINITION",
-    "FRAGMENT_SPREAD",
-    "INLINE_FRAGMENT",
-    "VARIABLE_DEFINITION",
-    "SCHEMA",
-    "SCALAR",
-    "OBJECT",
-    "FIELD_DEFINITION",
-    "ARGUMENT_DEFINITION",
-    "INTERFACE",
-    "UNION",
-    "ENUM",
-    "ENUM_VALUE",
-    "INPUT_OBJECT",
-    "INPUT_FIELD_DEFINITION",
-};
+/// See: https://spec.graphql.org/October2021/#DirectiveLocation
+pub const DirectiveLocation = enum {
+    Query,
+    Mutation,
+    Subscription,
+    Field,
+    FragmentDefinition,
+    FragmentSpread,
+    InlineFragment,
+    VariableDefinition,
+    Schema,
+    Scalar,
+    Object,
+    FieldDefinition,
+    ArgumentDefinition,
+    Interface,
+    Union,
+    Enum,
+    EnumValue,
+    InputObject,
+    InputFieldDefinition,
 
-/// Checks if the given string matches a known GraphQL directive location.
-pub fn is_directive_location(value: []const u8) bool {
-    inline for (directive_locations) |loc| {
-        if (std.mem.eql(u8, value, loc)) {
-            return true;
-        }
+    /// Returns the GraphQL source representation of this directive location.
+    pub fn name(self: DirectiveLocation) []const u8 {
+        return switch (self) {
+            .Query => "QUERY",
+            .Mutation => "MUTATION",
+            .Subscription => "SUBSCRIPTION",
+            .Field => "FIELD",
+            .FragmentDefinition => "FRAGMENT_DEFINITION",
+            .FragmentSpread => "FRAGMENT_SPREAD",
+            .InlineFragment => "INLINE_FRAGMENT",
+            .VariableDefinition => "VARIABLE_DEFINITION",
+            .Schema => "SCHEMA",
+            .Scalar => "SCALAR",
+            .Object => "OBJECT",
+            .FieldDefinition => "FIELD_DEFINITION",
+            .ArgumentDefinition => "ARGUMENT_DEFINITION",
+            .Interface => "INTERFACE",
+            .Union => "UNION",
+            .Enum => "ENUM",
+            .EnumValue => "ENUM_VALUE",
+            .InputObject => "INPUT_OBJECT",
+            .InputFieldDefinition => "INPUT_FIELD_DEFINITION",
+        };
     }
-    return false;
-}
+
+    /// Parses a GraphQL directive location string into the enum.
+    pub fn fromString(value: []const u8) ?DirectiveLocation {
+        const map = std.StaticStringMap(DirectiveLocation).initComptime(.{
+            .{ "QUERY", .Query },
+            .{ "MUTATION", .Mutation },
+            .{ "SUBSCRIPTION", .Subscription },
+            .{ "FIELD", .Field },
+            .{ "FRAGMENT_DEFINITION", .FragmentDefinition },
+            .{ "FRAGMENT_SPREAD", .FragmentSpread },
+            .{ "INLINE_FRAGMENT", .InlineFragment },
+            .{ "VARIABLE_DEFINITION", .VariableDefinition },
+            .{ "SCHEMA", .Schema },
+            .{ "SCALAR", .Scalar },
+            .{ "OBJECT", .Object },
+            .{ "FIELD_DEFINITION", .FieldDefinition },
+            .{ "ARGUMENT_DEFINITION", .ArgumentDefinition },
+            .{ "INTERFACE", .Interface },
+            .{ "UNION", .Union },
+            .{ "ENUM", .Enum },
+            .{ "ENUM_VALUE", .EnumValue },
+            .{ "INPUT_OBJECT", .InputObject },
+            .{ "INPUT_FIELD_DEFINITION", .InputFieldDefinition },
+        });
+        return map.get(value);
+    }
+};
 
 /// This enum defines the keywords in the GraphQL syntax.
 /// The keywords are used to identify the type of node in the AST.

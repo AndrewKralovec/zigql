@@ -5,7 +5,7 @@ const ValidationContext = @import("../validation_context.zig").ValidationContext
 const validateDirectives = @import("./directive.zig").validateDirectives;
 
 pub fn validateEnumDefinition(ctx: *ValidationContext, enum_def: ast.EnumTypeDefinitionNode) anyerror!void {
-    try validateDirectives(ctx, enum_def.directives, "ENUM");
+    try validateDirectives(ctx, enum_def.directives, .Enum);
 
     if (enum_def.values) |values| {
         for (values) |value| {
@@ -28,5 +28,5 @@ fn validateEnumValue(ctx: *ValidationContext, enum_val: ast.EnumValueDefinitionN
     if (std.mem.startsWith(u8, enum_val.name.value, "__")) {
         try ctx.addError(.ReservedName);
     }
-    try validateDirectives(ctx, enum_val.directives, "ENUM_VALUE");
+    try validateDirectives(ctx, enum_val.directives, .EnumValue);
 }

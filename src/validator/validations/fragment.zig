@@ -6,7 +6,7 @@ const validateDirectives = @import("./directive.zig").validateDirectives;
 const validateSelectionSet = @import("./selection.zig").validateSelectionSet;
 
 pub fn validateInlineFragment(ctx: *ValidationContext, frag: ast.InlineFragmentNode) anyerror!void {
-    try validateDirectives(ctx, frag.directives, "INLINE_FRAGMENT");
+    try validateDirectives(ctx, frag.directives, .InlineFragment);
 
     const parent_type: ?[]const u8 = if (frag.type_condition) |tc| tc.name.value else null;
     try validateSelectionSet(ctx, frag.selection_set, parent_type);
@@ -17,11 +17,11 @@ pub fn validateFragmentSpread(ctx: *ValidationContext, frag: ast.FragmentSpreadN
         try ctx.addError(.UndefinedFragment);
     }
 
-    try validateDirectives(ctx, frag.directives, "FRAGMENT_SPREAD");
+    try validateDirectives(ctx, frag.directives, .FragmentSpread);
 }
 
 pub fn validateFragmentDefinition(ctx: *ValidationContext, frag: ast.FragmentDefinitionNode) !void {
-    try validateDirectives(ctx, frag.directives, "FRAGMENT_DEFINITION");
+    try validateDirectives(ctx, frag.directives, .FragmentDefinition);
     try validateSelectionSet(ctx, frag.selection_set, frag.type_condition.name.value);
 }
 

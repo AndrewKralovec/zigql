@@ -4,7 +4,7 @@ const ast = @import("../grammar/ast.zig");
 pub const DirectiveInfo = struct {
     arguments: []const ast.InputValueDefinitionNode,
     repeatable: bool,
-    locations: []const ast.NameNode,
+    locations: []const ast.DirectiveLocation,
 };
 
 pub const Schema = struct {

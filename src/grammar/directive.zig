@@ -29,15 +29,15 @@ pub fn parseDirectiveDefinition(p: *Parser) !ast.DirectiveDefinitionNode {
     };
 }
 
-pub fn parseDirectiveLocations(p: *Parser) ![]ast.NameNode {
+pub fn parseDirectiveLocations(p: *Parser) ![]ast.DirectiveLocation {
     p.debug("parseDirectiveLocations");
     _ = try p.expectOptionalToken(TokenKind.Pipe);
 
-    var nodes = std.ArrayList(ast.NameNode).init(p.allocator);
+    var nodes = std.ArrayList(ast.DirectiveLocation).init(p.allocator);
     defer nodes.deinit();
     while (true) {
-        const name = try parseDirectiveLocation(p);
-        try nodes.append(name);
+        const loc = try parseDirectiveLocation(p);
+        try nodes.append(loc);
 
         if (!try p.expectOptionalToken(TokenKind.Pipe)) {
             break;
@@ -46,15 +46,16 @@ pub fn parseDirectiveLocations(p: *Parser) ![]ast.NameNode {
     return try nodes.toOwnedSlice();
 }
 
-pub fn parseDirectiveLocation(p: *Parser) !ast.NameNode {
+pub fn parseDirectiveLocation(p: *Parser) !ast.DirectiveLocation {
     p.debug("parseDirectiveLocation");
     const token = try p.peek();
-    if (!ast.is_directive_location(token.data)) {
+    const loc = ast.DirectiveLocation.fromString(token.data) orelse {
         return error.UnknownDirectiveLocation;
-    }
+    };
 
-    const name = try parseName(p);
-    return name;
+    // Consume the token
+    _ = try parseName(p);
+    return loc;
 }
 
 pub fn parseConstDirectives(p: *Parser) !?[]ast.DirectiveNode {

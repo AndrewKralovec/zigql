@@ -694,8 +694,8 @@ test "should parse a directive definition with arguments" {
 
     // Verify locations
     try std.testing.expect(dir_def.locations.len == 2);
-    try std.testing.expect(std.mem.eql(u8, dir_def.locations[0].value, "FIELD_DEFINITION"));
-    try std.testing.expect(std.mem.eql(u8, dir_def.locations[1].value, "ENUM_VALUE"));
+    try std.testing.expect(dir_def.locations[0] == .FieldDefinition);
+    try std.testing.expect(dir_def.locations[1] == .EnumValue);
 }
 
 test "should parse a fragment definition" {

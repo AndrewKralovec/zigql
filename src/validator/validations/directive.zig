@@ -5,10 +5,12 @@ const schema_mod = @import("../schema.zig");
 
 const validateArguments = @import("./argument.zig").validateArguments;
 
+const DirectiveLocation = ast.DirectiveLocation;
+
 const BuiltinDirective = struct {
     arguments: []const []const u8,
     repeatable: bool,
-    locations: []const []const u8,
+    locations: []const DirectiveLocation,
 };
 
 /// Built-in spec directives with their arguments, repeatability, and valid locations.
@@ -18,22 +20,22 @@ const specified_directives = std.StaticStringMap(BuiltinDirective).initComptime(
     .{ "skip", BuiltinDirective{
         .arguments = &.{"if"},
         .repeatable = false,
-        .locations = &.{ "FIELD", "FRAGMENT_SPREAD", "INLINE_FRAGMENT" },
+        .locations = &.{ .Field, .FragmentSpread, .InlineFragment },
     } },
     .{ "include", BuiltinDirective{
         .arguments = &.{"if"},
         .repeatable = false,
-        .locations = &.{ "FIELD", "FRAGMENT_SPREAD", "INLINE_FRAGMENT" },
+        .locations = &.{ .Field, .FragmentSpread, .InlineFragment },
     } },
     .{ "deprecated", BuiltinDirective{
         .arguments = &.{"reason"},
         .repeatable = false,
-        .locations = &.{ "FIELD_DEFINITION", "ARGUMENT_DEFINITION", "INPUT_FIELD_DEFINITION", "ENUM_VALUE" },
+        .locations = &.{ .FieldDefinition, .ArgumentDefinition, .InputFieldDefinition, .EnumValue },
     } },
     .{ "specifiedBy", BuiltinDirective{
         .arguments = &.{"url"},
         .repeatable = false,
-        .locations = &.{"SCALAR"},
+        .locations = &.{.Scalar},
     } },
 });
 
@@ -50,7 +52,7 @@ pub fn validateDirectivesDefinitions(ctx: *ValidationContext) !void {
     // TODO: add validation logic
 }
 
-pub fn validateDirectives(ctx: *ValidationContext, directives: ?[]const ast.DirectiveNode, location: []const u8) !void {
+pub fn validateDirectives(ctx: *ValidationContext, directives: ?[]const ast.DirectiveNode, location: DirectiveLocation) !void {
     const dirs = directives orelse return;
 
     var seen_directives = std.StringHashMap(void).init(ctx.allocator);
@@ -126,11 +128,11 @@ fn checkDirectiveDefined(ctx: *ValidationContext, directive_name: []const u8) !b
     return false;
 }
 
-fn checkDirectiveLocation(ctx: *ValidationContext, directive_name: []const u8, location: []const u8) !void {
+fn checkDirectiveLocation(ctx: *ValidationContext, directive_name: []const u8, location: DirectiveLocation) !void {
     // check built-in directives
     if (specified_directives.get(directive_name)) |dir_info| {
         for (dir_info.locations) |valid_location| {
-            if (std.mem.eql(u8, location, valid_location)) {
+            if (location == valid_location) {
                 return;
             }
         }
@@ -140,8 +142,8 @@ fn checkDirectiveLocation(ctx: *ValidationContext, directive_name: []const u8, l
 
     // check schema-defined directives
     if (ctx.schema.getDirective(directive_name)) |dir_info| {
-        for (dir_info.locations) |loc_node| {
-            if (std.mem.eql(u8, location, loc_node.value)) {
+        for (dir_info.locations) |valid_location| {
+            if (location == valid_location) {
                 return;
             }
         }

@@ -5,7 +5,7 @@ const ValidationContext = @import("../validation_context.zig").ValidationContext
 const validateDirectives = @import("./directive.zig").validateDirectives;
 
 pub fn validateUnionDefinition(ctx: *ValidationContext, union_def: ast.UnionTypeDefinitionNode) anyerror!void {
-    try validateDirectives(ctx, union_def.directives, "UNION");
+    try validateDirectives(ctx, union_def.directives, .Union);
 
     if (union_def.types) |members| {
         for (members) |member| {

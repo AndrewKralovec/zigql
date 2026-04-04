@@ -93,7 +93,7 @@ fn validateTypeSystemDefinition(ctx: *ValidationContext, def: ast.TypeSystemDefi
     switch (def) {
         .TypeDefinition => |type_def| try validateTypeDefinition(ctx, type_def),
         .SchemaDefinition => |schema_def| {
-            try validateDirectives(ctx, schema_def.directives, "SCHEMA");
+            try validateDirectives(ctx, schema_def.directives, .Schema);
         },
         .DirectiveDefinition => |dir_def| {
             // ReservedNameRule
@@ -122,13 +122,13 @@ fn validateTypeDefinition(ctx: *ValidationContext, type_def: ast.TypeDefinitionN
     switch (type_def) {
         .InputObjectTypeDefinition => |input| try validateInputObjectDefinition(ctx, input),
         .ObjectTypeDefinition => |obj| {
-            try validateDirectives(ctx, obj.directives, "OBJECT");
+            try validateDirectives(ctx, obj.directives, .Object);
             if (obj.fields) |fields| {
                 try validateFieldDefinitions(ctx, fields);
             }
         },
         .InterfaceTypeDefinition => |iface| {
-            try validateDirectives(ctx, iface.directives, "INTERFACE");
+            try validateDirectives(ctx, iface.directives, .Interface);
             if (iface.fields) |fields| {
                 try validateFieldDefinitions(ctx, fields);
             }

@@ -12,7 +12,7 @@ const validateVariableUsage = @import("./variable.zig").validateVariableUsage;
 
 pub fn validateField(ctx: *ValidationContext, field: ast.FieldNode, parent_type_name: ?[]const u8) anyerror!void {
     // first do all the validation that we can without knowing the type of the field.
-    try validateDirectives(ctx, field.directives, "FIELD");
+    try validateDirectives(ctx, field.directives, .Field);
     try validateArguments(ctx, field.arguments);
 
     // if we don't know the type (no schema, or invalid parent), we cannot perform
@@ -46,7 +46,7 @@ pub fn validateField(ctx: *ValidationContext, field: ast.FieldNode, parent_type_
 
 pub fn validateFieldDefinition(ctx: *ValidationContext, field_def: ast.FieldDefinitionNode) anyerror!void {
     // TODO: try validateTypeSystemName(ctx, field_def.name, "");
-    try validateDirectives(ctx, field_def.directives, "FIELD_DEFINITION");
+    try validateDirectives(ctx, field_def.directives, .FieldDefinition);
     if (field_def.arguments) |args| {
         try validateArgumentDefinitions(ctx, args);
     }

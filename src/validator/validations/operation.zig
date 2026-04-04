@@ -23,10 +23,10 @@ pub fn validateOperation(ctx: *ValidationContext, operation: ast.OperationDefini
         }
     }
 
-    const directive_location: []const u8 = switch (operation.operation) {
-        .Query => "QUERY",
-        .Mutation => "MUTATION",
-        .Subscription => "SUBSCRIPTION",
+    const directive_location: ast.DirectiveLocation = switch (operation.operation) {
+        .Query => .Query,
+        .Mutation => .Mutation,
+        .Subscription => .Subscription,
     };
     try validateDirectives(ctx, operation.directives, directive_location);
     if (operation.variable_definitions) |var_defs| {
