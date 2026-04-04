@@ -11,7 +11,7 @@ pub fn validateVariableDefinitions(ctx: *ValidationContext, var_defs: []const as
 
     for (var_defs) |var_def| {
         if (var_def.directives) |directives| {
-            try validateDirectives(ctx, directives);
+            try validateDirectives(ctx, directives, "VARIABLE_DEFINITION");
         }
 
         const name = var_def.variable.name.value;

@@ -12,7 +12,7 @@ const validateVariableUsage = @import("./variable.zig").validateVariableUsage;
 
 pub fn validateField(ctx: *ValidationContext, field: ast.FieldNode, parent_type_name: ?[]const u8) anyerror!void {
     // first do all the validation that we can without knowing the type of the field.
-    try validateDirectives(ctx, field.directives);
+    try validateDirectives(ctx, field.directives, "FIELD");
     try validateArguments(ctx, field.arguments);
 
     // if we don't know the type (no schema, or invalid parent), we cannot perform
@@ -46,7 +46,7 @@ pub fn validateField(ctx: *ValidationContext, field: ast.FieldNode, parent_type_
 
 pub fn validateFieldDefinition(ctx: *ValidationContext, field_def: ast.FieldDefinitionNode) anyerror!void {
     // TODO: try validateTypeSystemName(ctx, field_def.name, "");
-    try validateDirectives(ctx, field_def.directives);
+    try validateDirectives(ctx, field_def.directives, "FIELD_DEFINITION");
     if (field_def.arguments) |args| {
         try validateArgumentDefinitions(ctx, args);
     }
@@ -65,16 +65,28 @@ pub fn validateLeafFieldSelection(ctx: *ValidationContext, field: ast.FieldNode,
     const type_info = ctx.schema.getType(return_type_name) orelse return;
 
     const is_leaf = field.selection_set == null;
-    const is_composite = switch (type_info) {
-        .Object, .Interface, .Union => true,
-        .Scalar, .Enum, .InputObject => false,
-    };
 
-    if (is_leaf and is_composite) {
-        // TODO: report MissingSubselection error once tests provide complete
-        // selection sets. For now, leave the detection logic in place as a stub.
+    switch (type_info) {
+        .Object, .Interface, .Union => {
+            if (is_leaf) {
+                try ctx.addError(.MissingSubselection);
+            }
+        },
+        .Scalar => {
+            if (!is_leaf) {
+                try ctx.addError(.SubselectionOnScalarType);
+            }
+        },
+        .Enum => {
+            if (!is_leaf) {
+                try ctx.addError(.SubselectionOnEnumType);
+            }
+        },
+        .InputObject => {
+            // InputObject as a field return type is a schema-level error,
+            // not an executable-level error. Handled by schema validation.
+        },
     }
-    // TODO: also check the inverse scalar/enum fields should NOT have subselections
 }
 
 fn checkFieldExistence(ctx: *ValidationContext, type_name: []const u8, field_name: []const u8) !ast.FieldDefinitionNode {

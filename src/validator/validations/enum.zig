@@ -2,8 +2,10 @@ const std = @import("std");
 const ast = @import("../../grammar/ast.zig");
 const ValidationContext = @import("../validation_context.zig").ValidationContext;
 
-pub fn validateEnumDefinition(ctx: *ValidationContext, enum_def: ast.EnumTypeDefinitionNode) std.mem.Allocator.Error!void {
-    // TODO: validate directives on enum definition (DirectiveLocation.Enum)
+const validateDirectives = @import("./directive.zig").validateDirectives;
+
+pub fn validateEnumDefinition(ctx: *ValidationContext, enum_def: ast.EnumTypeDefinitionNode) anyerror!void {
+    try validateDirectives(ctx, enum_def.directives, "ENUM");
 
     if (enum_def.values) |values| {
         for (values) |value| {
@@ -14,7 +16,7 @@ pub fn validateEnumDefinition(ctx: *ValidationContext, enum_def: ast.EnumTypeDef
     }
 }
 
-pub fn validateEnumExtension(ctx: *ValidationContext, enum_ext: ast.EnumTypeExtensionNode) std.mem.Allocator.Error!void {
+pub fn validateEnumExtension(ctx: *ValidationContext, enum_ext: ast.EnumTypeExtensionNode) anyerror!void {
     if (enum_ext.values) |values| {
         for (values) |value| {
             try validateEnumValue(ctx, value);
@@ -22,9 +24,9 @@ pub fn validateEnumExtension(ctx: *ValidationContext, enum_ext: ast.EnumTypeExte
     }
 }
 
-fn validateEnumValue(ctx: *ValidationContext, enum_val: ast.EnumValueDefinitionNode) std.mem.Allocator.Error!void {
+fn validateEnumValue(ctx: *ValidationContext, enum_val: ast.EnumValueDefinitionNode) anyerror!void {
     if (std.mem.startsWith(u8, enum_val.name.value, "__")) {
         try ctx.addError(.ReservedName);
     }
-    // TODO: validate directives on enum value (DirectiveLocation.EnumValue)
+    try validateDirectives(ctx, enum_val.directives, "ENUM_VALUE");
 }

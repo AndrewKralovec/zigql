@@ -137,13 +137,28 @@ pub const ValidationErrorKind = enum {
     ///
     /// See https://spec.graphql.org/draft/#sec-Field-Selections
     FieldNotFound,
-    /// Leaf field selections
+    // ScalarLeafsRule
+    /// Scalar leafs
     ///
-    /// Field selections on scalars or enums must not have subselections,
-    /// and field selections on objects, interfaces, or unions must have subselections.
+    /// A GraphQL document is valid only if all leaf fields (fields without
+    /// sub selections) are of scalar or enum types.
     ///
     /// See https://spec.graphql.org/draft/#sec-Leaf-Field-Selections
     MissingSubselection,
+    // ScalarLeafsRule
+    /// Scalar leafs
+    ///
+    /// Field selections on scalars must not have subselections.
+    ///
+    /// See https://spec.graphql.org/draft/#sec-Leaf-Field-Selections
+    SubselectionOnScalarType,
+    // ScalarLeafsRule
+    /// Scalar leafs
+    ///
+    /// Field selections on enums must not have subselections.
+    ///
+    /// See https://spec.graphql.org/draft/#sec-Leaf-Field-Selections
+    SubselectionOnEnumType,
     // ValuesOfCorrectTypeRule
     /// Value literals of correct type
     ///
@@ -183,6 +198,27 @@ pub const ValidationErrorKind = enum {
     ///
     /// See https://spec.graphql.org/draft/#sel-HAHdfFBABAB6Bw3R
     UndefinedDefinition,
+    // KnownDirectivesRule
+    /// Undefined directive
+    ///
+    /// A directive used must be defined in the schema or be a built-in directive.
+    ///
+    /// See https://spec.graphql.org/draft/#sec-Directives-Are-Defined
+    UndefinedDirective,
+    // DirectivesAreInValidLocationsRule
+    /// Unsupported directive location
+    ///
+    /// Directives must only be used in locations they are declared to support.
+    ///
+    /// See https://spec.graphql.org/draft/#sec-Directives-Are-In-Valid-Locations
+    UnsupportedDirectiveLocation,
+    // UniqueDirectivesPerLocationRule
+    /// Duplicate directive
+    ///
+    /// Directives that are not declared repeatable must appear at most once per location.
+    ///
+    /// See https://spec.graphql.org/draft/#sec-Directives-Are-Unique-Per-Location
+    DuplicateDirective,
 };
 
 // TODO: import the validation object in the future

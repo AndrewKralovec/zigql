@@ -2,8 +2,10 @@ const std = @import("std");
 const ast = @import("../../grammar/ast.zig");
 const ValidationContext = @import("../validation_context.zig").ValidationContext;
 
-pub fn validateUnionDefinition(ctx: *ValidationContext, union_def: ast.UnionTypeDefinitionNode) std.mem.Allocator.Error!void {
-    // TODO: validate directives on union definition (DirectiveLocation.Union)
+const validateDirectives = @import("./directive.zig").validateDirectives;
+
+pub fn validateUnionDefinition(ctx: *ValidationContext, union_def: ast.UnionTypeDefinitionNode) anyerror!void {
+    try validateDirectives(ctx, union_def.directives, "UNION");
 
     if (union_def.types) |members| {
         for (members) |member| {

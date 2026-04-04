@@ -250,11 +250,13 @@ test "should allow fields with no arguments" {
 }
 
 test "should allow no arguments on directive" {
-    try expectValid(
+    try expectErrorsWithSchema(
+        \\directive @directive on FIELD
+    ,
         \\ {
         \\   field @directive
         \\ }
-    );
+    , 0);
 }
 
 test "should allow fields with one argument" {
@@ -266,11 +268,13 @@ test "should allow fields with one argument" {
 }
 
 test "should allow argument on directive" {
-    try expectValid(
+    try expectErrorsWithSchema(
+        \\directive @directive(arg: String) on FIELD
+    ,
         \\ {
         \\   field @directive(arg: "value")
         \\ }
-    );
+    , 0);
 }
 
 test "should allow same argument on two fields" {
@@ -283,19 +287,24 @@ test "should allow same argument on two fields" {
 }
 
 test "should allow same argument on field and directive" {
-    try expectValid(
+    try expectErrorsWithSchema(
+        \\directive @directive(arg: String) on FIELD
+    ,
         \\ {
         \\   field(arg: "value") @directive(arg: "value")
         \\ }
-    );
+    , 0);
 }
 
 test "should allow same argument on two directives" {
-    try expectValid(
+    try expectErrorsWithSchema(
+        \\directive @directive1(arg: String) on FIELD
+        \\directive @directive2(arg: String) on FIELD
+    ,
         \\ {
         \\   field @directive1(arg: "value") @directive2(arg: "value")
         \\ }
-    );
+    , 0);
 }
 
 test "should allow multiple field arguments" {
@@ -307,11 +316,13 @@ test "should allow multiple field arguments" {
 }
 
 test "should allow multiple directive arguments" {
-    try expectValid(
+    try expectErrorsWithSchema(
+        \\directive @directive(arg1: String, arg2: String, arg3: String) on FIELD
+    ,
         \\ {
         \\   field @directive(arg1: "value", arg2: "value", arg3: "value")
         \\ }
-    );
+    , 0);
 }
 
 test "should return errors on duplicate field arguments" {
@@ -331,7 +342,9 @@ test "should return errors on many duplicate field arguments" {
 }
 
 test "should return errors on duplicate directive arguments" {
-    try expectErrors(
+    try expectErrorsWithSchema(
+        \\directive @directive(arg1: String) on FIELD
+    ,
         \\ {
         \\   field @directive(arg1: "value", arg1: "value")
         \\ }
@@ -339,7 +352,9 @@ test "should return errors on duplicate directive arguments" {
 }
 
 test "should return errors on many duplicate directive arguments" {
-    try expectErrors(
+    try expectErrorsWithSchema(
+        \\directive @directive(arg1: String) on FIELD
+    ,
         \\ {
         \\   field @directive(arg1: "value", arg1: "value", arg1: "value")
         \\ }
@@ -676,7 +691,7 @@ test "should allow known arguments on field defined in schema" {
         \\ }
     ,
         \\ {
-        \\   dog(name: "Rex", breed: "Husky")
+        \\   dog(name: "Rex", breed: "Husky") { name }
         \\ }
     , 0);
 }
@@ -691,7 +706,7 @@ test "should return error for unknown argument on field" {
         \\ }
     ,
         \\ {
-        \\   dog(unknown: true)
+        \\   dog(unknown: true) { name }
         \\ }
     , 1);
 }
@@ -706,7 +721,7 @@ test "should return errors for multiple unknown arguments on field" {
         \\ }
     ,
         \\ {
-        \\   dog(bad1: true, bad2: false)
+        \\   dog(bad1: true, bad2: false) { name }
         \\ }
     , 2);
 }
@@ -721,7 +736,7 @@ test "should return error for mixed known and unknown arguments on field" {
         \\ }
     ,
         \\ {
-        \\   dog(name: "Rex", unknown: true)
+        \\   dog(name: "Rex", unknown: true) { name }
         \\ }
     , 1);
 }
@@ -736,7 +751,7 @@ test "should allow field with no arguments when none defined" {
         \\ }
     ,
         \\ {
-        \\   dog
+        \\   dog { name }
         \\ }
     , 0);
 }
@@ -810,11 +825,13 @@ test "should return errors when field args are invalid" {
 }
 
 test "should allow when directive without args is valid" {
-    try expectValid(
+    try expectErrorsWithSchema(
+        \\directive @onField on FIELD
+    ,
         \\ {
         \\   dog @onField
         \\ }
-    );
+    , 0);
 }
 
 test "should return errors when misspelled directive args are reported" {
@@ -842,11 +859,13 @@ test "should return error for unknown argument on include directive" {
 }
 
 test "should return error for unknown argument on deprecated directive" {
+    // 1 UndefinedArgument ("message" is not valid, "reason" is) +
+    // 1 UnsupportedDirectiveLocation (@deprecated not valid on FIELD)
     try expectErrors(
         \\ {
         \\   field @deprecated(message: "old")
         \\ }
-    , 1);
+    , 2);
 }
 
 test "should return errors for multiple unknown arguments on directive" {
@@ -907,14 +926,14 @@ test "should return error for mix of known and unknown args on custom directive"
     , 1);
 }
 
-test "should not error for directive not defined in schema or built-ins" {
+test "should return error for undefined directive" {
     try expectErrorsWithSchema(
         \\ directive @other(x: String) on FIELD
     ,
         \\ {
         \\   field @unknownDirective(arg: true)
         \\ }
-    , 0);
+    , 1);
 }
 
 test "should allow custom directive with no args when definition has no args" {
@@ -925,6 +944,155 @@ test "should allow custom directive with no args when definition has no args" {
         \\   field @simple
         \\ }
     , 0);
+}
+
+// KnownDirectivesRule (UndefinedDirective)
+
+test "should allow built-in directive @skip on field" {
+    try expectValid(
+        \\ {
+        \\   field @skip(if: true)
+        \\ }
+    );
+}
+
+test "should allow built-in directive @include on field" {
+    try expectValid(
+        \\ {
+        \\   field @include(if: false)
+        \\ }
+    );
+}
+
+test "should allow schema-defined directive" {
+    try expectErrorsWithSchema(
+        \\directive @custom on FIELD
+    ,
+        \\ {
+        \\   field @custom
+        \\ }
+    , 0);
+}
+
+test "should return error for single undefined directive" {
+    try expectErrorCount(
+        \\ {
+        \\   field @unknown
+        \\ }
+    , 1, .UndefinedDirective);
+}
+
+test "should return errors for multiple undefined directives" {
+    try expectErrorCount(
+        \\ {
+        \\   field @unknown1 @unknown2
+        \\ }
+    , 2, .UndefinedDirective);
+}
+
+// DirectivesAreInValidLocationsRule (UnsupportedDirectiveLocation)
+
+test "should allow @skip on field" {
+    try expectErrorCount(
+        \\ {
+        \\   field @skip(if: true)
+        \\ }
+    , 0, .UnsupportedDirectiveLocation);
+}
+
+test "should allow @skip on fragment spread" {
+    try expectErrorCount(
+        \\ {
+        \\   ...fragA @skip(if: true)
+        \\ }
+        \\ fragment fragA on Type {
+        \\   field
+        \\ }
+    , 0, .UnsupportedDirectiveLocation);
+}
+
+test "should allow @skip on inline fragment" {
+    try expectErrorCount(
+        \\ {
+        \\   ... @skip(if: true) {
+        \\     field
+        \\   }
+        \\ }
+    , 0, .UnsupportedDirectiveLocation);
+}
+
+test "should return error for @deprecated on field" {
+    try expectErrorCount(
+        \\ {
+        \\   field @deprecated(reason: "old")
+        \\ }
+    , 1, .UnsupportedDirectiveLocation);
+}
+
+test "should allow @deprecated on field definition in schema" {
+    try expectSchemaErrors(
+        \\type Query {
+        \\  field: String @deprecated(reason: "use newField")
+        \\}
+    , 0);
+}
+
+test "should return error for custom directive at wrong location" {
+    try expectErrorsWithSchema(
+        \\directive @fieldOnly on FIELD
+    ,
+        \\ query @fieldOnly {
+        \\   field
+        \\ }
+    , 1);
+}
+
+test "should allow custom directive at valid location" {
+    try expectErrorsWithSchema(
+        \\directive @onQuery on QUERY
+    ,
+        \\ query @onQuery {
+        \\   field
+        \\ }
+    , 0);
+}
+
+// UniqueDirectivesPerLocationRule (DuplicateDirective)
+
+test "should allow different directives on same field" {
+    try expectValid(
+        \\ {
+        \\   field @skip(if: true) @include(if: false)
+        \\ }
+    );
+}
+
+test "should return error for duplicate non-repeatable directive" {
+    try expectErrorCount(
+        \\ {
+        \\   field @skip(if: true) @skip(if: false)
+        \\ }
+    , 1, .DuplicateDirective);
+}
+
+test "should allow repeatable custom directive multiple times" {
+    try expectErrorsWithSchema(
+        \\directive @tag repeatable on FIELD
+    ,
+        \\ {
+        \\   field @tag @tag @tag
+        \\ }
+    , 0);
+}
+
+test "should return error for duplicate non-repeatable custom directive" {
+    try expectErrorsWithSchema(
+        \\directive @once on FIELD
+    ,
+        \\ {
+        \\   field @once @once
+        \\ }
+    , 1);
 }
 
 // UniqueInputFieldNamesRule
@@ -1509,6 +1677,41 @@ fn expectSchemaValid(
     try expectSchemaErrors(schema_source, 0);
 }
 
+fn expectErrorCountWithSchema(
+    schema_source: []const u8,
+    query_source: []const u8,
+    expected_error_count: usize,
+    expected_error: ValidationErrorKind,
+) !void {
+    const allocator = std.testing.allocator;
+
+    var arena = std.heap.ArenaAllocator.init(allocator);
+    defer arena.deinit();
+
+    const schema_doc = try parse(arena.allocator(), schema_source);
+    var s = try buildSchema(allocator, schema_doc);
+    defer s.deinit();
+
+    const query_doc = try parse(arena.allocator(), query_source);
+
+    var ctx = ValidationContext.init(allocator, &s);
+    defer ctx.deinit();
+
+    try validateDocument(&ctx, query_doc);
+
+    var err_count: u32 = 0;
+    for (ctx.errors.items) |err| {
+        if (err.kind == expected_error) {
+            err_count = err_count + 1;
+        }
+    }
+
+    std.testing.expectEqual(expected_error_count, err_count) catch |err| {
+        std.debug.print("\nerrors={any}\n", .{ctx.errors.items});
+        return err;
+    };
+}
+
 // Union type validation
 
 test "valid union with object members" {
@@ -1561,4 +1764,116 @@ test "union with multiple non-object members" {
         2,
         .UnionMemberObjectType,
     );
+}
+
+// LeafFieldSelectionsRule
+
+test "scalar field without subselection is valid" {
+    try expectErrorCountWithSchema(
+        \\type Query { name: String }
+    ,
+        \\{ name }
+    , 0, .MissingSubselection);
+}
+
+test "enum field without subselection is valid" {
+    try expectErrorCountWithSchema(
+        \\type Query { status: Status }
+        \\enum Status { ACTIVE INACTIVE }
+    ,
+        \\{ status }
+    , 0, .MissingSubselection);
+}
+
+test "object field with subselection is valid" {
+    try expectErrorCountWithSchema(
+        \\type Query { dog: Dog }
+        \\type Dog { name: String }
+    ,
+        \\{ dog { name } }
+    , 0, .MissingSubselection);
+}
+
+test "interface field with subselection is valid" {
+    try expectErrorCountWithSchema(
+        \\type Query { node: Node }
+        \\interface Node { id: ID }
+    ,
+        \\{ node { id } }
+    , 0, .MissingSubselection);
+}
+
+test "union field with subselection is valid" {
+    try expectErrorCountWithSchema(
+        \\type Query { pet: Pet }
+        \\type Dog { name: String }
+        \\type Cat { name: String }
+        \\union Pet = Dog | Cat
+    ,
+        \\{ pet { ... on Dog { name } } }
+    , 0, .MissingSubselection);
+}
+
+test "object field without subselection returns MissingSubselection" {
+    try expectErrorCountWithSchema(
+        \\type Query { dog: Dog }
+        \\type Dog { name: String }
+    ,
+        \\{ dog }
+    , 1, .MissingSubselection);
+}
+
+test "interface field without subselection returns MissingSubselection" {
+    try expectErrorCountWithSchema(
+        \\type Query { node: Node }
+        \\interface Node { id: ID }
+    ,
+        \\{ node }
+    , 1, .MissingSubselection);
+}
+
+test "union field without subselection returns MissingSubselection" {
+    try expectErrorCountWithSchema(
+        \\type Query { pet: Pet }
+        \\type Dog { name: String }
+        \\type Cat { name: String }
+        \\union Pet = Dog | Cat
+    ,
+        \\{ pet }
+    , 1, .MissingSubselection);
+}
+
+test "scalar field with subselection returns SubselectionOnScalarType" {
+    try expectErrorCountWithSchema(
+        \\type Query { name: String }
+    ,
+        \\{ name { foo } }
+    , 1, .SubselectionOnScalarType);
+}
+
+test "enum field with subselection returns SubselectionOnEnumType" {
+    try expectErrorCountWithSchema(
+        \\type Query { status: Status }
+        \\enum Status { ACTIVE INACTIVE }
+    ,
+        \\{ status { foo } }
+    , 1, .SubselectionOnEnumType);
+}
+
+test "non-null list of objects without subselection returns MissingSubselection" {
+    try expectErrorCountWithSchema(
+        \\type Query { dogs: [Dog!]! }
+        \\type Dog { name: String }
+    ,
+        \\{ dogs }
+    , 1, .MissingSubselection);
+}
+
+test "non-null list of objects with subselection is valid" {
+    try expectErrorCountWithSchema(
+        \\type Query { dogs: [Dog!]! }
+        \\type Dog { name: String }
+    ,
+        \\{ dogs { name } }
+    , 0, .MissingSubselection);
 }

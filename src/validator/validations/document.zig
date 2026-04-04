@@ -14,6 +14,7 @@ const validateScalarDefinition = @import("./scalar.zig").validateScalarDefinitio
 const validateUnionDefinition = @import("./union.zig").validateUnionDefinition;
 const validateEnumDefinition = @import("./enum.zig").validateEnumDefinition;
 const validateEnumExtension = @import("./enum.zig").validateEnumExtension;
+const validateDirectives = @import("./directive.zig").validateDirectives;
 
 pub fn validateDocument(ctx: *ValidationContext, doc: ast.DocumentNode) !void {
     // TODO: graphql-js does the walk in a single pass. optimize later.
@@ -92,8 +93,8 @@ pub fn validateSchema(ctx: *ValidationContext, doc: ast.DocumentNode) !void {
 fn validateTypeSystemDefinition(ctx: *ValidationContext, def: ast.TypeSystemDefinitionNode) !void {
     switch (def) {
         .TypeDefinition => |type_def| try validateTypeDefinition(ctx, type_def),
-        .SchemaDefinition => {
-            // TODO: validate schema definition
+        .SchemaDefinition => |schema_def| {
+            try validateDirectives(ctx, schema_def.directives, "SCHEMA");
         },
         .DirectiveDefinition => |dir_def| {
             // ReservedNameRule
@@ -122,11 +123,13 @@ fn validateTypeDefinition(ctx: *ValidationContext, type_def: ast.TypeDefinitionN
     switch (type_def) {
         .InputObjectTypeDefinition => |input| try validateInputObjectDefinition(ctx, input),
         .ObjectTypeDefinition => |obj| {
+            try validateDirectives(ctx, obj.directives, "OBJECT");
             if (obj.fields) |fields| {
                 try validateFieldDefinitions(ctx, fields);
             }
         },
         .InterfaceTypeDefinition => |iface| {
+            try validateDirectives(ctx, iface.directives, "INTERFACE");
             if (iface.fields) |fields| {
                 try validateFieldDefinitions(ctx, fields);
             }

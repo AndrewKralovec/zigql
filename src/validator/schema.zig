@@ -1,16 +1,22 @@
 const std = @import("std");
 const ast = @import("../grammar/ast.zig");
 
+pub const DirectiveInfo = struct {
+    arguments: []const ast.InputValueDefinitionNode,
+    repeatable: bool,
+    locations: []const ast.NameNode,
+};
+
 pub const Schema = struct {
     allocator: std.mem.Allocator,
-    directive_definitions: std.StringHashMap([]const ast.InputValueDefinitionNode),
+    directive_definitions: std.StringHashMap(DirectiveInfo),
     types: std.StringHashMap(TypeDefinition),
     query_type: ?[]const u8,
 
     pub fn init(allocator: std.mem.Allocator) Schema {
         return Schema{
             .allocator = allocator,
-            .directive_definitions = std.StringHashMap([]const ast.InputValueDefinitionNode).init(allocator),
+            .directive_definitions = std.StringHashMap(DirectiveInfo).init(allocator),
             .types = std.StringHashMap(TypeDefinition).init(allocator),
             .query_type = null,
         };
@@ -21,8 +27,15 @@ pub const Schema = struct {
         self.types.deinit();
     }
 
-    pub fn getDirectiveArguments(self: *const Schema, directive_name: []const u8) ?[]const ast.InputValueDefinitionNode {
+    pub fn getDirective(self: *const Schema, directive_name: []const u8) ?DirectiveInfo {
         return self.directive_definitions.get(directive_name);
+    }
+
+    pub fn getDirectiveArguments(self: *const Schema, directive_name: []const u8) ?[]const ast.InputValueDefinitionNode {
+        if (self.directive_definitions.get(directive_name)) |info| {
+            return info.arguments;
+        }
+        return null;
     }
 
     pub fn getType(self: *const Schema, name: []const u8) ?TypeDefinition {
@@ -50,16 +63,27 @@ pub const Schema = struct {
     }
 };
 
+const builtin_scalars = [_][]const u8{ "String", "Int", "Float", "Boolean", "ID" };
+
 pub fn buildSchema(allocator: std.mem.Allocator, document: ast.DocumentNode) !Schema {
     var schema = Schema.init(allocator);
     errdefer schema.deinit();
+
+    // Register built-in scalar types per the GraphQL spec.
+    for (builtin_scalars) |name| {
+        try schema.types.put(name, .{ .Scalar = .{ .directives = null } });
+    }
 
     for (document.definitions) |def| {
         switch (def) {
             .TypeSystemDefinition => |type_sys_def| {
                 switch (type_sys_def) {
                     .DirectiveDefinition => |dir_def| {
-                        try schema.directive_definitions.put(dir_def.name.value, dir_def.arguments orelse &.{});
+                        try schema.directive_definitions.put(dir_def.name.value, .{
+                            .arguments = dir_def.arguments orelse &.{},
+                            .repeatable = dir_def.repeatable,
+                            .locations = dir_def.locations,
+                        });
                     },
                     .TypeDefinition => |type_def| {
                         try collectType(&schema, type_def);
