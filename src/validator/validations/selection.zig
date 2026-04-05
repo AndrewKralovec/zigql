@@ -15,10 +15,10 @@ pub fn validateSelectionSet(ctx: *ValidationContext, sel_set: ast.SelectionSetNo
                 try validateField(ctx, field, parent_type_name);
             },
             .FragmentSpread => |frag_spread| {
-                try validateFragmentSpread(ctx, frag_spread);
+                try validateFragmentSpread(ctx, frag_spread, parent_type_name);
             },
             .InlineFragment => |inline_frag| {
-                try validateInlineFragment(ctx, inline_frag);
+                try validateInlineFragment(ctx, inline_frag, parent_type_name);
             },
         }
     }

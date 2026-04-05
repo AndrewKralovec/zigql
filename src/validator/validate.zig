@@ -786,7 +786,7 @@ test "should validate field arguments inside fragment with type condition" {
         \\ fragment DogFields on Dog {
         \\   name(unknown: true)
         \\ }
-    , 1);
+    , 2); // InvalidFragmentSpread (Dog fragment on Query) + UndefinedArgument
 }
 
 test "should validate field arguments on interface via inline fragment" {
@@ -803,7 +803,7 @@ test "should validate field arguments on interface via inline fragment" {
         \\     id(bad: true)
         \\   }
         \\ }
-    , 1);
+    , 2); // InvalidFragmentSpread (Node fragment on Query) + UndefinedArgument
 }
 
 // KnownArgumentNamesRule, directive argument tests

@@ -42,6 +42,14 @@ pub const Schema = struct {
         return self.types.get(name);
     }
 
+    pub fn isCompositeType(self: *const Schema, type_name: []const u8) bool {
+        const type_def = self.types.get(type_name) orelse return false;
+        return switch (type_def) {
+            .Object, .Interface, .Union => true,
+            .Scalar, .Enum, .InputObject => false,
+        };
+    }
+
     pub fn typeField(self: *const Schema, type_name: []const u8, field_name: []const u8) FieldLookupError!ast.FieldDefinitionNode {
         const type_info = self.types.get(type_name) orelse return error.NoSuchType;
 
