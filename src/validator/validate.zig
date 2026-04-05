@@ -679,6 +679,111 @@ test "should allow fragment used in nested field selection" {
     );
 }
 
+// NoFragmentCyclesRule
+
+test "should detect direct fragment cycle (self-reference)" {
+    try expectErrorCount(
+        \\ {
+        \\   ...fragA
+        \\ }
+        \\ fragment fragA on Type {
+        \\   ...fragA
+        \\ }
+    , 1, .RecursiveFragmentDefinition);
+}
+
+test "should detect mutual fragment cycle" {
+    try expectErrorCount(
+        \\ {
+        \\   ...fragA
+        \\ }
+        \\ fragment fragA on Type {
+        \\   ...fragB
+        \\ }
+        \\ fragment fragB on Type {
+        \\   ...fragA
+        \\ }
+    , 1, .RecursiveFragmentDefinition);
+}
+
+test "should detect three-fragment cycle" {
+    try expectErrorCount(
+        \\ {
+        \\   ...fragA
+        \\ }
+        \\ fragment fragA on Type {
+        \\   ...fragB
+        \\ }
+        \\ fragment fragB on Type {
+        \\   ...fragC
+        \\ }
+        \\ fragment fragC on Type {
+        \\   ...fragA
+        \\ }
+    , 1, .RecursiveFragmentDefinition);
+}
+
+test "should allow linear fragment chain without cycle" {
+    try expectErrorCount(
+        \\ {
+        \\   ...fragA
+        \\ }
+        \\ fragment fragA on Type {
+        \\   ...fragB
+        \\ }
+        \\ fragment fragB on Type {
+        \\   ...fragC
+        \\ }
+        \\ fragment fragC on Type {
+        \\   field
+        \\ }
+    , 0, .RecursiveFragmentDefinition);
+}
+
+test "should detect fragment cycle through inline fragment" {
+    try expectErrorCount(
+        \\ {
+        \\   ...fragA
+        \\ }
+        \\ fragment fragA on Type {
+        \\   ... on Type {
+        \\     ...fragA
+        \\   }
+        \\ }
+    , 1, .RecursiveFragmentDefinition);
+}
+
+test "should detect fragment cycle through nested field" {
+    try expectErrorCount(
+        \\ {
+        \\   ...fragA
+        \\ }
+        \\ fragment fragA on Type {
+        \\   field {
+        \\     ...fragA
+        \\   }
+        \\ }
+    , 1, .RecursiveFragmentDefinition);
+}
+
+test "should not report cycle for fragment spreading different fragments" {
+    try expectErrorCount(
+        \\ {
+        \\   ...fragA
+        \\   ...fragB
+        \\ }
+        \\ fragment fragA on Type {
+        \\   ...fragC
+        \\ }
+        \\ fragment fragB on Type {
+        \\   ...fragC
+        \\ }
+        \\ fragment fragC on Type {
+        \\   field
+        \\ }
+    , 0, .RecursiveFragmentDefinition);
+}
+
 // KnownArgumentNamesRule, field argument tests
 
 test "should allow known arguments on field defined in schema" {

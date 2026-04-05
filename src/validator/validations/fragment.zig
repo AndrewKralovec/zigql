@@ -149,6 +149,126 @@ pub fn validateFragmentSpread(
     }
 }
 
+const CycleDetectResult = enum {
+    ok,
+    cycle_detected,
+    recursion_limit,
+};
+
+// TODO: make this configurable, rust had hard coded values, but we shouldnt
+const recursion_limit: usize = 100;
+
+// ported from apollo-rs.
+// file: validation/fragment.rs
+// fn:   validate_fragment_cycles()
+//
+// detects cycles in fragment spreads. A fragment must not transitively spread itself.
+// uses a path stack and a seen set
+// TODO: track cycle trace for richer diagnostics (CycleError::Recursed trace)
+fn detectFragmentCycles(
+    selection_set: ast.SelectionSetNode,
+    fragment_defs: *const std.StringHashMap(ast.FragmentDefinitionNode),
+    path: *std.ArrayList([]const u8),
+    seen: *std.StringHashMap(void),
+) CycleDetectResult {
+    for (selection_set.selections) |sel| {
+        const result = switch (sel) {
+            .FragmentSpread => |spread| blk: {
+                const spread_name = spread.name.value;
+
+                for (path.items) |path_name| {
+                    if (std.mem.eql(u8, path_name, spread_name)) {
+                        // cycle found, this spread refers back to a fragment in path
+                        break :blk CycleDetectResult.cycle_detected;
+                    }
+                }
+
+                // already validated without cycle
+                if (seen.contains(spread_name)) {
+                    break :blk CycleDetectResult.ok;
+                }
+
+                if (fragment_defs.get(spread_name)) |frag_def| {
+                    if (path.items.len >= recursion_limit) {
+                        break :blk CycleDetectResult.recursion_limit;
+                    }
+
+                    path.append(spread_name) catch break :blk CycleDetectResult.ok;
+                    defer _ = path.pop();
+
+                    const inner_result = detectFragmentCycles(
+                        frag_def.selection_set,
+                        fragment_defs,
+                        path,
+                        seen,
+                    );
+                    if (inner_result != .ok) {
+                        break :blk inner_result;
+                    }
+
+                    seen.put(spread_name, {}) catch {};
+                }
+                break :blk CycleDetectResult.ok;
+            },
+            .InlineFragment => |inline_frag| detectFragmentCycles(
+                inline_frag.selection_set,
+                fragment_defs,
+                path,
+                seen,
+            ),
+            .Field => |field| if (field.selection_set) |nested|
+                detectFragmentCycles(nested, fragment_defs, path, seen)
+            else
+                CycleDetectResult.ok,
+        };
+
+        if (result != .ok) return result;
+    }
+
+    return .ok;
+}
+
+pub fn checkFragmentCycles(ctx: *ValidationContext) !void {
+    var seen = std.StringHashMap(void).init(ctx.allocator);
+    defer seen.deinit();
+
+    var path = std.ArrayList([]const u8).init(ctx.allocator);
+    defer path.deinit();
+
+    var it = ctx.fragment_defs.iterator();
+    while (it.next()) |entry| {
+        const frag_name = entry.key_ptr.*;
+        const frag_def = entry.value_ptr.*;
+
+        if (seen.contains(frag_name)) continue;
+
+        path.clearRetainingCapacity();
+        try path.append(frag_name);
+
+        const result = detectFragmentCycles(
+            frag_def.selection_set,
+            &ctx.fragment_defs,
+            &path,
+            &seen,
+        );
+
+        switch (result) {
+            .ok => {
+                try seen.put(frag_name, {});
+            },
+            .cycle_detected => {
+                try ctx.addError(.RecursiveFragmentDefinition);
+                for (path.items) |path_name| {
+                    try seen.put(path_name, {});
+                }
+            },
+            .recursion_limit => {
+                try ctx.addError(.DeeplyNestedType);
+            },
+        }
+    }
+}
+
 pub fn validateFragmentDefinition(ctx: *ValidationContext, frag: ast.FragmentDefinitionNode) !void {
     try validateDirectives(ctx, frag.directives, .FragmentDefinition);
 

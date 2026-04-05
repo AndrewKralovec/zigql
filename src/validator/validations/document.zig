@@ -5,6 +5,7 @@ const ValidationContext = @import("../validation_context.zig").ValidationContext
 const validateOperation = @import("./operation.zig").validateOperation;
 const validateSubscription = @import("./operation.zig").validateSubscription;
 const validateFragmentDefinition = @import("./fragment.zig").validateFragmentDefinition;
+const checkFragmentCycles = @import("./fragment.zig").checkFragmentCycles;
 const checkUnusedFragments = @import("./fragment.zig").checkUnusedFragments;
 const validateInputObjectDefinition = @import("./input.zig").validateInputObjectDefinition;
 const validateInputObjectExtension = @import("./input.zig").validateInputObjectExtension;
@@ -38,6 +39,9 @@ pub fn validateDocument(ctx: *ValidationContext, doc: ast.DocumentNode) !void {
             else => {},
         }
     }
+
+    // NoFragmentCyclesRule
+    try checkFragmentCycles(ctx);
 
     // validation pass
     for (doc.definitions) |def| {

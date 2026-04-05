@@ -233,6 +233,19 @@ pub const ValidationErrorKind = enum {
     /// be true: if there is a non-empty intersection of the possible parent types,
     /// and possible types which pass the type condition.
     InvalidFragmentSpread,
+    // NoFragmentCyclesRule
+    /// No fragment cycles
+    ///
+    /// The graph of fragment spreads must not form any cycles including spreading itself.
+    /// Otherwise an operation could infinitely spread or infinitely execute on cycles in the underlying data.
+    ///
+    /// See https://spec.graphql.org/draft/#sec-Fragment-spreads-must-not-form-cycles
+    RecursiveFragmentDefinition,
+    /// Deeply nested type
+    ///
+    /// A fragment definition contains too much nesting, indicating potential
+    /// abuse or an excessively complex query.
+    DeeplyNestedType,
 };
 
 // TODO: import the validation object in the future
