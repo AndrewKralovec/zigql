@@ -8,7 +8,7 @@ pub const ast = @import("grammar/ast.zig");
 pub const Lexer = @import("core/lexer.zig").Lexer;
 pub const Parser = @import("core/parser.zig").Parser;
 pub const parse = @import("core/parser.zig").parse;
-
+pub const parseWithLimit = @import("core/parser.zig").parseWithLimit;
 //
 // Test cases for the zigql module
 //
