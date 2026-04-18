@@ -37,7 +37,6 @@ pub const Parser = struct {
     pub const debug = if (config.debug) printDebug else noopDebug;
 
     /// Initializes a new `Parser` from source text.
-    /// The `Lexer` is set up with the given source, and no token is loaded... yet.
     pub fn init(allocator: std.mem.Allocator, source: []const u8, options: Options) Parser {
         return Parser{
             .allocator = allocator,
@@ -152,8 +151,15 @@ pub const ParserError = LexerError || error{
 };
 
 /// Parse the given GraphQL source text into an AST representation, using the given allocator.
-pub fn parse(allocator: std.mem.Allocator, source: []const u8, options: Parser.Options) !ast.DocumentNode {
-    var parser = Parser.init(allocator, source, options);
+pub fn parse(allocator: std.mem.Allocator, source: []const u8) !ast.DocumentNode {
+    var parser = Parser.init(allocator, source, .{});
+    return parser.parse();
+}
+
+/// Parse the given GraphQL source text with a limit on the number of tokens that can be scanned.
+/// This is useful for bounded parsing to prevent excessive memory usage or infinite loops.
+pub fn parseWithLimit(allocator: std.mem.Allocator, source: []const u8, limit: usize) !ast.DocumentNode {
+    var parser = Parser.init(allocator, source, .{ .limit = limit });
     return parser.parse();
 }
 
@@ -937,6 +943,16 @@ test "should parse query mixed type definitions" {
     try std.testing.expect(std.mem.eql(u8, type_ext.ObjectTypeExtension.name.value, "Guest"));
 }
 
+test "should parse simple query with public parse function" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    const source = "{ user { id } }";
+    const doc = try parse(arena.allocator(), source);
+
+    try std.testing.expect(doc.definitions.len == 1);
+}
+
 test "should return error when limit is reached" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
@@ -948,22 +964,12 @@ test "should return error when limit is reached" {
     try std.testing.expectError(error.LimitReached, result);
 }
 
-test "should parse simple query with public parse function" {
-    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
-    defer arena.deinit();
-
-    const source = "{ user { id } }";
-    const doc = try parse(arena.allocator(), source, .{});
-
-    try std.testing.expect(doc.definitions.len == 1);
-}
-
 test "should parse with limit using public parse function" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
 
     const source = "{ user { id } }";
-    const doc = try parse(arena.allocator(), source, .{ .limit = 12 });
+    const doc = try parseWithLimit(arena.allocator(), source, 12);
 
     try std.testing.expect(doc.definitions.len == 1);
 }
@@ -973,7 +979,7 @@ test "should return error when limit is reached using public parse function" {
     defer arena.deinit();
 
     const source = "{ user { id } }";
-    const result = parse(arena.allocator(), source, .{ .limit = 11 });
+    const result = parseWithLimit(arena.allocator(), source, 11);
 
     try std.testing.expectError(error.LimitReached, result);
 }

@@ -6,6 +6,8 @@ After reading that [bun](https://bun.sh/) was coded in zig, i wanted to try it o
 
 - [Getting Started](#getting-started)
 - [Usage](#usage)
+    - [Lexer](#lexer) for tokenization.
+    - [Parser](#parser) for building an abstract syntax tree (AST).
 - [TODO](#todo)
 - [Inspiration And Resources](#inspiration-and-resources)
 
@@ -105,9 +107,9 @@ while (try lexer.next()) |token| {
 }
 ```
 
-#### Bounded Lexing
+#### Bounded Parsing
 
-It is recommended to limit how far the lexer can scan. Pass a `limit` option to create a lexer that stops after scanning a given number of tokens.
+It is recommended to limit how far the lexer can scan. Pass a `limit` in the options struct to create a lexer that has a limit on the number of tokens that can be scanned.
 
 
 Example.
@@ -166,17 +168,25 @@ const zigql = @import("zig_ql");
 var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
 defer arena.deinit();
 
-const doc = try zigql.parse(arena.allocator(), source, .{});
+const doc = try zigql.parse(arena.allocator(), source);
 ```
 
 #### Bounded Parsing
 
-Similar to the lexer, it is recommended to limit how far the parser can process tokens. Pass a `limit` option to cap the number of tokens scanned.
+Similar to the lexer, it is recommended to limit how far the parser can process tokens. You can use the `parseWithLimit()` function or pass a `limit` in the options struct.
 
-Example.
+Example with `parseWithLimit()`.
 ```zig
-const doc = try zigql.parse(allocator, source, .{ .limit = 100 });
-// Will return LimitReached error if the limit is exceeded
+const doc = try zigql.parseWithLimit(allocator, source, 100);
+// Will throw LimitReached error if we hit the limit
+```
+
+Example with options struct.
+```zig
+var parser = Parser.init(allocator, source, .{ .limit = 100 }); // Only process up to 100 tokens
+
+const doc = try parser.parse();
+// Will throw LimitReached error if we hit the limit
 ```
 
 ## TODO
