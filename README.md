@@ -67,7 +67,7 @@ const source =
     \\  }
     \\ }
 ;
-var lexer = Lexer.init(source);
+var lexer = Lexer.init(source, .{});
 const result = try lexer.lex(allocator);
 defer {
     allocator.free(result.tokens);
@@ -96,7 +96,7 @@ const source =
     \\  }
     \\ }
 ;
-var lexer = Lexer.init(source);
+var lexer = Lexer.init(source, .{});
 while (try lexer.next()) |token| {
     if (token.kind == TokenKind.Eof) {
         break; // Reached EOF
@@ -105,17 +105,16 @@ while (try lexer.next()) |token| {
 }
 ```
 
-#### Bounded Parsing
+#### Bounded Lexing
 
-It is recommended to limit how far the lexer can scan. Use `withLimit()` to create a lexer that has a limit on the number of tokens that can be scanned.
+It is recommended to limit how far the lexer can scan. Pass a `limit` option to create a lexer that stops after scanning a given number of tokens.
 
 
 Example.
 ```zig
-var lexer = Lexer.init(source);
-var limited_lexer = lexer.withLimit(10); // Only scan up to 10 tokens
+var lexer = Lexer.init(source, .{ .limit = 10 }); // Only scan up to 10 tokens
 
-const result = try limited_lexer.lex(allocator);
+const result = try lexer.lex(allocator);
 defer {
     allocator.free(result.tokens);
     allocator.free(result.errors);
@@ -148,7 +147,7 @@ var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
 defer arena.deinit(); // Clean up all allocated memory
 
 const allocator = arena.allocator();
-var parser = Parser.init(allocator, source);
+var parser = Parser.init(allocator, source, .{});
 const doc = try parser.parse();
 
 for (doc.definitions) |definition| {
@@ -167,26 +166,17 @@ const zigql = @import("zig_ql");
 var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
 defer arena.deinit();
 
-const doc = try zigql.parse(arena.allocator(), source);
+const doc = try zigql.parse(arena.allocator(), source, .{});
 ```
 
 #### Bounded Parsing
 
-Similar to the lexer, it is recommended to limit how far the parser can process tokens. You can use the `parseWithLimit()` function or create a parser with `withLimit()`.
+Similar to the lexer, it is recommended to limit how far the parser can process tokens. Pass a `limit` option to cap the number of tokens scanned.
 
-Example with `parseWithLimit()`.
+Example.
 ```zig
-const doc = try zigql.parseWithLimit(allocator, source, 100);
-// Will throw LimitReached error if we hit the limit
-```
-
-Example with `withLimit()`.
-```zig
-var parser = Parser.init(allocator, source);
-var limited_parser = parser.withLimit(100); // Only process up to 100 tokens
-
-const doc = try limitedParser.parse();
-// Will throw LimitReached error if we hit the limit
+const doc = try zigql.parse(allocator, source, .{ .limit = 100 });
+// Will return LimitReached error if the limit is exceeded
 ```
 
 ## TODO

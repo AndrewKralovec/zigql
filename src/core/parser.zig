@@ -27,26 +27,22 @@ pub const Parser = struct {
     lexer: Lexer,
     current_token: ?Token,
 
+    /// Configuration options for the `Parser`.
+    pub const Options = struct {
+        /// Maximum number of tokens the parser will scan before returning `LimitReached`.
+        limit: usize = std.math.maxInt(usize),
+    };
+
     /// Debug function to print the parser state.
     pub const debug = if (config.debug) printDebug else noopDebug;
 
     /// Initializes a new `Parser` from source text.
     /// The `Lexer` is set up with the given source, and no token is loaded... yet.
-    pub fn init(allocator: std.mem.Allocator, source: []const u8) Parser {
+    pub fn init(allocator: std.mem.Allocator, source: []const u8, options: Options) Parser {
         return Parser{
             .allocator = allocator,
-            .lexer = Lexer.init(source),
+            .lexer = Lexer.init(source, .{ .limit = options.limit }),
             .current_token = null,
-        };
-    }
-
-    /// Initializes a new `Parser` with a `Lexer` that has a limit on how far
-    /// it can look ahead in the token stream. Useful for bounded parsing.
-    pub fn withLimit(self: Parser, limit: usize) Parser {
-        return Parser{
-            .allocator = self.allocator,
-            .current_token = self.current_token,
-            .lexer = self.lexer.withLimit(limit),
         };
     }
 
@@ -156,15 +152,8 @@ pub const ParserError = LexerError || error{
 };
 
 /// Parse the given GraphQL source text into an AST representation, using the given allocator.
-pub fn parse(allocator: std.mem.Allocator, source: []const u8) !ast.DocumentNode {
-    var parser = Parser.init(allocator, source);
-    return parser.parse();
-}
-
-/// Parse the given GraphQL source text with a limit on the number of tokens that can be scanned.
-/// This is useful for bounded parsing to prevent excessive memory usage or infinite loops.
-pub fn parseWithLimit(allocator: std.mem.Allocator, source: []const u8, limit: usize) !ast.DocumentNode {
-    var parser = Parser.init(allocator, source).withLimit(limit);
+pub fn parse(allocator: std.mem.Allocator, source: []const u8, options: Parser.Options) !ast.DocumentNode {
+    var parser = Parser.init(allocator, source, options);
     return parser.parse();
 }
 
@@ -178,7 +167,7 @@ test "should parse a operation definition with a single field" {
 
     const allocator = arena.allocator();
     const source = "{ user { id } }";
-    var p = Parser.init(allocator, source);
+    var p = Parser.init(allocator, source, .{});
     const doc = try p.parse();
 
     try std.testing.expect(doc.definitions.len == 1);
@@ -223,7 +212,7 @@ test "should parse a query operation with a single field" {
         \\  }
         \\ }
     ;
-    var p = Parser.init(allocator, source);
+    var p = Parser.init(allocator, source, .{});
     const doc = try p.parse();
 
     try std.testing.expect(doc.definitions.len == 1);
@@ -272,7 +261,7 @@ test "should parse a query operation with fields and arguments" {
         \\   }
         \\ }
     ;
-    var p = Parser.init(allocator, source);
+    var p = Parser.init(allocator, source, .{});
     const doc = try p.parse();
 
     try std.testing.expect(doc.definitions.len == 1);
@@ -338,7 +327,7 @@ test "should parse a query operation with descriptions" {
         \\   users(id: Int): User
         \\ }
     ;
-    var p = Parser.init(allocator, source);
+    var p = Parser.init(allocator, source, .{});
     const doc = try p.parse();
 
     try std.testing.expect(doc.definitions.len == 1);
@@ -385,7 +374,7 @@ test "should parse a schema definition" {
         \\   mutation: Mutation
         \\ }
     ;
-    var p = Parser.init(allocator, source);
+    var p = Parser.init(allocator, source, .{});
     const doc = try p.parse();
 
     try std.testing.expect(doc.definitions.len == 1);
@@ -419,7 +408,7 @@ test "should parse a schema definition with directives" {
         \\   mutation: Mutation
         \\ }
     ;
-    var p = Parser.init(allocator, source);
+    var p = Parser.init(allocator, source, .{});
     const doc = try p.parse();
     try std.testing.expect(doc.definitions.len == 1);
 
@@ -444,7 +433,7 @@ test "should parse a scalar type definition" {
     const source =
         \\ scalar DateTime
     ;
-    var p = Parser.init(allocator, source);
+    var p = Parser.init(allocator, source, .{});
     const doc = try p.parse();
     try std.testing.expect(doc.definitions.len == 1);
 
@@ -473,7 +462,7 @@ test "should parse a type definition" {
         \\   friends: [User]
         \\ }
     ;
-    var p = Parser.init(allocator, source);
+    var p = Parser.init(allocator, source, .{});
     const doc = try p.parse();
     try std.testing.expect(doc.definitions.len == 1);
 
@@ -510,7 +499,7 @@ test "should parse a interface type definition" {
         \\   name: String
         \\ }
     ;
-    var p = Parser.init(allocator, source);
+    var p = Parser.init(allocator, source, .{});
     const doc = try p.parse();
     try std.testing.expect(doc.definitions.len == 1);
 
@@ -538,7 +527,7 @@ test "should parse a union type definition" {
     const source =
         \\ union SearchResult = User | Post | Comment
     ;
-    var p = Parser.init(allocator, source);
+    var p = Parser.init(allocator, source, .{});
     const doc = try p.parse();
     try std.testing.expect(doc.definitions.len == 1);
 
@@ -568,7 +557,7 @@ test "should parse a enum type definition" {
         \\   ADMIN
         \\ }
     ;
-    var p = Parser.init(allocator, source);
+    var p = Parser.init(allocator, source, .{});
     const doc = try p.parse();
     try std.testing.expect(doc.definitions.len == 1);
 
@@ -605,7 +594,7 @@ test "should parse a input type definition" {
         \\   name: String
         \\ }
     ;
-    var p = Parser.init(allocator, source);
+    var p = Parser.init(allocator, source, .{});
     const doc = try p.parse();
     try std.testing.expect(doc.definitions.len == 1);
 
@@ -639,7 +628,7 @@ test "should parse a directive definition" {
     const source =
         \\ directive @auth on FIELD_DEFINITION
     ;
-    var p = Parser.init(allocator, source);
+    var p = Parser.init(allocator, source, .{});
     const doc = try p.parse();
     try std.testing.expect(doc.definitions.len == 1);
 
@@ -665,7 +654,7 @@ test "should parse a directive definition with arguments" {
         \\   removeDate: String
         \\ ) on FIELD_DEFINITION | ENUM_VALUE
     ;
-    var p = Parser.init(allocator, source);
+    var p = Parser.init(allocator, source, .{});
     const doc = try p.parse();
     try std.testing.expect(doc.definitions.len == 1);
 
@@ -714,7 +703,7 @@ test "should parse a fragment definition" {
         \\   name
         \\ }
     ;
-    var p = Parser.init(allocator, source);
+    var p = Parser.init(allocator, source, .{});
     const doc = try p.parse();
     try std.testing.expect(doc.definitions.len == 1);
 
@@ -754,7 +743,7 @@ test "should parse a schema extension" {
         \\   mutation: Mutation
         \\ }
     ;
-    var p = Parser.init(allocator, source);
+    var p = Parser.init(allocator, source, .{});
     const doc = try p.parse();
     try std.testing.expect(doc.definitions.len == 1);
 
@@ -787,7 +776,7 @@ test "should parse nested types like [String!]" {
         \\  tags: [String!]!
         \\}
     ;
-    var p = Parser.init(allocator, source);
+    var p = Parser.init(allocator, source, .{});
     const doc = try p.parse();
 
     const def = doc.definitions[0].TypeSystemDefinition.TypeDefinition.ObjectTypeDefinition;
@@ -812,7 +801,7 @@ test "should parse a field with a single directive without arguments" {
         \\   }
         \\ }
     ;
-    var p = Parser.init(allocator, source);
+    var p = Parser.init(allocator, source, .{});
     const doc = try p.parse();
 
     try std.testing.expect(doc.definitions.len == 1);
@@ -840,7 +829,7 @@ test "should parse a field with a directive with arguments" {
         \\   }
         \\ }
     ;
-    var p = Parser.init(allocator, source);
+    var p = Parser.init(allocator, source, .{});
     const doc = try p.parse();
 
     const op = doc.definitions[0].ExecutableDefinition.OperationDefinition;
@@ -871,7 +860,7 @@ test "should parse directives on type definition" {
         \\   name: String
         \\ }
     ;
-    var p = Parser.init(allocator, source);
+    var p = Parser.init(allocator, source, .{});
     const doc = try p.parse();
 
     const obj_def = doc.definitions[0].TypeSystemDefinition.TypeDefinition.ObjectTypeDefinition;
@@ -899,7 +888,7 @@ test "should parse directives on field definition" {
         \\   email: String @deprecated(reason: "Use emailAddress")
         \\ }
     ;
-    var p = Parser.init(allocator, source);
+    var p = Parser.init(allocator, source, .{});
     const doc = try p.parse();
 
     const obj_def = doc.definitions[0].TypeSystemDefinition.TypeDefinition.ObjectTypeDefinition;
@@ -934,7 +923,7 @@ test "should parse query mixed type definitions" {
         \\   role: String
         \\ }
     ;
-    var p = Parser.init(allocator, source);
+    var p = Parser.init(allocator, source, .{});
     const doc = try p.parse();
     try std.testing.expect(doc.definitions.len == 3);
 
@@ -953,8 +942,7 @@ test "should return error when limit is reached" {
     defer arena.deinit();
 
     const source = "{ user { id } }";
-    var parser = Parser.init(arena.allocator(), source);
-    var bounded = parser.withLimit(11);
+    var bounded = Parser.init(arena.allocator(), source, .{ .limit = 11 });
 
     const result = bounded.parse();
     try std.testing.expectError(error.LimitReached, result);
@@ -965,27 +953,27 @@ test "should parse simple query with public parse function" {
     defer arena.deinit();
 
     const source = "{ user { id } }";
-    const doc = try parse(arena.allocator(), source);
+    const doc = try parse(arena.allocator(), source, .{});
 
     try std.testing.expect(doc.definitions.len == 1);
 }
 
-test "should parse simple query with public parseWithLimit function" {
+test "should parse with limit using public parse function" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
 
     const source = "{ user { id } }";
-    const doc = try parseWithLimit(arena.allocator(), source, 12);
+    const doc = try parse(arena.allocator(), source, .{ .limit = 12 });
 
     try std.testing.expect(doc.definitions.len == 1);
 }
 
-test "should return error when limit is reached using parseWithLimit function" {
+test "should return error when limit is reached using public parse function" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
 
     const source = "{ user { id } }";
-    const result = parseWithLimit(arena.allocator(), source, 11);
+    const result = parse(arena.allocator(), source, .{ .limit = 11 });
 
     try std.testing.expectError(error.LimitReached, result);
 }

@@ -12,25 +12,18 @@ pub const Lexer = struct {
     limit_tracker: LimitTracker,
     cursor: Cursor,
 
-    /// Initializes a new `Lexer` from source text without a limit on the number of tokens
-    /// that can be scanned.
-    pub fn init(source: []const u8) Lexer {
+    /// Configuration options for the `Lexer`.
+    pub const Options = struct {
+        /// Maximum number of tokens the lexer will scan before returning `LimitReached`.
+        limit: usize = std.math.maxInt(usize),
+    };
+
+    /// Initializes a new `Lexer` from source text.
+    pub fn init(source: []const u8, options: Options) Lexer {
         return Lexer{
             .finished = false,
             .cursor = Cursor.init(source),
-            .limit_tracker = LimitTracker.init(
-                std.math.maxInt(usize),
-            ),
-        };
-    }
-
-    /// Initializes a new `Lexer` with a limit on the number of tokens that can be scanned.
-    /// This is useful for bounded parsing.
-    pub fn withLimit(self: Lexer, limit: usize) Lexer {
-        return Lexer{
-            .finished = self.finished,
-            .cursor = self.cursor,
-            .limit_tracker = LimitTracker.init(limit),
+            .limit_tracker = LimitTracker.init(options.limit),
         };
     }
 
@@ -123,9 +116,7 @@ test "should parse all tokens from input" {
     const allocator = std.testing.allocator;
     const input = "{ user { id } }"; // 12 tokens including EOF.
 
-    var lexer = Lexer
-        .init(input)
-        .withLimit(100);
+    var lexer = Lexer.init(input, .{ .limit = 100 });
     const result = try lexer.lex(allocator);
     defer {
         allocator.free(result.tokens);
@@ -139,9 +130,7 @@ test "should parse all tokens from input" {
 test "should stream all tokens from input" {
     const input = "{ user { id } }"; // 12 tokens including EOF.
 
-    var lexer = Lexer
-        .init(input)
-        .withLimit(100);
+    var lexer = Lexer.init(input, .{ .limit = 100 });
 
     var count: usize = 0;
     while (try lexer.next()) |token| {
@@ -163,9 +152,7 @@ test "should parse string blocks as a single token" {
         \\   users(): User
         \\ }
     ;
-    var lexer = Lexer
-        .init(input)
-        .withLimit(100);
+    var lexer = Lexer.init(input, .{ .limit = 100 });
 
     const result = try lexer.lex(allocator);
     defer {
@@ -180,9 +167,7 @@ test "should return error when limit is reached" {
     const allocator = std.testing.allocator;
     const input = "{ user { id } }"; // 12 tokens including EOF.
 
-    var lexer = Lexer
-        .init(input)
-        .withLimit(10);
+    var lexer = Lexer.init(input, .{ .limit = 10 });
 
     const result = try lexer.lex(allocator);
     defer {
@@ -197,9 +182,7 @@ test "should return error when limit is reached on read" {
     const allocator = std.testing.allocator;
     const input = "{ user { id } }"; // 12 tokens including EOF.
 
-    var lexer = Lexer
-        .init(input)
-        .withLimit(100);
+    var lexer = Lexer.init(input, .{ .limit = 100 });
     const result = try lexer.lex(allocator);
     defer {
         allocator.free(result.tokens);
