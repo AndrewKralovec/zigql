@@ -1,8 +1,9 @@
 const std = @import("std");
-const Token = @import("tokens.zig").Token;
-const TokenKind = @import("tokens.zig").TokenKind;
-const Cursor = @import("cursor.zig").Cursor;
-const CursorError = @import("cursor.zig").CursorError;
+const Allocator = std.mem.Allocator;
+pub const Token = @import("tokens.zig").Token;
+pub const TokenKind = @import("tokens.zig").TokenKind;
+pub const Cursor = @import("cursor.zig").Cursor;
+pub const CursorError = @import("cursor.zig").CursorError;
 const LimitTracker = @import("../util/limit_tracker.zig").LimitTracker;
 
 /// The `Lexer` struct is responsible for walking over GraphQL text and producing a stream of tokens.
@@ -30,7 +31,7 @@ pub const Lexer = struct {
     /// Fully lex the input stream and return a struct containing all tokens and all errors encountered.
     /// Errors from the allocator are propagated immediately.
     /// The caller is responsible for freeing both slices.
-    pub fn lex(self: *Lexer, allocator: std.mem.Allocator) std.mem.Allocator.Error!LexResult {
+    pub fn lex(self: *Lexer, allocator: Allocator) Allocator.Error!LexResult {
         var tokens = std.ArrayList(Token).init(allocator);
         var errors = std.ArrayList(LexerError).init(allocator);
         errdefer {
@@ -55,7 +56,6 @@ pub const Lexer = struct {
             }
         }
 
-        // Return both tokens and errors, regardless of whether errors occurred.
         return .{
             .tokens = try tokens.toOwnedSlice(),
             .errors = try errors.toOwnedSlice(),
@@ -107,6 +107,19 @@ pub const LexResult = struct {
     tokens: []Token,
     errors: []LexerError,
 };
+
+/// Lex the given GraphQL source text into tokens, using the given allocator.
+pub fn lex(allocator: Allocator, source: []const u8) Allocator.Error!LexResult {
+    var lexer = Lexer.init(source, .{});
+    return lexer.lex(allocator);
+}
+
+/// Lex the given GraphQL source text with a limit on the number of tokens that can be scanned.
+/// This is useful for bounded lexing to prevent excessive memory usage or infinite loops.
+pub fn lexWithLimit(allocator: Allocator, source: []const u8, limit: usize) Allocator.Error!LexResult {
+    var lexer = Lexer.init(source, .{ .limit = limit });
+    return lexer.lex(allocator);
+}
 
 //
 // Test cases for the Lexer
@@ -191,4 +204,32 @@ test "should return error when limit is reached on read" {
     _ = lexer.read() catch |err| {
         try std.testing.expect(err == error.ReadAfterFinished);
     };
+}
+
+test "lex should tokenize input" {
+    const allocator = std.testing.allocator;
+    const input = "{ user { id } }"; // 12 tokens including EOF.
+
+    const result = try lex(allocator, input);
+    defer {
+        allocator.free(result.tokens);
+        allocator.free(result.errors);
+    }
+
+    try std.testing.expect(result.tokens.len == 12);
+    try std.testing.expect(result.errors.len == 0);
+}
+
+test "lexWithLimit should return error when limit is reached" {
+    const allocator = std.testing.allocator;
+    const input = "{ user { id } }"; // 12 tokens including EOF.
+
+    const result = try lexWithLimit(allocator, input, 10);
+    defer {
+        allocator.free(result.tokens);
+        allocator.free(result.errors);
+    }
+
+    try std.testing.expect(result.tokens.len == 10);
+    try std.testing.expect(result.errors.len == 1);
 }

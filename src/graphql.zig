@@ -5,10 +5,9 @@
 //! subscriptions) and type system definitions (schemas, types, directives).
 const std = @import("std");
 pub const ast = @import("ast/ast.zig");
-pub const Lexer = @import("lexer/lexer.zig").Lexer;
-pub const Parser = @import("parser/parser.zig").Parser;
-pub const parse = @import("parser/parser.zig").parse;
-pub const parseWithLimit = @import("parser/parser.zig").parseWithLimit;
+pub const lexer = @import("lexer/lexer.zig");
+pub const parser = @import("parser/parser.zig");
+
 //
 // Test cases for the graphql module
 //

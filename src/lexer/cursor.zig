@@ -409,28 +409,28 @@ pub const Cursor = struct {
             }
         }
     }
-};
 
-const State = union(enum) {
-    Start,
-    Ident,
-    StringLiteralEscapedUnicode,
-    StringLiteral,
-    StringLiteralStart,
-    BlockStringLiteral,
-    BlockStringLiteralBackslash,
-    StringLiteralBackslash,
-    LeadingZero,
-    IntegerPart,
-    DecimalPoint,
-    FractionalPart,
-    ExponentIndicator,
-    ExponentSign,
-    ExponentDigit,
-    Whitespace,
-    Comment,
-    SpreadOperator,
-    MinusSign,
+    const State = union(enum) {
+        Start,
+        Ident,
+        StringLiteralEscapedUnicode,
+        StringLiteral,
+        StringLiteralStart,
+        BlockStringLiteral,
+        BlockStringLiteralBackslash,
+        StringLiteralBackslash,
+        LeadingZero,
+        IntegerPart,
+        DecimalPoint,
+        FractionalPart,
+        ExponentIndicator,
+        ExponentSign,
+        ExponentDigit,
+        Whitespace,
+        Comment,
+        SpreadOperator,
+        MinusSign,
+    };
 };
 
 /// Errors produced by the cursor while tokenizing the raw source text.

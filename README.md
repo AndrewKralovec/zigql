@@ -61,7 +61,6 @@ This approach is useful when you need an error resilient lexer that will not sto
 
 Example.
 ```zig
-const allocator = std.heap.page_allocator;
 const source =
     \\ query {
     \\  users(id: 1) {
@@ -69,6 +68,8 @@ const source =
     \\  }
     \\ }
 ;
+
+const Lexer = @import("graphql").lexer.Lexer;
 var lexer = Lexer.init(source, .{});
 const result = try lexer.lex(allocator);
 defer {
@@ -77,11 +78,21 @@ defer {
 }
 
 for (result.tokens) |token| {
-    // Process each valid token
+    // Process each valid token.
 }
 for (result.errors) |err| {
-    // Handle each error that occurred during lexing
+    // Handle each error that occurred during lexing.
 }
+```
+
+The library exposes a `lex()` function, which provides a convenient way to tokenize GraphQL documents without manually creating a Lexer instance.
+
+
+Example.
+```zig
+const graphql = @import("graphql");
+
+const result = try graphql.lexer.lex(allocator, source);
 ```
 
 #### Stream Lexing
@@ -98,30 +109,35 @@ const source =
     \\  }
     \\ }
 ;
+
+const Lexer = @import("graphql").lexer.Lexer;
 var lexer = Lexer.init(source, .{});
 while (try lexer.next()) |token| {
     if (token.kind == TokenKind.Eof) {
-        break; // Reached EOF
+        break; // Reached EOF.
     }
-    // Process token
+    // Process token.
 }
 ```
 
-#### Bounded Parsing
+#### Bounded Lexing
 
-It is recommended to limit how far the lexer can scan. Pass a `limit` in the options struct to create a lexer that has a limit on the number of tokens that can be scanned.
+It is recommended to limit how far the lexer can scan. You can use the `lexWithLimit()` function or pass a `limit` in the options struct into the Lexer.
 
 
-Example.
+Example with `lexWithLimit()`.
 ```zig
-var lexer = Lexer.init(source, .{ .limit = 10 }); // Only scan up to 10 tokens
+const graphql = @import("graphql");
+
+const result = try graphql.lexer.lexWithLimit(allocator, source); // Only scan up to 10 tokens.
+```
+
+
+Example with options struct.
+```zig
+var lexer = Lexer.init(source, .{ .limit = 10 }); // Only scan up to 10 tokens.
 
 const result = try lexer.lex(allocator);
-defer {
-    allocator.free(result.tokens);
-    allocator.free(result.errors);
-}
-// result.errors will contain LimitReached if we hit the limit
 ```
 
 ### Parser
@@ -145,18 +161,16 @@ const source =
     \\  }
     \\ }
 ;
-var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
-defer arena.deinit(); // Clean up all allocated memory
+defer allocator.deinit(); // Clean up all allocated memory.
 
-const allocator = arena.allocator();
+const Parser = @import("graphql").parser.Parser;
 var parser = Parser.init(allocator, source, .{});
 const doc = try parser.parse();
 
 for (doc.definitions) |definition| {
-    // Process each definition in the document
+    // Process each definition in the document.
 }
 ```
-
 
 For basic parsing, the library exposes a `parse()` function, which provides a convenient way to parse GraphQL documents without manually creating a parser instance.
 
@@ -165,10 +179,7 @@ Example.
 ```zig
 const graphql = @import("graphql");
 
-var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
-defer arena.deinit();
-
-const doc = try graphql.parse(arena.allocator(), source);
+const doc = try graphql.parser.parse(arena.allocator(), source);
 ```
 
 #### Bounded Parsing
@@ -177,16 +188,16 @@ Similar to the lexer, it is recommended to limit how far the parser can process 
 
 Example with `parseWithLimit()`.
 ```zig
-const doc = try graphql.parseWithLimit(allocator, source, 100);
-// Will throw LimitReached error if we hit the limit
+const doc = try graphql.parser.parseWithLimit(allocator, source, 100);
+// Will throw LimitReached error if we hit the limit.
 ```
 
 Example with options struct.
 ```zig
-var parser = Parser.init(allocator, source, .{ .limit = 100 }); // Only process up to 100 tokens
+var parser = Parser.init(allocator, source, .{ .limit = 100 }); // Only process up to 100 tokens.
 
 const doc = try parser.parse();
-// Will throw LimitReached error if we hit the limit
+// Will throw LimitReached error if we hit the limit.
 ```
 
 ## TODO
