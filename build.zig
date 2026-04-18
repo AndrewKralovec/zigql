@@ -7,8 +7,8 @@ pub fn build(b: *std.Build) void {
 
     // Define the build options
     const lib = b.addStaticLibrary(.{
-        .name = "zig_ql",
-        .root_source_file = b.path("src/zig_ql.zig"),
+        .name = "graphql",
+        .root_source_file = b.path("src/graphql.zig"),
         .target = target,
         .optimize = optimize,
         .version = .{
@@ -31,14 +31,14 @@ pub fn build(b: *std.Build) void {
     b.installArtifact(lib);
 
     // Export the module so other projects can depend on it
-    const module = b.addModule("zig_ql", .{
-        .root_source_file = b.path("src/zig_ql.zig"),
+    const module = b.addModule("graphql", .{
+        .root_source_file = b.path("src/graphql.zig"),
     });
     module.addOptions("build_config.zig", options);
 
     // Add a test step
     const tests = b.addTest(.{
-        .root_source_file = b.path("src/zig_ql.zig"),
+        .root_source_file = b.path("src/graphql.zig"),
     });
     tests.root_module.addOptions("build_config.zig", options);
 

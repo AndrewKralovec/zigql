@@ -1,4 +1,4 @@
-# ZigQL
+# graphql-zig
 A graphql parsing library written in zig.
 After reading that [bun](https://bun.sh/) was coded in zig, i wanted to try it out.
 
@@ -44,7 +44,7 @@ zig build test
 
 ## Usage
 
-ZigQL provides two main components for working with GraphQL.
+graphql-zig provides two main components for working with GraphQL.
 
 - [Lexer](#lexer) for tokenization.
 - [Parser](#parser) for building an abstract syntax tree (AST).
@@ -163,12 +163,12 @@ For basic parsing, the library exposes a `parse()` function, which provides a co
 
 Example.
 ```zig
-const zigql = @import("zig_ql");
+const graphql = @import("graphql");
 
 var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
 defer arena.deinit();
 
-const doc = try zigql.parse(arena.allocator(), source);
+const doc = try graphql.parse(arena.allocator(), source);
 ```
 
 #### Bounded Parsing
@@ -177,7 +177,7 @@ Similar to the lexer, it is recommended to limit how far the parser can process 
 
 Example with `parseWithLimit()`.
 ```zig
-const doc = try zigql.parseWithLimit(allocator, source, 100);
+const doc = try graphql.parseWithLimit(allocator, source, 100);
 // Will throw LimitReached error if we hit the limit
 ```
 

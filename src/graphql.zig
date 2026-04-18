@@ -1,4 +1,4 @@
-//! ZigQL - A GraphQL parser library for Zig
+//! A GraphQL parser library for Zig
 //!
 //! This library provides comprehensive lexical analysis and parsing capabilities
 //! for GraphQL documents, supporting both executable documents (queries, mutations,
@@ -10,7 +10,7 @@ pub const Parser = @import("parser/parser.zig").Parser;
 pub const parse = @import("parser/parser.zig").parse;
 pub const parseWithLimit = @import("parser/parser.zig").parseWithLimit;
 //
-// Test cases for the zigql module
+// Test cases for the graphql module
 //
 
 test {
