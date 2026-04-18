@@ -1,11 +1,11 @@
 const std = @import("std");
-const ast = @import("../grammar/ast.zig");
+const ast = @import("../ast/ast.zig");
 const config = @import("build_config.zig");
-const document = @import("../grammar/document.zig");
-const Lexer = @import("lexer.zig").Lexer;
-const LexerError = @import("lexer.zig").LexerError;
-const Token = @import("tokens.zig").Token;
-const TokenKind = @import("tokens.zig").TokenKind;
+const document = @import("./grammar/document.zig");
+const Lexer = @import("../lexer/lexer.zig").Lexer;
+const LexerError = @import("../lexer/lexer.zig").LexerError;
+const Token = @import("../lexer/tokens.zig").Token;
+const TokenKind = @import("../lexer/tokens.zig").TokenKind;
 
 // Debugging functions to print the parser state.
 // Configurable through build options.
