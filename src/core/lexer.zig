@@ -2,6 +2,7 @@ const std = @import("std");
 const Token = @import("tokens.zig").Token;
 const TokenKind = @import("tokens.zig").TokenKind;
 const Cursor = @import("cursor.zig").Cursor;
+const CursorError = @import("cursor.zig").CursorError;
 const LimitTracker = @import("../util/limit_tracker.zig").LimitTracker;
 
 /// The `Lexer` struct is responsible for walking over GraphQL text and producing a stream of tokens.
@@ -36,10 +37,10 @@ pub const Lexer = struct {
     /// Fully lex the input stream and return a struct containing all tokens and all errors encountered.
     /// Errors from the allocator are propagated immediately.
     /// The caller is responsible for freeing both slices.
-    pub fn lex(self: *Lexer, allocator: std.mem.Allocator) !LexResult {
+    pub fn lex(self: *Lexer, allocator: std.mem.Allocator) std.mem.Allocator.Error!LexResult {
         var tokens = std.ArrayList(Token).init(allocator);
-        var errors = std.ArrayList(anyerror).init(allocator);
-        defer {
+        var errors = std.ArrayList(LexerError).init(allocator);
+        errdefer {
             tokens.deinit();
             errors.deinit();
         }
@@ -49,7 +50,7 @@ pub const Lexer = struct {
                 // collect lexing errors or throw on non lexing errors (from allocator or limitReached).
                 try errors.append(err);
                 switch (err) {
-                    error.LimitReached => break, // If we hit the limit, stop lexing.
+                    LexerError.LimitReached => break, // If we hit the limit, stop lexing.
                     else => continue,
                 }
             };
@@ -72,12 +73,12 @@ pub const Lexer = struct {
     /// This method is safe to call after EOF has been reached.
     /// If a limit was set and reached, `LimitReached` is returned.
     /// Token parsing errors are propagated immediately.
-    pub fn next(self: *Lexer) !?Token {
+    pub fn next(self: *Lexer) LexerError!?Token {
         if (self.finished) return null;
 
         if (self.limit_tracker.checkAndIncrement()) {
             self.finished = true;
-            return error.LimitReached;
+            return LexerError.LimitReached;
         }
 
         const token = try self.cursor.advance();
@@ -90,20 +91,28 @@ pub const Lexer = struct {
     /// Return the next token in the stream.
     /// An error is returned if read is called after the lexer has finished.
     /// A lexer is finished when it reaches EOF or when a limit is reached.
-    pub fn read(self: *Lexer) !Token {
+    pub fn read(self: *Lexer) LexerError!Token {
         const token = try self.next();
         if (token == null) {
-            return error.ReadAfterFinished;
+            return LexerError.ReadAfterFinished;
         }
         return token.?;
     }
+};
+
+/// Errors produced during lexical analysis. This includes the `CursorError` error set.
+pub const LexerError = CursorError || error{
+    /// The token scan limit has been exceeded.
+    LimitReached,
+    /// Read was called after the lexer has already finished processing all input.
+    ReadAfterFinished,
 };
 
 /// Result from lexing an entire input stream.
 /// Contains all tokens and any errors encountered during lexing.
 pub const LexResult = struct {
     tokens: []Token,
-    errors: []anyerror,
+    errors: []LexerError,
 };
 
 //

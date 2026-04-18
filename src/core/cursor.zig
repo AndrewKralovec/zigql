@@ -77,7 +77,7 @@ pub const Cursor = struct {
     pub fn eatc(self: *Cursor, c: u8) !bool {
         if (self.pending != null) {
             // Don't call eatc when a character is pending
-            return error.InvalidState;
+            return CursorError.PendingCharacterConflict;
         }
 
         if (self.read_pos < self.source.len) {
@@ -98,7 +98,7 @@ pub const Cursor = struct {
 
     // TODO: Split this up into smaller functions. There seems to be a problem with the LLVM version when doing so.
     // Need to investigate further.
-    pub fn advance(self: *Cursor) !Token {
+    pub fn advance(self: *Cursor) CursorError!Token {
         // TODO: Invalid record 'LLVM 18.1.7':
         // This code is a long running function because there seems to be a problem splitting the function into smaller parts.
         var state = State.Start;
@@ -109,7 +109,7 @@ pub const Cursor = struct {
         };
 
         while (true) {
-            var c_opt = self.bump();
+            const c_opt = self.bump();
             if (c_opt == null) {
                 // TODO: Fix llvm error (version: 0.14.0-dev.544+7aaebd17).
                 // Make this long running block of code a self.eof func once zig is fixed.
@@ -119,19 +119,19 @@ pub const Cursor = struct {
                         return token;
                     },
                     State.StringLiteralStart => {
-                        return error.UnexpectedEndOfData;
+                        return CursorError.UnexpectedEndOfData;
                     },
                     State.StringLiteral, State.BlockStringLiteral, State.StringLiteralEscapedUnicode, State.BlockStringLiteralBackslash, State.StringLiteralBackslash => {
-                        return error.UnterminatedString;
+                        return CursorError.UnterminatedString;
                     },
                     State.SpreadOperator => {
-                        return error.UnterminatedSpreadOperator;
+                        return CursorError.UnterminatedSpreadOperator;
                     },
                     State.MinusSign => {
-                        return error.UnexpectedCharacter;
+                        return CursorError.UnexpectedCharacter;
                     },
                     State.DecimalPoint, State.ExponentIndicator, State.ExponentSign => {
-                        return error.UnexpectedEOFInFloat;
+                        return CursorError.UnexpectedEOFInFloat;
                     },
                     State.Ident, State.LeadingZero, State.IntegerPart, State.FractionalPart, State.ExponentDigit, State.Whitespace, State.Comment => {
                         token.data = self.currentStr();
@@ -140,7 +140,6 @@ pub const Cursor = struct {
                 }
             }
             const c = c_opt.?;
-            c_opt = null; // TODO: trick compiler so i can use var, figure out proper way to do this in zig.
             switch (state) {
                 State.Start => {
                     const t = tokens.punctuationKind(c);
@@ -188,7 +187,7 @@ pub const Cursor = struct {
                                 token.kind = TokenKind.Whitespace;
                                 state = State.Whitespace;
                             } else {
-                                return error.UnexpectedChar;
+                                return CursorError.UnexpectedCharacter;
                             }
                         },
                     }
@@ -251,9 +250,9 @@ pub const Cursor = struct {
                 },
                 State.StringLiteralEscapedUnicode => {
                     if (c == '"') {
-                        return error.IncompleteUnicode;
+                        return CursorError.IncompleteUnicode;
                     } else if (text.isAsciiHexDigit(c)) {
-                        return error.IncompleteUnicodeEscapeSequence;
+                        return CursorError.IncompleteUnicodeEscapeSequence;
                     } else {
                         state = State.StringLiteral;
                         continue;
@@ -270,7 +269,7 @@ pub const Cursor = struct {
                         },
                         else => {
                             if (text.isLineTerminator(c)) {
-                                return error.UnexpectedLineTerminator;
+                                return CursorError.UnexpectedLineTerminator;
                             }
                         },
                     }
@@ -302,7 +301,7 @@ pub const Cursor = struct {
                     } else if (c == 'u') {
                         state = State.StringLiteralEscapedUnicode;
                     } else {
-                        return error.UnexpectedCharacter;
+                        return CursorError.UnexpectedCharacter;
                     }
                 },
                 State.LeadingZero => {
@@ -313,9 +312,9 @@ pub const Cursor = struct {
                         token.kind = TokenKind.Float;
                         state = State.ExponentIndicator;
                     } else if (text.isAsciiHexDigit(c)) {
-                        return error.LeadingZero;
+                        return CursorError.LeadingZero;
                     } else if (text.isNameStart(c)) {
-                        return error.UnexpectedCharacter;
+                        return CursorError.UnexpectedCharacter;
                     } else {
                         token.data = self.prevStr();
                         return token;
@@ -332,7 +331,7 @@ pub const Cursor = struct {
                         token.kind = TokenKind.Float;
                         state = State.ExponentIndicator;
                     } else if (text.isNameStart(c)) {
-                        return error.UnexpectedCharacter;
+                        return CursorError.UnexpectedCharacter;
                     } else {
                         token.data = self.prevStr();
                         return token;
@@ -342,7 +341,7 @@ pub const Cursor = struct {
                     if (text.isAsciiDigit(c)) {
                         state = State.FractionalPart;
                     } else {
-                        return error.UnexpectedCharacter;
+                        return CursorError.UnexpectedCharacter;
                     }
                 },
                 State.FractionalPart => {
@@ -352,7 +351,7 @@ pub const Cursor = struct {
                     if (c == 'e' or c == 'E') {
                         state = State.ExponentIndicator;
                     } else if (c == '.' or text.isNameStart(c)) {
-                        return error.UnexpectCharacterAsFloatSuffix;
+                        return CursorError.UnexpectedFloatSuffix;
                     } else {
                         token.data = self.prevStr();
                         return token;
@@ -364,14 +363,14 @@ pub const Cursor = struct {
                     } else if (c == '+' or c == '-') {
                         state = State.ExponentSign;
                     } else {
-                        return error.UnexpectedCharacter;
+                        return CursorError.UnexpectedCharacter;
                     }
                 },
                 State.ExponentSign => {
                     if (text.isAsciiDigit(c)) {
                         state = State.ExponentDigit;
                     } else {
-                        return error.UnexpectedCharacter;
+                        return CursorError.UnexpectedCharacter;
                     }
                 },
                 State.ExponentDigit => {
@@ -379,7 +378,7 @@ pub const Cursor = struct {
                         continue;
                     }
                     if (c == '.' or text.isNameStart(c)) {
-                        return error.UnexpectCharacterAsFloatSuffix;
+                        return CursorError.UnexpectedFloatSuffix;
                     } else {
                         token.data = self.prevStr();
                         return token;
@@ -390,7 +389,7 @@ pub const Cursor = struct {
                         token.data = self.currentStr();
                         return token;
                     }
-                    return error.UnterminatedSpreadOperator;
+                    return CursorError.UnterminatedSpreadOperator;
                 },
                 State.MinusSign => {
                     if (c == '0') {
@@ -398,7 +397,7 @@ pub const Cursor = struct {
                     } else if (text.isAsciiDigit(c)) {
                         state = State.IntegerPart;
                     } else {
-                        return error.UnexpectedCharacter;
+                        return CursorError.UnexpectedCharacter;
                     }
                 },
                 State.Comment => {
@@ -432,6 +431,33 @@ const State = union(enum) {
     Comment,
     SpreadOperator,
     MinusSign,
+};
+
+/// Errors produced by the cursor while tokenizing the raw source text.
+pub const CursorError = error{
+    /// Reached end of input where more data was expected.
+    UnexpectedEndOfData,
+    /// A string literal was not properly closed with a matching quote.
+    UnterminatedString,
+    /// A spread operator (`...`) was started but not completed.
+    UnterminatedSpreadOperator,
+    /// Encountered a character that is not valid in this position.
+    UnexpectedCharacter,
+    /// Reached end of input while parsing a floating point.
+    UnexpectedEOFInFloat,
+    /// A unicode escape sequence was started but is incomplete.
+    IncompleteUnicode,
+    /// A unicode escape sequence is missing the required hex digits.
+    IncompleteUnicodeEscapeSequence,
+    /// A line terminator was found inside a single line string literal.
+    UnexpectedLineTerminator,
+    /// A numeric literal has an invalid leading zero.
+    LeadingZero,
+    /// An invalid character appears after a floating point.
+    UnexpectedFloatSuffix,
+    /// A character has been peeked ahead but not yet consumed.
+    /// If eatc is called while a character is pending, it would skip over that pending character, which would break the parser's logic.
+    PendingCharacterConflict,
 };
 
 //
@@ -498,7 +524,7 @@ test "should return error when advancing on unexpected character" {
 
     var cursor = Cursor.init(input);
     _ = cursor.advance() catch |err| {
-        try std.testing.expect(err == error.UnexpectedChar);
+        try std.testing.expect(err == CursorError.UnexpectedCharacter);
         return;
     };
 }
