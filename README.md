@@ -129,7 +129,7 @@ Example with `lexWithLimit()`.
 ```zig
 const graphql = @import("graphql");
 
-const result = try graphql.lexer.lexWithLimit(allocator, source); // Only scan up to 10 tokens.
+const result = try graphql.lexer.lexWithLimit(allocator, source, 10); // Only scan up to 10 tokens.
 ```
 
 
