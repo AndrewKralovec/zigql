@@ -10,3 +10,29 @@ pub fn parseName(p: *Parser) !ast.NameNode {
         .value = token.data,
     };
 }
+
+//
+// Test cases for name
+//
+
+test "should parse a simple name" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    const allocator = arena.allocator();
+    const source =
+        \\ {
+        \\   hello
+        \\ }
+    ;
+    var p = Parser.init(allocator, source, .{});
+    const doc = try p.parse();
+
+    const dn = doc.definitions[0];
+    const def = dn.ExecutableDefinition;
+    const op = def.OperationDefinition;
+    const sel = op.selection_set.?.selections[0];
+    const field = sel.Field;
+
+    try std.testing.expect(std.mem.eql(u8, field.name.value, "hello"));
+}

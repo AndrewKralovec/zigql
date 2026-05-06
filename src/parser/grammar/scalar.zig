@@ -37,3 +37,32 @@ pub fn parseScalarTypeExtension(p: *Parser) !ast.ScalarTypeExtensionNode {
         .directives = directives,
     };
 }
+
+//
+// Test cases for scalar
+//
+
+test "should parse a scalar type definition" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    const allocator = arena.allocator();
+    const source =
+        \\ scalar DateTime
+    ;
+    var p = Parser.init(allocator, source, .{});
+    const doc = try p.parse();
+    try std.testing.expect(doc.definitions.len == 1);
+
+    const dn = doc.definitions[0];
+    try std.testing.expect(dn == ast.DefinitionNode.TypeSystemDefinition);
+
+    const def = dn.TypeSystemDefinition;
+    try std.testing.expect(def == ast.TypeSystemDefinitionNode.TypeDefinition);
+
+    const type_def = def.TypeDefinition;
+    try std.testing.expect(type_def == ast.TypeDefinitionNode.ScalarTypeDefinition);
+
+    const scalar_def = type_def.ScalarTypeDefinition;
+    try std.testing.expect(std.mem.eql(u8, scalar_def.name.value, "DateTime"));
+}

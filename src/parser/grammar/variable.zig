@@ -56,3 +56,64 @@ pub fn parseVariable(p: *Parser) !ast.VariableNode {
         .name = name,
     };
 }
+
+//
+// Test cases for variable
+//
+
+test "should parse a variable definition" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    const allocator = arena.allocator();
+    const source =
+        \\ query GetUser($id: ID!) {
+        \\   user
+        \\ }
+    ;
+    var p = Parser.init(allocator, source, .{});
+    const doc = try p.parse();
+
+    const op = doc.definitions[0].ExecutableDefinition.OperationDefinition;
+    const var_defs = op.variable_definitions.?;
+    try std.testing.expect(var_defs.len == 1);
+
+    try std.testing.expect(std.mem.eql(u8, var_defs[0].variable.name.value, "id"));
+
+    const type_node = var_defs[0].type.*;
+    try std.testing.expect(type_node == ast.TypeNode.NonNullType);
+    const inner = type_node.NonNullType.type.*;
+    try std.testing.expect(inner == ast.TypeNode.NamedType);
+    try std.testing.expect(std.mem.eql(u8, inner.NamedType.name.value, "ID"));
+
+    try std.testing.expect(var_defs[0].default_value == null);
+}
+
+test "should parse a variable definition with a default value" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    const allocator = arena.allocator();
+    const source =
+        \\ query GetUsers($limit: Int = 10) {
+        \\   users
+        \\ }
+    ;
+    var p = Parser.init(allocator, source, .{});
+    const doc = try p.parse();
+
+    const op = doc.definitions[0].ExecutableDefinition.OperationDefinition;
+    const var_defs = op.variable_definitions.?;
+    try std.testing.expect(var_defs.len == 1);
+
+    try std.testing.expect(std.mem.eql(u8, var_defs[0].variable.name.value, "limit"));
+
+    const type_node = var_defs[0].type.*;
+    try std.testing.expect(type_node == ast.TypeNode.NamedType);
+    try std.testing.expect(std.mem.eql(u8, type_node.NamedType.name.value, "Int"));
+
+    try std.testing.expect(var_defs[0].default_value != null);
+    const default_val = var_defs[0].default_value.?;
+    try std.testing.expect(default_val == ast.ValueNode.Int);
+    try std.testing.expect(std.mem.eql(u8, default_val.Int.value, "10"));
+}

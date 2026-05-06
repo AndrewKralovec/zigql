@@ -142,3 +142,64 @@ pub fn parseStringLiteral(p: *Parser) !ast.StringValueNode {
         .value = token.data,
     };
 }
+
+//
+// Test cases for value
+//
+
+test "should parse int and string argument values" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    const allocator = arena.allocator();
+    const source =
+        \\ {
+        \\   user(id: 42, name: "Alice")
+        \\ }
+    ;
+    var p = Parser.init(allocator, source, .{});
+    const doc = try p.parse();
+
+    const op = doc.definitions[0].ExecutableDefinition.OperationDefinition;
+    const field = op.selection_set.?.selections[0].Field;
+    const args = field.arguments.?;
+    try std.testing.expect(args.len == 2);
+
+    try std.testing.expect(std.mem.eql(u8, args[0].name.value, "id"));
+    try std.testing.expect(args[0].value == ast.ValueNode.Int);
+    try std.testing.expect(std.mem.eql(u8, args[0].value.Int.value, "42"));
+
+    try std.testing.expect(std.mem.eql(u8, args[1].name.value, "name"));
+    try std.testing.expect(args[1].value == ast.ValueNode.String);
+    try std.testing.expect(std.mem.eql(u8, args[1].value.String.value, "\"Alice\""));
+}
+
+test "should parse boolean, null, and enum values" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    const allocator = arena.allocator();
+    const source =
+        \\ {
+        \\   user(active: true, deleted: false, middle: null, role: ADMIN)
+        \\ }
+    ;
+    var p = Parser.init(allocator, source, .{});
+    const doc = try p.parse();
+
+    const op = doc.definitions[0].ExecutableDefinition.OperationDefinition;
+    const field = op.selection_set.?.selections[0].Field;
+    const args = field.arguments.?;
+    try std.testing.expect(args.len == 4);
+
+    try std.testing.expect(args[0].value == ast.ValueNode.Boolean);
+    try std.testing.expect(args[0].value.Boolean.value == true);
+
+    try std.testing.expect(args[1].value == ast.ValueNode.Boolean);
+    try std.testing.expect(args[1].value.Boolean.value == false);
+
+    try std.testing.expect(args[2].value == ast.ValueNode.Null);
+
+    try std.testing.expect(args[3].value == ast.ValueNode.Enum);
+    try std.testing.expect(std.mem.eql(u8, args[3].value.Enum.value, "ADMIN"));
+}

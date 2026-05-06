@@ -163,6 +163,8 @@ pub const Cursor = struct {
 
                     switch (c) {
                         '"' => {
+                            // TODO: decide whether to strip surrounding quotes from string token data
+                            // this is how the rs parser does it
                             token.kind = TokenKind.StringValue;
                             state = State.StringLiteralStart;
                         },

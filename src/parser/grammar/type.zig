@@ -126,3 +126,60 @@ pub fn parseTypeSystemExtension(p: *Parser) !ast.TypeSystemExtensionNode {
     }
     return error.UnexpectedToken;
 }
+
+//
+// Test cases for type
+//
+
+test "should parse a named type reference" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    const allocator = arena.allocator();
+    const source =
+        \\ type User {
+        \\   name: String
+        \\ }
+    ;
+    var p = Parser.init(allocator, source, .{});
+    const doc = try p.parse();
+
+    const type_def = doc.definitions[0].TypeSystemDefinition.TypeDefinition.ObjectTypeDefinition;
+    const field = type_def.fields.?[0];
+    try std.testing.expect(std.mem.eql(u8, field.name.value, "name"));
+
+    const type_node = field.type.*;
+    try std.testing.expect(type_node == ast.TypeNode.NamedType);
+    try std.testing.expect(std.mem.eql(u8, type_node.NamedType.name.value, "String"));
+}
+
+test "should parse a non-null list type reference" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    const allocator = arena.allocator();
+    const source =
+        \\ type User {
+        \\   tags: [String!]!
+        \\ }
+    ;
+    var p = Parser.init(allocator, source, .{});
+    const doc = try p.parse();
+
+    const type_def = doc.definitions[0].TypeSystemDefinition.TypeDefinition.ObjectTypeDefinition;
+    const field = type_def.fields.?[0];
+    try std.testing.expect(std.mem.eql(u8, field.name.value, "tags"));
+
+    const outer = field.type.*;
+    try std.testing.expect(outer == ast.TypeNode.NonNullType);
+
+    const list = outer.NonNullType.type.*;
+    try std.testing.expect(list == ast.TypeNode.ListType);
+
+    const inner_non_null = list.ListType.type.*;
+    try std.testing.expect(inner_non_null == ast.TypeNode.NonNullType);
+
+    const named = inner_non_null.NonNullType.type.*;
+    try std.testing.expect(named == ast.TypeNode.NamedType);
+    try std.testing.expect(std.mem.eql(u8, named.NamedType.name.value, "String"));
+}

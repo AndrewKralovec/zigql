@@ -64,3 +64,33 @@ pub fn parseUnionTypeExtension(p: *Parser) !ast.UnionTypeExtensionNode {
         .types = types,
     };
 }
+
+//
+// Test cases for union
+//
+
+test "should parse a union type definition" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    const allocator = arena.allocator();
+    const source =
+        \\ union SearchResult = User | Post | Comment
+    ;
+    var p = Parser.init(allocator, source, .{});
+    const doc = try p.parse();
+    try std.testing.expect(doc.definitions.len == 1);
+
+    const dn = doc.definitions[0];
+    try std.testing.expect(dn == ast.DefinitionNode.TypeSystemDefinition);
+
+    const def = dn.TypeSystemDefinition;
+    try std.testing.expect(def == ast.TypeSystemDefinitionNode.TypeDefinition);
+
+    const type_def = def.TypeDefinition;
+    try std.testing.expect(type_def == ast.TypeDefinitionNode.UnionTypeDefinition);
+
+    const obj_def = type_def.UnionTypeDefinition;
+    try std.testing.expect(obj_def.description == null);
+    try std.testing.expect(std.mem.eql(u8, obj_def.name.value, "SearchResult"));
+}

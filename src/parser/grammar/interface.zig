@@ -70,3 +70,38 @@ pub fn parseInterfaceTypeExtension(p: *Parser) !ast.InterfaceTypeExtensionNode {
         .fields = fields,
     };
 }
+
+//
+// Test cases for interface
+//
+
+test "should parse a interface type definition" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    const allocator = arena.allocator();
+    const source =
+        \\ interface User {
+        \\   id: ID
+        \\   name: String
+        \\ }
+    ;
+    var p = Parser.init(allocator, source, .{});
+    const doc = try p.parse();
+    try std.testing.expect(doc.definitions.len == 1);
+
+    const dn = doc.definitions[0];
+    try std.testing.expect(dn == ast.DefinitionNode.TypeSystemDefinition);
+
+    const def = dn.TypeSystemDefinition;
+    try std.testing.expect(def == ast.TypeSystemDefinitionNode.TypeDefinition);
+
+    const type_def = def.TypeDefinition;
+    try std.testing.expect(type_def == ast.TypeDefinitionNode.InterfaceTypeDefinition);
+
+    const obj_def = type_def.InterfaceTypeDefinition;
+    try std.testing.expect(obj_def.description == null);
+    try std.testing.expect(std.mem.eql(u8, obj_def.name.value, "User"));
+    try std.testing.expect(obj_def.interfaces == null);
+    try std.testing.expect(obj_def.directives == null);
+}

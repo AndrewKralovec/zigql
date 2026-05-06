@@ -79,3 +79,69 @@ pub fn parseField(p: *Parser) anyerror!ast.FieldNode {
         .selection_set = selection_set,
     };
 }
+
+//
+// Test cases for field
+//
+
+test "should parse a simple field in a query" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    const allocator = arena.allocator();
+    const source =
+        \\ {
+        \\   name
+        \\   age
+        \\ }
+    ;
+    var p = Parser.init(allocator, source, .{});
+    const doc = try p.parse();
+    try std.testing.expect(doc.definitions.len == 1);
+
+    const dn = doc.definitions[0];
+    try std.testing.expect(dn == ast.DefinitionNode.ExecutableDefinition);
+
+    const def = dn.ExecutableDefinition;
+    try std.testing.expect(def == ast.ExecutableDefinitionNode.OperationDefinition);
+
+    const op = def.OperationDefinition;
+    try std.testing.expect(op.selection_set.?.selections.len == 2);
+
+    const sel_one = op.selection_set.?.selections[0];
+    try std.testing.expect(sel_one == ast.SelectionNode.Field);
+    try std.testing.expect(std.mem.eql(u8, sel_one.Field.name.value, "name"));
+    try std.testing.expect(sel_one.Field.alias == null);
+
+    const sel_two = op.selection_set.?.selections[1];
+    try std.testing.expect(sel_two == ast.SelectionNode.Field);
+    try std.testing.expect(std.mem.eql(u8, sel_two.Field.name.value, "age"));
+}
+
+test "should parse a field with an alias" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    const allocator = arena.allocator();
+    const source =
+        \\ {
+        \\   fullName: name
+        \\ }
+    ;
+    var p = Parser.init(allocator, source, .{});
+    const doc = try p.parse();
+    try std.testing.expect(doc.definitions.len == 1);
+
+    const dn = doc.definitions[0];
+    const def = dn.ExecutableDefinition;
+    const op = def.OperationDefinition;
+    try std.testing.expect(op.selection_set.?.selections.len == 1);
+
+    const sel = op.selection_set.?.selections[0];
+    try std.testing.expect(sel == ast.SelectionNode.Field);
+
+    const field = sel.Field;
+    try std.testing.expect(std.mem.eql(u8, field.name.value, "name"));
+    try std.testing.expect(field.alias != null);
+    try std.testing.expect(std.mem.eql(u8, field.alias.?.value, "fullName"));
+}

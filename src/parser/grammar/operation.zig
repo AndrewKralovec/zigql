@@ -113,3 +113,160 @@ pub fn parseOperationType(p: *Parser) !ast.OperationType {
     }
     return error.UnexpectedToken;
 }
+
+//
+// Test cases for operation
+//
+
+test "should parse a operation definition with a single field" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    const allocator = arena.allocator();
+    const source = "{ user { id } }";
+    var p = Parser.init(allocator, source, .{});
+    const doc = try p.parse();
+
+    try std.testing.expect(doc.definitions.len == 1);
+    const dn = doc.definitions[0];
+
+    try std.testing.expect(dn == ast.DefinitionNode.ExecutableDefinition);
+    const def = dn.ExecutableDefinition;
+
+    try std.testing.expect(def == ast.ExecutableDefinitionNode.OperationDefinition);
+    const op = def.OperationDefinition;
+
+    try std.testing.expect(op.selection_set != null);
+    try std.testing.expect(op.selection_set.?.selections.len == 1);
+    const sel = op.selection_set.?.selections[0];
+
+    try std.testing.expect(sel == ast.SelectionNode.Field);
+    const f = sel.Field;
+    try std.testing.expect(std.mem.eql(u8, f.name.value, "user"));
+    try std.testing.expect(f.alias == null);
+    try std.testing.expect(f.arguments == null);
+    try std.testing.expect(f.selection_set != null);
+    try std.testing.expect(f.selection_set.?.selections.len == 1);
+
+    const sub_sel = f.selection_set.?.selections[0];
+    try std.testing.expect(sub_sel == ast.SelectionNode.Field);
+    const sub_f = sub_sel.Field;
+    try std.testing.expect(std.mem.eql(u8, sub_f.name.value, "id"));
+    try std.testing.expect(sub_f.alias == null);
+    try std.testing.expect(sub_f.arguments == null);
+    try std.testing.expect(sub_f.selection_set == null);
+}
+
+test "should parse a query operation with a single field" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    const allocator = arena.allocator();
+    const source =
+        \\ query {
+        \\  users(id: 1) {
+        \\   id
+        \\  }
+        \\ }
+    ;
+    var p = Parser.init(allocator, source, .{});
+    const doc = try p.parse();
+
+    try std.testing.expect(doc.definitions.len == 1);
+    const dn = doc.definitions[0];
+
+    try std.testing.expect(dn == ast.DefinitionNode.ExecutableDefinition);
+    const def = dn.ExecutableDefinition;
+
+    try std.testing.expect(def == ast.ExecutableDefinitionNode.OperationDefinition);
+    const op = def.OperationDefinition;
+
+    try std.testing.expect(op.selection_set != null);
+    try std.testing.expect(op.selection_set.?.selections.len == 1);
+    const sel = op.selection_set.?.selections[0];
+
+    try std.testing.expect(sel == ast.SelectionNode.Field);
+    const f = sel.Field;
+    try std.testing.expect(std.mem.eql(u8, f.name.value, "users"));
+    try std.testing.expect(f.alias == null);
+    try std.testing.expect(f.arguments != null);
+    try std.testing.expect(f.arguments.?.len == 1);
+    try std.testing.expect(f.selection_set != null);
+    try std.testing.expect(f.selection_set.?.selections.len == 1);
+
+    const sub_sel = f.selection_set.?.selections[0];
+    try std.testing.expect(sub_sel == ast.SelectionNode.Field);
+    const sub_f = sub_sel.Field;
+    try std.testing.expect(std.mem.eql(u8, sub_f.name.value, "id"));
+    try std.testing.expect(sub_f.alias == null);
+    try std.testing.expect(sub_f.arguments == null);
+    try std.testing.expect(sub_f.selection_set == null);
+}
+
+test "should parse a query operation with fields and arguments" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    const allocator = arena.allocator();
+    const source =
+        \\ query UserAndFriends($createdTime: DateTime) {
+        \\   users(createdTime: $createdTime) {
+        \\     id
+        \\     friends {
+        \\       id
+        \\     }
+        \\   }
+        \\ }
+    ;
+    var p = Parser.init(allocator, source, .{});
+    const doc = try p.parse();
+
+    try std.testing.expect(doc.definitions.len == 1);
+    const dn = doc.definitions[0];
+
+    try std.testing.expect(dn == ast.DefinitionNode.ExecutableDefinition);
+    const def = dn.ExecutableDefinition;
+
+    try std.testing.expect(def == ast.ExecutableDefinitionNode.OperationDefinition);
+    const op = def.OperationDefinition;
+
+    try std.testing.expect(op.selection_set != null);
+    try std.testing.expect(op.selection_set.?.selections.len == 1);
+    const sel = op.selection_set.?.selections[0];
+
+    try std.testing.expect(sel == ast.SelectionNode.Field);
+    const f = sel.Field;
+    try std.testing.expect(std.mem.eql(u8, f.name.value, "users"));
+    try std.testing.expect(f.alias == null);
+
+    try std.testing.expect(f.arguments != null);
+    try std.testing.expect(f.arguments.?.len == 1);
+    const args = f.arguments.?;
+    const arg = args[0];
+    try std.testing.expect(std.mem.eql(u8, arg.name.value, "createdTime"));
+
+    try std.testing.expect(arg.value == ast.ValueNode.Variable);
+    const var_node = arg.value.Variable;
+    try std.testing.expect(std.mem.eql(u8, var_node.name.value, "createdTime"));
+
+    try std.testing.expect(f.selection_set != null);
+    try std.testing.expect(f.selection_set.?.selections.len == 2);
+
+    const sub_sel_one = f.selection_set.?.selections[0];
+    try std.testing.expect(sub_sel_one == ast.SelectionNode.Field);
+    const sub_f_one = sub_sel_one.Field;
+    try std.testing.expect(std.mem.eql(u8, sub_f_one.name.value, "id"));
+    try std.testing.expect(sub_f_one.alias == null);
+    try std.testing.expect(sub_f_one.arguments == null);
+    try std.testing.expect(sub_f_one.selection_set == null);
+
+    const sub_sel_two = f.selection_set.?.selections[1];
+    try std.testing.expect(sub_sel_two == ast.SelectionNode.Field);
+
+    const sub_f_two = sub_sel_two.Field;
+    try std.testing.expect(std.mem.eql(u8, sub_f_two.name.value, "friends"));
+    try std.testing.expect(sub_f_two.alias == null);
+    try std.testing.expect(sub_f_two.arguments == null);
+    try std.testing.expect(sub_f_two.selection_set != null);
+    try std.testing.expect(sub_f_two.selection_set.?.selections.len == 1);
+}

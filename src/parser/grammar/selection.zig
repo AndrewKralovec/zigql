@@ -74,3 +74,61 @@ pub fn parseSelection(p: *Parser) !ast.SelectionNode {
         },
     };
 }
+
+//
+// Test cases for selection
+//
+
+test "should parse a selection set with multiple fields" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    const allocator = arena.allocator();
+    const source =
+        \\ {
+        \\   id
+        \\   name
+        \\   email
+        \\ }
+    ;
+    var p = Parser.init(allocator, source, .{});
+    const doc = try p.parse();
+
+    const op = doc.definitions[0].ExecutableDefinition.OperationDefinition;
+    const selections = op.selection_set.?.selections;
+    try std.testing.expect(selections.len == 3);
+
+    try std.testing.expect(selections[0] == ast.SelectionNode.Field);
+    try std.testing.expect(std.mem.eql(u8, selections[0].Field.name.value, "id"));
+
+    try std.testing.expect(selections[1] == ast.SelectionNode.Field);
+    try std.testing.expect(std.mem.eql(u8, selections[1].Field.name.value, "name"));
+
+    try std.testing.expect(selections[2] == ast.SelectionNode.Field);
+    try std.testing.expect(std.mem.eql(u8, selections[2].Field.name.value, "email"));
+}
+
+test "should parse a fragment spread in a selection set" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    const allocator = arena.allocator();
+    const source =
+        \\ {
+        \\   id
+        \\   ...UserFields
+        \\ }
+    ;
+    var p = Parser.init(allocator, source, .{});
+    const doc = try p.parse();
+
+    const op = doc.definitions[0].ExecutableDefinition.OperationDefinition;
+    const selections = op.selection_set.?.selections;
+    try std.testing.expect(selections.len == 2);
+
+    try std.testing.expect(selections[0] == ast.SelectionNode.Field);
+    try std.testing.expect(std.mem.eql(u8, selections[0].Field.name.value, "id"));
+
+    try std.testing.expect(selections[1] == ast.SelectionNode.FragmentSpread);
+    try std.testing.expect(std.mem.eql(u8, selections[1].FragmentSpread.name.value, "UserFields"));
+}

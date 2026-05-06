@@ -176,7 +176,7 @@ Example.
 ```zig
 const graphql = @import("graphql");
 
-const doc = try graphql.parser.parse(arena.allocator(), source);
+const doc = try graphql.parser.parse(allocator, source);
 ```
 
 #### Bounded Parsing

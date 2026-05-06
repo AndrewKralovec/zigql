@@ -38,3 +38,47 @@ pub fn parseFragmentName(p: *Parser) !ast.NameNode {
     const name = try parseName(p);
     return name;
 }
+
+//
+// Test cases for fragment
+//
+
+test "should parse a fragment definition" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    const allocator = arena.allocator();
+    const source =
+        \\ fragment UserFragment on User {
+        \\   id
+        \\   name
+        \\ }
+    ;
+    var p = Parser.init(allocator, source, .{});
+    const doc = try p.parse();
+    try std.testing.expect(doc.definitions.len == 1);
+
+    const dn = doc.definitions[0];
+    try std.testing.expect(dn == ast.DefinitionNode.ExecutableDefinition);
+
+    const def = dn.ExecutableDefinition;
+    try std.testing.expect(def == ast.ExecutableDefinitionNode.FragmentDefinition);
+
+    const frag_def = def.FragmentDefinition;
+    try std.testing.expect(std.mem.eql(u8, frag_def.name.value, "UserFragment"));
+
+    try std.testing.expect(std.mem.eql(u8, frag_def.type_condition.name.value, "User"));
+    try std.testing.expect(frag_def.selection_set.selections.len == 2);
+
+    const sel_one = frag_def.selection_set.selections[0];
+    try std.testing.expect(sel_one == ast.SelectionNode.Field);
+
+    const f_one = sel_one.Field;
+    try std.testing.expect(std.mem.eql(u8, f_one.name.value, "id"));
+
+    const sel_two = frag_def.selection_set.selections[1];
+    try std.testing.expect(sel_two == ast.SelectionNode.Field);
+
+    const f_two = sel_two.Field;
+    try std.testing.expect(std.mem.eql(u8, f_two.name.value, "name"));
+}
