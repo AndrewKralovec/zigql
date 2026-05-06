@@ -53,10 +53,10 @@ graphql-zig provides two main components for working with GraphQL.
 
 The `Lexer` tokenizes GraphQL text into individual tokens, which can then be processed by the parser or analyzed directly. It exposes several methods for tokenization and navigation.
 
-#### Batch Lexing
+#### Tokenization
 
-The simplest way to use the lexer is to tokenize an entire GraphQL document at once. The `lex()` method returns both tokens and any errors encountered during scanning.
-This approach is useful when you need an error resilient lexer that will not stop at the first error it encounters. This method instead collections errors and tokens, giving you the complete tokenized data.
+The simplest way to use the lexer is to tokenize an entire GraphQL document at once. The `tokenize()` method returns all tokens or the first error encountered during scanning.
+This approach is useful when you want fail-fast behavior that stops at the first error rather than collecting all errors.
 
 
 Example.
@@ -71,28 +71,23 @@ const source =
 
 const Lexer = @import("graphql").lexer.Lexer;
 var lexer = Lexer.init(source, .{});
-const result = try lexer.lex(allocator);
-defer {
-    allocator.free(result.tokens);
-    allocator.free(result.errors);
-}
+const tokens = try lexer.tokenize(allocator);
+defer allocator.free(tokens);
 
-for (result.tokens) |token| {
-    // Process each valid token.
-}
-for (result.errors) |err| {
-    // Handle each error that occurred during lexing.
+for (tokens) |token| {
+    // Process each token.
 }
 ```
 
-The library exposes a `lex()` function, which provides a convenient way to tokenize GraphQL documents without manually creating a Lexer instance.
+The library exposes a `tokenize()` function, which provides a convenient way to tokenize GraphQL documents without manually creating a Lexer instance.
 
 
 Example.
 ```zig
 const graphql = @import("graphql");
 
-const result = try graphql.lexer.lex(allocator, source);
+const tokens = try graphql.lexer.tokenize(allocator, source);
+defer allocator.free(tokens);
 ```
 
 #### Stream Lexing
@@ -120,16 +115,17 @@ while (try lexer.next()) |token| {
 }
 ```
 
-#### Bounded Lexing
+#### Bounded Tokenization
 
-It is recommended to limit how far the lexer can scan. You can use the `lexWithLimit()` function or pass a `limit` in the options struct into the Lexer.
+It is recommended to limit how far the lexer can scan. You can use the `tokenizeWithLimit()` function or pass a `limit` in the options struct into the Lexer.
 
 
-Example with `lexWithLimit()`.
+Example with `tokenizeWithLimit()`.
 ```zig
 const graphql = @import("graphql");
 
-const result = try graphql.lexer.lexWithLimit(allocator, source, 10); // Only scan up to 10 tokens.
+const tokens = try graphql.lexer.tokenizeWithLimit(allocator, source, 10); // Only scan up to 10 tokens.
+defer allocator.free(tokens);
 ```
 
 
@@ -137,7 +133,8 @@ Example with options struct.
 ```zig
 var lexer = Lexer.init(source, .{ .limit = 10 }); // Only scan up to 10 tokens.
 
-const result = try lexer.lex(allocator);
+const tokens = try lexer.tokenize(allocator);
+defer allocator.free(tokens);
 ```
 
 ### Parser
@@ -207,7 +204,7 @@ const doc = try parser.parse();
 #### Validator
 
 Create a graphql validator for validating graphql documents.
-This is a work in progress, see: https://github.com/AndrewKralovec/zigql/tree/feat/graphql-validator
+This is a work in progress.
 Help wanted if you happen to be reading this.
 
 ### Improvements

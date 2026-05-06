@@ -28,40 +28,6 @@ pub const Lexer = struct {
         };
     }
 
-    /// Fully lex the input stream and return a struct containing all tokens and all errors encountered.
-    /// Errors from the allocator are propagated immediately.
-    /// The caller is responsible for freeing both slices.
-    pub fn lex(self: *Lexer, allocator: Allocator) Allocator.Error!LexResult {
-        var tokens = std.ArrayList(Token).init(allocator);
-        var errors = std.ArrayList(LexerError).init(allocator);
-        errdefer {
-            tokens.deinit();
-            errors.deinit();
-        }
-
-        while (true) {
-            const result = self.next() catch |err| {
-                // collect lexing errors or throw on non lexing errors (from allocator or limitReached).
-                try errors.append(err);
-                switch (err) {
-                    LexerError.LimitReached => break, // If we hit the limit, stop lexing.
-                    else => continue,
-                }
-            };
-            if (result == null) {
-                break;
-            } else {
-                const token = result.?;
-                try tokens.append(token);
-            }
-        }
-
-        return .{
-            .tokens = try tokens.toOwnedSlice(),
-            .errors = try errors.toOwnedSlice(),
-        };
-    }
-
     /// Return the next token in the stream, or null if we have reached EOF.
     /// This method is safe to call after EOF has been reached.
     /// If a limit was set and reached, `LimitReached` is returned.
@@ -91,6 +57,56 @@ pub const Lexer = struct {
         }
         return token.?;
     }
+
+    /// Fully lex the input stream and return a struct containing all tokens and all errors encountered.
+    /// Errors from the allocator are propagated immediately.
+    /// The caller is responsible for freeing both slices.
+    pub fn lex(self: *Lexer, allocator: Allocator) Allocator.Error!LexResult {
+        var tokens = std.ArrayList(Token).init(allocator);
+        var errors = std.ArrayList(LexerError).init(allocator);
+        errdefer {
+            tokens.deinit();
+            errors.deinit();
+        }
+
+        while (true) {
+            const result = self.next() catch |err| {
+                try errors.append(err);
+                switch (err) {
+                    LexerError.LimitReached => break,
+                    else => continue,
+                }
+            };
+            if (result == null) {
+                break;
+            } else {
+                const token = result.?;
+                try tokens.append(token);
+            }
+        }
+
+        return .{
+            .tokens = try tokens.toOwnedSlice(),
+            .errors = try errors.toOwnedSlice(),
+        };
+    }
+
+    /// Tokenize the input stream and return all tokens.
+    /// Returns the first error encountered during lexing.
+    /// The caller is responsible for freeing the returned slice.
+    pub fn tokenize(self: *Lexer, allocator: Allocator) (Allocator.Error || LexerError)![]Token {
+        var tokens = std.ArrayList(Token).init(allocator);
+        errdefer tokens.deinit();
+
+        while (try self.next()) |token| {
+            if (token.kind == TokenKind.Eof) {
+                break;
+            }
+            try tokens.append(token);
+        }
+
+        return try tokens.toOwnedSlice();
+    }
 };
 
 /// Errors produced during lexical analysis. This includes the `CursorError` error set.
@@ -119,6 +135,20 @@ pub fn lex(allocator: Allocator, source: []const u8) Allocator.Error!LexResult {
 pub fn lexWithLimit(allocator: Allocator, source: []const u8, limit: usize) Allocator.Error!LexResult {
     var lexer = Lexer.init(source, .{ .limit = limit });
     return lexer.lex(allocator);
+}
+
+/// Tokenize the given GraphQL source text into tokens, using the given allocator.
+/// Returns the first error encountered during lexing.
+pub fn tokenize(allocator: Allocator, source: []const u8) (Allocator.Error || LexerError)![]Token {
+    var lexer = Lexer.init(source, .{});
+    return lexer.tokenize(allocator);
+}
+
+/// Tokenize the given GraphQL source text with a limit on the number of tokens that can be scanned.
+/// Returns the first error encountered during lexing.
+pub fn tokenizeWithLimit(allocator: Allocator, source: []const u8, limit: usize) (Allocator.Error || LexerError)![]Token {
+    var lexer = Lexer.init(source, .{ .limit = limit });
+    return lexer.tokenize(allocator);
 }
 
 //
@@ -232,4 +262,27 @@ test "lexWithLimit should return error when limit is reached" {
 
     try std.testing.expect(result.tokens.len == 10);
     try std.testing.expect(result.errors.len == 1);
+}
+
+test "tokenize should return slice of tokens" {
+    const allocator = std.testing.allocator;
+    const input = "{ user { id } }";
+
+    var lexer = Lexer.init(input, .{});
+    const tokens = try lexer.tokenize(allocator);
+    defer allocator.free(tokens);
+
+    try std.testing.expect(tokens.len == 11);
+    try std.testing.expect(tokens[0].kind == TokenKind.LCurly);
+    try std.testing.expect(tokens[tokens.len - 1].kind == TokenKind.RCurly);
+}
+
+test "tokenize should return first error on limit reached" {
+    const allocator = std.testing.allocator;
+    const input = "{ user { id } }";
+
+    var lexer = Lexer.init(input, .{ .limit = 5 });
+    const result = lexer.tokenize(allocator);
+
+    try std.testing.expectError(error.LimitReached, result);
 }
