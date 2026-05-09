@@ -12,8 +12,22 @@ const TokenKind = @import("../lexer/tokens.zig").TokenKind;
 // Might be removed in the future. This is a beta feature.
 fn noopDebug(_: *Parser, _: []const u8) void {}
 fn printDebug(p: *Parser, tag: []const u8) void {
-    std.debug.print("{s}:\n", .{tag});
-    std.debug.print("peek |{any}|\n", .{p.peek()});
+    std.debug.print("{s}\n", .{tag});
+    const t = p.peek() catch |err| {
+        std.debug.print("error = {any}\n", .{err});
+        return;
+    };
+    std.debug.print(
+        \\peek
+        \\{{
+        \\  .kind = {?}
+        \\  .data = {s}
+        \\  .index = {d}
+        \\}}
+        \\
+    ,
+        .{ t.kind, t.data, t.index },
+    );
 }
 
 /// The `Parser` struct handles converting GraphQL text into an
